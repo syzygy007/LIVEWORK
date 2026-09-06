@@ -73,6 +73,19 @@ footer .wrap{display:grid;gap:20px}
 footer img{height:16px}
 footer .legal-links{display:flex;gap:20px;flex-wrap:wrap}
 footer a{color:var(--stone)}
+
+/* weekly */
+.weekly{padding:96px 0;border-top:1px solid var(--line)}
+.weekly h2{font-size:clamp(40px,5.6vw,80px);max-width:9em;margin-bottom:24px}
+.weekly p{font-size:18px;max-width:34em}
+.weekly .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:64px;align-items:end}
+@media (max-width:820px){.weekly .grid{grid-template-columns:1fr;gap:32px}}
+.weekly .row{display:flex;gap:12px;flex-wrap:wrap}
+.weekly input{flex:1 1 220px;padding:14px 16px;border:1px solid var(--line);background:var(--white);font:inherit;border-radius:2px}
+.weekly .btn{flex:none}
+.weekly .hp{position:absolute;left:-9999px;opacity:0}
+.weekly .ok{margin-top:14px;font-weight:600}
+.weekly .err{margin-top:14px;color:#8a1f11}
 </style>
 </head>
 <body>
@@ -146,6 +159,27 @@ footer a{color:var(--stone)}
     </div>
   </section>
 
+  <section class="weekly" id="weekly">
+    <div class="wrap">
+      <div class="grid">
+        <div>
+          <div class="hl"><span class="bar"></span><h2>Once a week. One idea, one nudge.</h2></div>
+          <p>A short email on hiring, modern work, and the call you have been putting off. No noise, no selling, off the list in one click.</p>
+        </div>
+        <form id="wf" novalidate>
+          <div class="row">
+            <input id="we" name="email" type="email" placeholder="you@company.com" autocomplete="email" required aria-label="Email">
+            <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <button class="btn" type="submit">Join the list</button>
+          </div>
+          <p class="ok" id="wfok" hidden>You are on the list. Check your inbox for the first note.</p>
+          <p class="err" id="wferr" hidden></p>
+          <p class="small muted">By joining you agree to our <a href="privacy.html">Privacy Policy</a>. We only use your address to send this email.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
   <section class="contact" id="contact">
     <div class="wrap">
       <div class="hl"><span class="bar"></span><h2>Ready to hire, or ready to move. Start a conversation.</h2></div>
@@ -171,7 +205,25 @@ footer a{color:var(--stone)}
   </section>
 </main>
 
+<script src="lw-config.js?v=3"></script>
 <script>
+(function(){
+  var w=document.getElementById('wf'); if(!w) return;
+  w.addEventListener('submit',function(e){
+    e.preventDefault();
+    var ok=document.getElementById('wfok'), er=document.getElementById('wferr'), b=w.querySelector('button');
+    ok.hidden=true; er.hidden=true;
+    var email=(w.elements.email.value||'').trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){er.textContent='Enter a real email.';er.hidden=false;return}
+    if(!(window.LW&&LW.url&&LW.anon)){er.textContent='Sign up is not connected yet. Email hello@livework.inc and we will add you.';er.hidden=false;return}
+    b.disabled=true; b.textContent='Joining';
+    fetch(LW.url+'/functions/v1/subscribe',{method:'POST',headers:{'content-type':'application/json',apikey:LW.anon,Authorization:'Bearer '+LW.anon},body:JSON.stringify({email:email,website:w.elements.website.value,source:'index'})})
+      .then(function(r){return r.json()}).then(function(d){
+        if(d&&d.ok){ok.hidden=false;w.elements.email.value=''}else{er.textContent=(d&&d.error)||'That did not go through. Try again.';er.hidden=false}
+      }).catch(function(){er.textContent='That did not go through. Try again.';er.hidden=false})
+      .finally(function(){b.disabled=false;b.textContent='Join the list'});
+  });
+})();
 (function(){
   var f=document.getElementById('cf'); if(!f) return;
   f.addEventListener('submit',function(e){
