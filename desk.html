@@ -160,7 +160,7 @@ const MAP = {
   placement: { pipeline:'pipeline_id', start:'start_date', salary:'base_salary', fee:'fee_amount', fee_pct:'fee_pct',
                guarantee_ends:'guarantee_ends', status:'status' },
   invoice:   { company:'company_id', placement:'placement_id', amount:'amount', status:'status',
-               issued:'issued_at', due:'due_at', description:'description' },
+               issued:'issued_at', due:'due_at', description:'description', po:'po_number' },
   automation:{ name:'name', trigger:'trigger', enabled:'enabled' }
 };
 const STAGES = ['Sourced','Submitted','Interview','Offer','Placed','Passed'];
@@ -951,11 +951,13 @@ function form(kind, ctx){
       '<div class="two"><div class="field"><label for="f_start">Start date</label><input id="f_start" type="date"></div>' +
       '<div class="field"><label for="f_sal">Base salary</label><input id="f_sal" inputmode="numeric"></div></div>' +
       '<div class="field"><label for="f_fee">Fee</label><input id="f_fee" inputmode="numeric" placeholder="20% of base"></div>'],
-    invoice: ['Raise an invoice.', 'GERMANN INC dba LIVEWORK. The PDF comes from the backend later.',
+    invoice: ['Raise an invoice.', 'It saves as a draft. Send it from the Invoices screen when you are ready.',
       '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="field"><label for="f_place">Placement, if any</label><select id="f_place">' + opts(S.placements, p => pname(p.candidate_id) + ' · ' + cname(p.company_id), ctx.place) + '</select></div>' +
+      '<div class="field"><label for="f_desc">What it is for</label><input id="f_desc" placeholder="Placement fee · Elena Vasquez · Director of Fleet Operations"></div>' +
       '<div class="two"><div class="field"><label for="f_amt">Amount</label><input id="f_amt" inputmode="numeric"></div>' +
-      '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date"></div></div>'],
+      '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date" value="' + plusDays(30) + '"></div></div>' +
+      '<div class="field"><label for="f_po">PO number, if their AP requires one</label><input id="f_po"></div>'],
     premier: ['Premier.', 'A human call, so it needs a reason.',
       '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
   }[kind];
@@ -965,6 +967,7 @@ function form(kind, ctx){
   $('#fsave').onclick = () => save(kind, ctx);
 }
 const today = () => new Date().toISOString().slice(0,10);
+const plusDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); };
 const val = id => { const e = document.getElementById(id); return e ? (e.type === 'checkbox' ? e.checked : e.value.trim()) : ''; };
 const meId = () => ME ? idOf(ME) : null;
 
@@ -1051,9 +1054,11 @@ async function save(kind, ctx){
   }
   if(kind === 'invoice'){
     if(!val('f_co')) return toast('Pick the company.', true);
+    if(num(val('f_amt')) <= 0) return toast('Put an amount on it.', true);
     r = await tryWrite(() => insert('invoices', clean({ [M.invoice.company]: val('f_co'), [M.invoice.placement]: val('f_place'),
-      [M.invoice.amount]: Math.round(num(val('f_amt'))), [M.invoice.status]: 'sent',
-      [M.invoice.issued]: today(), [M.invoice.due]: val('f_due'), [M.invoice.description]: 'Placement fee' })), 'Invoice raised.');
+      [M.invoice.amount]: Math.round(num(val('f_amt'))), [M.invoice.status]: 'draft',
+      [M.invoice.issued]: today(), [M.invoice.due]: val('f_due') || plusDays(30),
+      [M.invoice.description]: val('f_desc') || 'Placement fee', [M.invoice.po]: val('f_po') })), 'Invoice drafted.');
   }
   if(kind === 'premier'){
     if(!val('f_why')) return toast('Premier needs a reason.', true);
