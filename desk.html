@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="lw.css">
 <script src="lw-config.js?v=3"></script>
-<script src="lw-auth.js?v=5"></script>
+<script src="lw-auth.js?v=6"></script>
 <style>
 body{background:var(--paper)}
 .app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
@@ -192,8 +192,14 @@ let toastT; function toast(m, bad){ const t=$('#toast'); t.textContent=m; t.clas
   clearTimeout(toastT); toastT=setTimeout(()=>t.className='toast', bad?6000:2400); }
 
 /* ---------- data layer ---------- */
+async function alive(){
+  const s = LWAuth.ensure ? await LWAuth.ensure() : LWAuth.session;
+  if(!s){ toast('Your sign in expired. Opening the door.', true); setTimeout(() => location.reload(), 1200); throw new Error('signed out'); }
+  return s;
+}
 async function rest(path, opts){
   opts = opts || {};
+  await alive();
   const h = { apikey: LW.anon, Authorization: 'Bearer ' + LWAuth.token(), 'content-type':'application/json' };
   if(opts.prefer) h.Prefer = opts.prefer;
   const r = await fetch(LW.url + '/rest/v1/' + path, { method: opts.method || 'GET', headers: h, body: opts.body });
@@ -215,6 +221,7 @@ async function patch(t, id, row){
   return Array.isArray(out) ? out[0] : out;
 }
 async function fnCall(name, body){
+  await alive();
   const r = await fetch(LW.url + '/functions/v1/' + name, { method:'POST',
     headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/json' },
     body: JSON.stringify(body || {}) });

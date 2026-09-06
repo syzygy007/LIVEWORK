@@ -26,6 +26,10 @@
 
   A.token = function(){ return A.session && A.session.access_token; };
 
+  /* refresh the access token if it is inside a minute of expiry.
+     returns the live session, or null when the sign in is gone. */
+  A.ensure = function(){ return refresh(); };
+
   async function refresh(){
     var s = load();
     if(!s || !s.refresh_token) return null;
