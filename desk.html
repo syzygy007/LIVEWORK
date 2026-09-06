@@ -164,6 +164,9 @@ const MAP = {
   automation:{ name:'name', trigger:'trigger', enabled:'enabled' }
 };
 const STAGES = ['Sourced','Submitted','Interview','Offer','Placed','Passed'];
+const DBSTAGE = { Sourced:'sourced', Submitted:'submitted', Interview:'client_interview', Offer:'offer', Placed:'placed', Passed:'passed' };
+const DISPLAYSTAGE = { sourced:'Sourced', screened:'Sourced', submitted:'Submitted', client_interview:'Interview', interview:'Interview', offer:'Offer', placed:'Placed', passed:'Passed' };
+const dbStage = st => DBSTAGE[st] || String(st || 'sourced').toLowerCase();
 const AUTOS = [
   ['candidate_released','Candidate released','The client room gets an email the moment you release someone.'],
   ['interview_set','Interview set','Candidate and client both get the time and the address.'],
@@ -257,8 +260,7 @@ const search = id => byId(S.searches, id);
 const cname = id => F(company(id) || {}, 'name','company_name','title') || 'No company';
 const sname = id => F(search(id) || {}, 'title','role','job_title','name') || 'Search';
 const pname = id => F(cand(id) || {}, 'name','full_name') || 'Candidate';
-const stageOf = p => { const s = F(p,'stage','status'); const i = STAGES.map(x=>x.toLowerCase()).indexOf(String(s).toLowerCase());
-  return i >= 0 ? STAGES[i] : (s || 'Sourced'); };
+const stageOf = p => { const s = String(F(p,'stage','status') || '').toLowerCase(); return DISPLAYSTAGE[s] || 'Sourced'; };
 const stageIx = p => Math.max(0, STAGES.indexOf(stageOf(p)));
 const isReleased = p => p[MAP.pipeline.released] === true || p.release === true || p.released_at != null;
 const isOpen = s => String(F(s,'status') || 'open').toLowerCase() !== 'closed';
@@ -861,7 +863,7 @@ function form(kind, ctx){
     note: ['Interview note.', 'Stored on the candidate, not on one submission.',
       '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
       '<div class="two"><div class="field"><label for="f_se">Search, if any</label><select id="f_se">' + opts(S.searches, s => F(s,'title','role') + ' · ' + cname(s.company_id), ctx.se) + '</select></div>' +
-      '<div class="field"><label for="f_kind">Kind</label><select id="f_kind"><option>Screen</option><option>Phone</option><option>Video</option><option>In person</option><option>Client debrief</option></select></div></div>' +
+      '<div class="field"><label for="f_kind">Kind</label><select id="f_kind"><option value="screen">Screen</option><option value="client_interview">Client interview</option><option value="panel">Panel</option><option value="site_visit">Site visit</option><option value="reference">Reference</option><option value="other">Other</option></select></div></div>' +
       '<div class="field"><label for="f_strong">Strong at</label><textarea id="f_strong"></textarea></div>' +
       '<div class="field"><label for="f_conc">Concerns</label><textarea id="f_conc"></textarea></div>' +
       '<div class="two"><div class="field"><label for="f_comp">Comp</label><input id="f_comp"></div>' +
@@ -926,7 +928,7 @@ async function save(kind, ctx){
   if(kind === 'pipeline'){
     if(!val('f_se') || !val('f_cand')) return toast('Pick a search and a candidate.', true);
     r = await tryWrite(() => insert('pipeline', clean({ [M.pipeline.search]: val('f_se'), [M.pipeline.candidate]: val('f_cand'),
-      [M.pipeline.stage]: val('f_stage'), [M.pipeline.released]: val('f_rel'),
+      [M.pipeline.stage]: dbStage(val('f_stage')), [M.pipeline.released]: val('f_rel'),
       [M.pipeline.released_at]: val('f_rel') ? new Date().toISOString() : '', [M.pipeline.added_by]: meId() })), 'Submitted.');
   }
   if(kind === 'call'){
@@ -970,8 +972,8 @@ async function save(kind, ctx){
     if(!val('f_start')) return toast('A placement needs a start date.', true);
     let pp = S.pipeline.filter(p => String(p.search_id)===val('f_se') && String(p.candidate_id)===val('f_cand'))[0];
     if(!pp) pp = await tryWrite(() => insert('pipeline', clean({ [M.pipeline.search]: val('f_se'), [M.pipeline.candidate]: val('f_cand'),
-      [M.pipeline.stage]: 'Placed', [M.pipeline.released]: true, [M.pipeline.released_at]: new Date().toISOString(), [M.pipeline.added_by]: meId() })));
-    else if(stageOf(pp) !== 'Placed') await tryWrite(() => patch('pipeline', idOf(pp), { [M.pipeline.stage]: 'Placed' }));
+      [M.pipeline.stage]: 'placed', [M.pipeline.released]: true, [M.pipeline.released_at]: new Date().toISOString(), [M.pipeline.added_by]: meId() })));
+    else if(stageOf(pp) !== 'Placed') await tryWrite(() => patch('pipeline', idOf(pp), { [M.pipeline.stage]: 'placed' }));
     if(!pp) return;
     const sal = num(val('f_sal')), fee = val('f_fee') ? num(val('f_fee')) : Math.round(sal * 0.2);
     const ends = new Date(val('f_start')); ends.setDate(ends.getDate() + 90);
@@ -1038,7 +1040,7 @@ function common(root){
   root.querySelectorAll('[data-adv]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const p = byId(S.pipeline, b.dataset.adv);
     const next = STAGES[Math.min(4, stageIx(p) + 1)];
-    const r = await tryWrite(() => patch('pipeline', idOf(p), { [MAP.pipeline.stage]: next }), 'Moved to ' + next + '.');
+    const r = await tryWrite(() => patch('pipeline', idOf(p), { [MAP.pipeline.stage]: dbStage(next) }), 'Moved to ' + next + '.');
     if(r){ await loadAll(); drawNav(); draw(); if(SHEET.kind && SHEET.kind !== 'form') paintSheet(); }
   });
   root.querySelectorAll('[data-rel]').forEach(b => b.onclick = async e => { e.stopPropagation();
