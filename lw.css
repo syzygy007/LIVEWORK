@@ -10,8 +10,8 @@
   --wall:#E7E3DB;       /* concrete, quiet panels */
   --line:#D3CEC4;       /* hairlines */
   --stone:#75716A;      /* secondary text */
-  --yellow:#F2D200;     /* softened from #FFFF00 for screens */
-  --yellow-deep:#D9BC00;
+  --yellow:#E3BD3B;     /* goldenrod, softened twice from #FFFF00 for screens */
+  --yellow-deep:#C9A52A;
   --ok:#1F7A45;
   --warn:#B4441A;
   --font:'Manrope',Arial,Helvetica,sans-serif;

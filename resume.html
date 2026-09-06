@@ -161,7 +161,7 @@ async function build(a){
   const [fR,fS,fX]=await Promise.all(['Manrope-Regular.ttf','Manrope-SemiBold.ttf','Manrope-ExtraBold.ttf'].map(async f=>doc.embedFont(await (await fetch(f)).arrayBuffer(),{subset:true})));
   const logo=await doc.embedPng(await (await fetch('livework-primary-all-black.png')).arrayBuffer());
   ref=fingerprint(a);
-  const ink=rgb(0,0,0), stone=rgb(.46,.44,.42), yellow=rgb(.95,.82,0), line=rgb(.83,.81,.77);
+  const ink=rgb(0,0,0), stone=rgb(.46,.44,.42), yellow=rgb(.89,.74,.23), line=rgb(.83,.81,.77);
   const W=612,H=792,M=56,BW=W-M*2;
   let page,y;
   const stamp=(pg)=>{
