@@ -1,0 +1,71 @@
+/* LIVEWORK web tokens, product build 1.0 (Sep 2026) */
+@font-face{font-family:'Manrope';src:url('Manrope-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Manrope';src:url('Manrope-SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Manrope';src:url('Manrope-ExtraBold.woff2') format('woff2');font-weight:800;font-display:swap}
+
+:root{
+  --ink:#000000;
+  --paper:#F4F2ED;      /* warm concrete white, the page */
+  --white:#FFFFFF;      /* cards and sheets */
+  --wall:#E7E3DB;       /* concrete, quiet panels */
+  --line:#D3CEC4;       /* hairlines */
+  --stone:#75716A;      /* secondary text */
+  --yellow:#F2D200;     /* softened from #FFFF00 for screens */
+  --yellow-deep:#D9BC00;
+  --ok:#1F7A45;
+  --warn:#B4441A;
+  --font:'Manrope',Arial,Helvetica,sans-serif;
+  --r:2px;
+  --u:8px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-weight:800;letter-spacing:-.025em;line-height:1.02}
+p{margin:0}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+img{display:block;max-width:100%}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px;box-shadow:0 0 0 6px var(--white)}
+
+/* the divider device: a yellow bar introduces a headline */
+.bar{display:block;width:6px;height:1em;background:var(--yellow);border-radius:var(--r)}
+.hl{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+.hl .bar{height:100%;min-height:1.2em;width:8px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 24px;border-radius:var(--r);border:1px solid var(--ink);background:var(--yellow);color:var(--ink);font-weight:600;font-size:16px;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--ink);color:var(--white)}
+.btn.ink{background:var(--ink);color:var(--white)}
+.btn.ink:hover{background:var(--yellow);color:var(--ink)}
+.btn.ghost{background:transparent}
+.btn.ghost:hover{background:var(--ink);color:var(--white)}
+.btn.sm{min-height:36px;padding:0 14px;font-size:14px}
+.btn[disabled]{opacity:.4;cursor:default}
+
+/* text */
+.lede{font-size:20px;line-height:1.45;max-width:34em;color:var(--ink)}
+.muted{color:var(--stone)}
+.small{font-size:14px}
+.tiny{font-size:12px;font-weight:600;letter-spacing:.02em}
+
+/* spec rows */
+.spec{border-top:1px solid var(--line)}
+.spec .row{display:grid;grid-template-columns:minmax(120px,1fr) 2fr;gap:24px;padding:18px 0;border-bottom:1px solid var(--line)}
+.spec .row b{font-weight:600}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);font-size:13px;font-weight:600;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.chip.y{background:var(--yellow);border-color:var(--ink)}
+.premier{display:inline-flex;align-items:center;gap:8px;font-weight:800}
+.premier::before{content:"";width:5px;height:16px;background:var(--yellow);border-radius:1px}
+
+/* forms */
+.field{display:grid;gap:6px}
+.field label{font-size:13px;font-weight:600}
+.field input,.field select,.field textarea{height:44px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--white)}
+.field textarea{height:auto;min-height:120px;padding:10px 12px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

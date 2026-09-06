@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resume drop. LIVEWORK</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="lw.css">
+<style>
+.wrap{width:min(1120px,100% - 96px);margin:0 auto}
+@media (max-width:720px){.wrap{width:calc(100% - 40px)}}
+.nav{border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:5}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
+.nav img{height:20px}
+.nav a{font-weight:600;font-size:14px;text-decoration:none}
+main{padding:48px 0 96px}
+h1{font-size:clamp(40px,5vw,64px)}
+.lede{margin:16px 0 36px 30px}
+@media (max-width:720px){.lede{margin-left:0}}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.drop{border:2px dashed var(--line);background:var(--white);min-height:320px;display:grid;place-items:center;text-align:center;padding:32px;cursor:pointer}
+.drop.over{border-color:var(--ink);background:var(--yellow)}
+.drop b{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.drop span{color:var(--stone);font-size:14px;display:block;margin-top:8px}
+.drop input{display:none}
+.panel{background:var(--white);border:1px solid var(--line);padding:28px;display:grid;gap:16px}
+.panel h2{font-size:22px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.prev{margin-top:32px;background:var(--white);border:1px solid var(--line);min-height:200px}
+.prev iframe{width:100%;height:760px;border:0;display:none}
+.prev .hint{padding:40px;color:var(--stone)}
+.done{display:none;background:var(--ink);color:var(--white);padding:24px 28px;margin-top:24px;display:none;gap:6px}
+.done.on{display:grid}
+.done b{font-size:20px;font-weight:800}
+.done small{color:#BDB9B1}
+.done .ref{color:var(--yellow);font-weight:600}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 18px;border-radius:var(--r);font-weight:600;font-size:14px;display:none;z-index:30}
+.toast.on{display:block}
+.sub{font-size:13px;color:var(--stone)}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a href="desk.html" aria-label="Back to the desk"><img src="livework-primary-all-black.png" alt="LIVE | WORK"></a>
+  <a href="desk.html">Back to the desk</a>
+</div></header>
+
+<main><div class="wrap">
+  <div class="hl"><span class="bar"></span><h1>Drop a resume.</h1></div>
+  <p class="lede">Name and contact come off the PDF and fill the applicant. The resume is rebuilt in LIVEWORK type with a watermark and a reference code, so everything you send carries the brand and can be traced.</p>
+
+  <div class="grid">
+    <label class="drop" id="drop">
+      <div><b>Drag a PDF here</b><span>or click to choose one. Word files come next.</span></div>
+      <input type="file" id="file" accept="application/pdf">
+    </label>
+
+    <form class="panel" id="form" autocomplete="off">
+      <h2>The applicant.</h2>
+      <p class="sub" id="status">Waiting for a file.</p>
+      <div class="field"><label>Name</label><input id="name"></div>
+      <div class="field"><label>Current title</label><input id="title"></div>
+      <div class="two">
+        <div class="field"><label>Email</label><input id="email" type="email"></div>
+        <div class="field"><label>Phone</label><input id="phone"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Location</label><input id="loc"></div>
+        <div class="field"><label>LinkedIn</label><input id="li"></div>
+      </div>
+      <div class="field"><label>Tags</label><input id="tags" placeholder="operations, fleet, leadership"></div>
+      <div class="field"><label>Source</label><select id="src"><option>Inbound</option><option>LinkedIn</option><option>Indeed</option><option>Referral</option><option>Job board</option><option>Network</option></select></div>
+      <div class="acts">
+        <button class="btn" type="button" id="build" disabled>Build the LIVEWORK resume</button>
+        <button class="btn ghost" type="button" id="dl" disabled>Download PDF</button>
+        <button class="btn ink" type="button" id="create" disabled>Create the applicant</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="prev" id="prev"><p class="hint">The rebuilt resume shows here.</p><iframe id="frame" title="LIVEWORK resume preview"></iframe></div>
+
+  <div class="done" id="done"><b id="doneName"></b><small id="doneMeta"></small><span class="ref" id="doneRef"></span></div>
+</div></main>
+<div class="toast" id="toast"></div>
+
+<script src="pdf-lib.min.js"></script>
+<script src="fontkit.umd.min.js"></script>
+<script type="module">
+import * as pdfjsLib from './pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.mjs';
+const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
+
+const $=s=>document.querySelector(s);
+let toastT;const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400)};
+let lines=[], outBytes=null, ref='';
+
+/* ---------- 1. read the PDF into lines ---------- */
+async function readPdf(file){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  const out=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    // group items into lines by y position
+    const rows=new Map();
+    for(const it of tc.items){
+      if(!it.str.trim()) continue;
+      const y=Math.round(it.transform[5]/3)*3;
+      if(!rows.has(y)) rows.set(y,[]);
+      rows.get(y).push({x:it.transform[4],s:it.str,h:Math.abs(it.transform[3])||it.height||10});
+    }
+    const ys=[...rows.keys()].sort((a,b)=>b-a);
+    for(const y of ys){
+      const parts=rows.get(y).sort((a,b)=>a.x-b.x);
+      let text='';let lastEnd=null;
+      for(const pt of parts){ text+=(lastEnd!==null && pt.x-lastEnd>4?' ':'')+pt.s; lastEnd=pt.x+pt.s.length*pt.h*.5; }
+      out.push({t:text.replace(/\s+/g,' ').trim(), h:Math.max(...parts.map(p=>p.h))});
+    }
+    if(p<pdf.numPages) out.push({t:'',h:0});
+  }
+  return out;
+}
+
+/* ---------- 2. pull the applicant out of the lines ---------- */
+const HEAD=/^(summary|profile|professional summary|objective|experience|work experience|professional experience|employment|education|skills|core competencies|technical skills|certifications|licenses|projects|awards|languages|volunteer|references|interests|publications)\b[:\s]*$/i;
+function extract(ls){
+  const all=ls.map(l=>l.t).join('\n');
+  const email=(all.match(/[\w.+-]+@[\w-]+\.[\w.-]+/)||[''])[0];
+  const phone=(all.match(/(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/)||[''])[0].trim();
+  const li=(all.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+/i)||[''])[0];
+  const loc=(all.match(/\b([A-Z][a-zA-Z.]+(?: [A-Z][a-zA-Z.]+)*),\s?(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/)||['',''])[0];
+  // name: biggest text in the top lines that looks like a person's name
+  const top=ls.slice(0,12).filter(l=>l.t);
+  const cand=top.filter(l=>/^[A-Z][a-zA-Z'.-]+(?: [A-Z][a-zA-Z'.-]+){1,3}$/.test(l.t) && !/resume|curriculum/i.test(l.t) && !HEAD.test(l.t));
+  const name=(cand.sort((a,b)=>b.h-a.h)[0]||{t:''}).t || (top[0]||{t:''}).t.replace(/[^a-zA-Z' .-]/g,'').trim();
+  // title: first non contact line after the name
+  const ni=ls.findIndex(l=>l.t===name);
+  let title='';
+  for(let i=ni+1;i<Math.min(ni+5,ls.length);i++){const t=ls[i].t; if(t && !/@|\d{3}[\s.-]?\d{4}|linkedin|^http/i.test(t) && !HEAD.test(t) && t.length<70){title=t.replace(/\s*[|•·]\s*.*$/,'');break;}}
+  // tags: skill words we recognise
+  const bank=['operations','logistics','fleet','warehouse','manager','director','leadership','sales','finance','accounting','controller','engineering','software','recruiting','healthcare','nursing','marketing','hr','remote','hybrid','construction','electrical','project management','supply chain','purchasing','customer service','analytics','excel','sql','python','solar','manufacturing','safety','forklift','cdl','dispatch','inventory','estimating','legal','paralegal','admin','executive assistant'];
+  const low=all.toLowerCase();
+  const tags=bank.filter(b=>new RegExp('\\b'+b.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').test(low)).slice(0,8);
+  return {name,title,email,phone,loc,li,tags};
+}
+
+/* ---------- 3. build the LIVEWORK resume ---------- */
+function fingerprint(a){
+  const s=(a.name+'|'+a.email+'|'+new Date().toISOString().slice(0,10));
+  let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;
+  return 'LW-'+h.toString(36).toUpperCase().padStart(6,'0').slice(-6);
+}
+async function build(a){
+  const doc=await PDFDocument.create();
+  doc.registerFontkit(fontkit);
+  const [fR,fS,fX]=await Promise.all(['Manrope-Regular.ttf','Manrope-SemiBold.ttf','Manrope-ExtraBold.ttf'].map(async f=>doc.embedFont(await (await fetch(f)).arrayBuffer(),{subset:true})));
+  const logo=await doc.embedPng(await (await fetch('livework-primary-all-black.png')).arrayBuffer());
+  ref=fingerprint(a);
+  const ink=rgb(0,0,0), stone=rgb(.46,.44,.42), yellow=rgb(.95,.82,0), line=rgb(.83,.81,.77);
+  const W=612,H=792,M=56,BW=W-M*2;
+  let page,y;
+  const stamp=(pg)=>{
+    // watermark
+    const wm='LIVEWORK';const sz=110;const tw=fX.widthOfTextAtSize(wm,sz);
+    const c=Math.SQRT1_2;pg.drawText(wm,{x:W/2-(tw/2)*c+(sz*.35)*c,y:H/2-(tw/2)*c-(sz*.35)*c,size:sz,font:fX,color:ink,opacity:.06,rotate:degrees(45)});
+    // header
+    const lw=120,lh=lw*logo.height/logo.width;
+    pg.drawImage(logo,{x:M,y:H-M-lh+8,width:lw,height:lh});
+    pg.drawText('Presented by LIVEWORK · Confidential',{x:W-M-fS.widthOfTextAtSize('Presented by LIVEWORK · Confidential',9),y:H-M+2,size:9,font:fS,color:stone});
+    // footer
+    pg.drawLine({start:{x:M,y:M-14},end:{x:W-M,y:M-14},thickness:.5,color:line});
+    pg.drawText('livework.inc · hello@livework.inc · 26632 Towne Centre Dr. #300, Suite 3, Foothill Ranch, CA 92610',{x:M,y:M-28,size:7.5,font:fR,color:stone});
+    pg.drawText(ref,{x:W-M-fS.widthOfTextAtSize(ref,8),y:M-28,size:8,font:fS,color:ink});
+  };
+  const newPage=()=>{page=doc.addPage([W,H]);stamp(page);y=H-M-40;};
+  const wrap=(t,f,s,w)=>{const words=t.split(' ');const out=[];let cur='';for(const wd of words){const try_=cur?cur+' '+wd:wd;if(f.widthOfTextAtSize(try_,s)>w&&cur){out.push(cur);cur=wd;}else cur=try_;}if(cur)out.push(cur);return out;};
+  const put=(t,f,s,color=ink,lead=1.35,indent=0)=>{for(const l of wrap(t,f,s,BW-indent)){if(y<M+10)newPage();page.drawText(l,{x:M+indent,y,size:s,font:f,color});y-=s*lead;}};
+  newPage();
+  // name block
+  page.drawRectangle({x:M,y:y-34,width:6,height:44,color:yellow});
+  page.drawText(a.name||'Candidate',{x:M+18,y:y-24,size:30,font:fX,color:ink});
+  y-=48;
+  if(a.title){page.drawText(a.title,{x:M+18,y,size:12,font:fS,color:ink});y-=18;}
+  const contact=[a.loc,a.email,a.phone,a.li].filter(Boolean).join('   ·   ');
+  if(contact){page.drawText(contact,{x:M+18,y,size:9.5,font:fR,color:stone});y-=16;}
+  y-=10;page.drawLine({start:{x:M,y},end:{x:W-M,y},thickness:.75,color:ink});y-=22;
+  // body: skip the lines we already used at the top
+  const skip=new Set([a.name,a.title]);
+  let started=false;
+  for(const l of lines){
+    const t=l.t;
+    if(!t){y-=6;continue;}
+    if(!started){ if(skip.has(t)||/@|\d{3}[\s.-]?\d{4}|linkedin/i.test(t)) continue; started=true; }
+    if(HEAD.test(t)||(t.length<32&&t===t.toUpperCase()&&/[A-Z]{3}/.test(t))){
+      y-=8; if(y<M+40)newPage();
+      page.drawRectangle({x:M,y:y-2,width:3,height:11,color:yellow});
+      page.drawText(t.replace(/:$/,'').toUpperCase(),{x:M+10,y,size:9,font:fS,color:ink});y-=16;continue;
+    }
+    if(/^[•·\-*▪●]\s?/.test(t)){page.drawText('·',{x:M+2,y,size:10,font:fS,color:ink});put(t.replace(/^[•·\-*▪●]\s?/,''),fR,9.5,ink,1.4,12);continue;}
+    put(t,fR,9.5,ink,1.4);
+  }
+  doc.setTitle(`${a.name} · Presented by LIVEWORK`);
+  doc.setAuthor('LIVEWORK');doc.setProducer('LIVEWORK desk');doc.setCreator('LIVEWORK desk');
+  doc.setSubject(`Candidate profile ${ref}`);doc.setKeywords(['LIVEWORK',ref,a.email||'']);
+  return doc.save();
+}
+
+/* ---------- wiring ---------- */
+const drop=$('#drop'),file=$('#file');
+['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',ev=>{const f=ev.dataTransfer.files[0];if(f)load(f)});
+file.addEventListener('change',()=>{if(file.files[0])load(file.files[0])});
+async function load(f){
+  if(f.type!=='application/pdf'){toast('PDF only for now');return;}
+  $('#status').textContent=`Reading ${f.name}`;
+  try{ lines=await readPdf(f); }catch(e){ $('#status').textContent='Could not read that PDF.'; return; }
+  const a=extract(lines);
+  $('#name').value=a.name;$('#title').value=a.title;$('#email').value=a.email;$('#phone').value=a.phone;$('#loc').value=a.loc;$('#li').value=a.li;$('#tags').value=a.tags.join(', ');
+  $('#status').textContent=`${lines.filter(l=>l.t).length} lines read from ${f.name}. Check the fields, then build.`;
+  $('#build').disabled=false;$('#create').disabled=false;$('#dl').disabled=true;outBytes=null;
+  $('#done').classList.remove('on');
+}
+const applicant=()=>({name:$('#name').value.trim(),title:$('#title').value.trim(),email:$('#email').value.trim(),phone:$('#phone').value.trim(),loc:$('#loc').value.trim(),li:$('#li').value.trim(),tags:$('#tags').value.split(',').map(s=>s.trim()).filter(Boolean),source:$('#src').value});
+$('#build').onclick=async()=>{
+  $('#status').textContent='Building the LIVEWORK resume';
+  try{ outBytes=await build(applicant()); }catch(e){ console.error(e); $('#status').textContent='Build failed: '+e.message; return; }
+  const url=URL.createObjectURL(new Blob([outBytes],{type:'application/pdf'}));
+  const fr=$('#frame');fr.src=url;fr.style.display='block';$('#prev .hint').style.display='none';
+  $('#dl').disabled=false;$('#status').textContent=`Built. Reference ${ref}.`;
+};
+$('#dl').onclick=()=>{const a=applicant();const u=URL.createObjectURL(new Blob([outBytes],{type:'application/pdf'}));const l=document.createElement('a');l.href=u;l.download=`${(a.name||'candidate').replace(/\s+/g,'-')}-LIVEWORK-${ref}.pdf`;l.click();};
+$('#create').onclick=async()=>{
+  const a=applicant(); if(!a.name){toast('Needs a name');return;}
+  if(!outBytes){ try{outBytes=await build(a);}catch(e){} }
+  $('#doneName').textContent=a.name;
+  $('#doneMeta').textContent=[a.title,a.email,a.phone,a.loc].filter(Boolean).join(' · ')+(a.tags.length?'   Tags: '+a.tags.join(', '):'');
+  $('#doneRef').textContent=`Applicant created · ${ref} · original and LIVEWORK PDF filed on the record`;
+  $('#done').classList.add('on');
+  toast('Applicant created (saves to the pool with the live layer)');
+};
+</script>
+</body>
+</html>

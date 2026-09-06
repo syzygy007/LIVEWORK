@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your room. LIVEWORK</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="lw.css">
+<style>
+.wrap{width:min(1040px,100% - 96px);margin:0 auto}
+@media (max-width:720px){.wrap{width:calc(100% - 40px)}}
+.nav{border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:5}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
+.nav img{height:20px}
+.nav .who{font-size:14px;color:var(--stone)}
+.nav .who b{color:var(--ink);font-weight:600}
+/* door */
+.door{min-height:calc(100vh - 72px);display:grid;place-items:center;padding:48px 0}
+.door .box{width:min(440px,100%);background:var(--white);border:1px solid var(--line);padding:40px;display:grid;gap:20px}
+.door h1{font-size:40px}
+.door p{color:var(--stone)}
+.door .btn{width:100%}
+.code{letter-spacing:.4em;font-size:24px;font-weight:800;text-align:center}
+/* room */
+.room{padding:56px 0 96px}
+.room h1{font-size:clamp(40px,6vw,72px);max-width:12em}
+.room .lede{margin:20px 0 48px 30px}
+@media (max-width:720px){.room .lede{margin-left:0}}
+.srch{border-top:2px solid var(--ink);padding:28px 0 40px}
+.srch header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;flex-wrap:wrap;margin-bottom:24px}
+.srch h2{font-size:30px}
+.srch .meta{font-size:14px;color:var(--stone);margin-top:6px}
+.ladder{display:flex;gap:4px;align-items:center;font-size:12px;font-weight:600;color:var(--stone)}
+.ladder span{padding:6px 10px;background:var(--wall);border-radius:var(--r)}
+.ladder span.on{background:var(--ink);color:var(--white)}
+.cands{display:grid;gap:12px}
+.cand{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:20px 24px;display:grid;grid-template-columns:1.6fr 1fr auto;gap:24px;align-items:center}
+@media (max-width:720px){.cand{grid-template-columns:1fr}}
+.cand b{font-weight:600;font-size:18px;display:block}
+.cand .t{color:var(--stone);font-size:14px}
+.cand .stage{font-size:13px;font-weight:600}
+.cand .stage i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--yellow);margin-right:8px;vertical-align:middle;font-style:normal}
+.cand .stage.done i{background:var(--ok)}
+.cand .acts{display:flex;gap:8px;flex-wrap:wrap}
+.cand .acts .btn{min-height:40px;padding:0 14px;font-size:14px}
+.cand .fb{grid-column:1/-1;border-top:1px solid var(--line);padding-top:14px;font-size:14px;color:var(--stone)}
+.cand .fb b{font-size:14px;display:inline;color:var(--ink)}
+.detail{grid-column:1/-1;display:none;gap:16px;border-top:1px solid var(--line);padding-top:16px}
+.detail.on{display:grid}
+.detail .spec .row{padding:10px 0}
+.detail .why{max-width:36em}
+.empty{padding:40px;border:1px dashed var(--line);color:var(--stone)}
+.terms{margin-top:56px;background:var(--white);border:1px solid var(--line);padding:32px}
+.terms h3{font-size:22px;margin-bottom:16px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 18px;border-radius:var(--r);font-weight:600;font-size:14px;display:none;z-index:30}
+.toast.on{display:block}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a href="index.html" aria-label="LIVEWORK"><img src="livework-primary-all-black.png" alt="LIVE | WORK"></a>
+  <span class="who" id="who"></span>
+</div></header>
+
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* demo: what Maria at Northwind sees. The live layer swaps this for the signed in contact's company. */
+const ME = {name:'Maria Delgado', company:'Northwind Logistics', email:'maria@northwind.example', kind:'Retained', fee:'28% of first year base', billing:'One third at engagement, one third at shortlist, one third at start', guarantee:'12 months', recruiter:'Derek Germann'};
+const STAGES=['Released','Interview','Offer','Placed'];
+const SEARCHES=[
+  {title:'Director of Fleet Operations', location:'Irvine, CA', comp:'$165k to $185k', opened:'Aug 14, 2026', status:'Open', cands:[
+    {name:'Elena Vasquez', title:'Regional Operations Manager', location:'Orange County, CA', stage:1, why:'Ran a 60 truck fleet across three sites with full P&L. She is looking for a director seat and named Irvine as her preferred location. Available in 30 days.', fit:['Fleet operations, 9 years','Multi site leadership','P&L ownership','Available in 30 days'], feedback:'You advanced Elena on Aug 26. Interview set for Sep 9, 10:00 AM.', resume:'vasquez-resume.pdf'},
+  ]},
+  {title:'Warehouse Manager, Night Shift', location:'Santa Fe Springs, CA', comp:'$95k to $110k', opened:'Aug 20, 2026', status:'Open', cands:[
+    {name:'Dana Whitfield', title:'Warehouse Manager', location:'Norwalk, CA', stage:0, why:'Runs a night operation today, 40 people. Open to a lateral move for a stronger culture, which is exactly what you described.', fit:['Night shift today','40 direct reports','WMS and RF scanning','12 minute commute'], feedback:'', resume:'whitfield-resume.pdf'},
+  ]},
+];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400)}
+
+let step=0;
+function door(){
+  $('#who').textContent='';
+  $('#main').innerHTML=`<section class="door"><div class="box">
+    ${step===0?`<div class="hl"><span class="bar"></span><h1>Your room.</h1></div>
+      <p>Sign in with the work email LIVEWORK invited. We send a six digit code, no password.</p>
+      <div class="field"><label for="em">Work email</label><input id="em" type="email" placeholder="you@company.com" value="${ME.email}"></div>
+      <button class="btn" id="go">Send my code</button>`
+    :`<div class="hl"><span class="bar"></span><h1>Check your email.</h1></div>
+      <p>Enter the six digit code we sent to ${esc(ME.email)}.</p>
+      <div class="field"><label for="cd">Code</label><input id="cd" class="code" inputmode="numeric" maxlength="6" placeholder="000000"></div>
+      <button class="btn" id="go">Open my room</button>
+      <p class="small"><a href="#" id="back">Use a different email</a></p>`}
+  </div></section>`;
+  $('#go').onclick=()=>{if(step===0){step=1;door();$('#cd').focus()}else room()};
+  const b=$('#back');if(b)b.onclick=e=>{e.preventDefault();step=0;door()};
+}
+function room(){
+  $('#who').innerHTML=`<b>${esc(ME.name)}</b> · ${esc(ME.company)} &nbsp; <a href="#" id="out">Sign out</a>`;
+  $('#out').onclick=e=>{e.preventDefault();step=0;door()};
+  $('#main').innerHTML=`<section class="room"><div class="wrap">
+    <div class="hl"><span class="bar"></span><h1>${esc(ME.company)}. Two searches, two people to look at.</h1></div>
+    <p class="lede">Everyone here has been screened by ${esc(ME.recruiter)} and released to you. Open a profile, then advance, pass, or ask for a time. You get an email as each search moves.</p>
+    ${SEARCHES.map((s,si)=>`<section class="srch">
+      <header><div><h2>${esc(s.title)}</h2><p class="meta">${esc(s.location)} · ${esc(s.comp)} · opened ${s.opened}</p></div>
+      <div class="ladder">${STAGES.map((k,i)=>`<span class="${s.cands.some(c=>c.stage>=i)?'on':''}">${k}</span>`).join('')}</div></header>
+      <div class="cands">${s.cands.length?s.cands.map((c,ci)=>`<article class="cand" id="c${si}-${ci}">
+        <div><b>${esc(c.name)}</b><span class="t">${esc(c.title)} · ${esc(c.location)}</span></div>
+        <div class="stage ${c.stage>=3?'done':''}"><i></i>${STAGES[c.stage]}${c.stage===0?' to you':''}</div>
+        <div class="acts"><button class="btn ghost" data-view="${si}-${ci}">Profile</button>${c.stage<2?`<button class="btn" data-adv="${si}-${ci}">Advance</button><button class="btn ghost" data-time="${si}-${ci}">Ask for a time</button><button class="btn ghost" data-pass="${si}-${ci}">Pass</button>`:''}</div>
+        <div class="detail" id="d${si}-${ci}">
+          <p class="why">${esc(c.why)}</p>
+          <div class="spec">${c.fit.map(f=>`<div class="row"><b>Fit</b><span>${esc(f)}</span></div>`).join('')}<div class="row"><b>Resume</b><span><a href="#" data-noop>${esc(c.resume)}</a></span></div></div>
+        </div>
+        ${c.feedback?`<div class="fb"><b>Your feedback.</b> ${esc(c.feedback)}</div>`:''}
+      </article>`).join(''):`<div class="empty">Nothing released yet. You will get an email the moment there is someone to see.</div>`}</div>
+    </section>`).join('')}
+    <div class="terms"><h3>Your engagement with LIVEWORK.</h3><div class="spec">
+      <div class="row"><b>Engagement</b><span>${ME.kind} search</span></div>
+      <div class="row"><b>Fee</b><span>${ME.fee}</span></div>
+      <div class="row"><b>Billing</b><span>${ME.billing}</span></div>
+      <div class="row"><b>Guarantee</b><span>${ME.guarantee} replacement on every placement</span></div>
+      <div class="row"><b>Agreement</b><span><a href="#" data-noop>Retained search agreement, signed Aug 12, 2026</a></span></div>
+      <div class="row"><b>Your recruiter</b><span>${ME.recruiter} · <a href="mailto:hello@livework.inc">hello@livework.inc</a></span></div>
+    </div></div>
+  </div></section>`;
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const d=$('#d'+b.dataset.view);d.classList.toggle('on');b.textContent=d.classList.contains('on')?'Close':'Profile'});
+  const get=k=>{const [si,ci]=k.split('-');return SEARCHES[si].cands[ci]};
+  document.querySelectorAll('[data-adv]').forEach(b=>b.onclick=()=>{const c=get(b.dataset.adv);c.stage=Math.max(c.stage,1);c.feedback=`You advanced ${c.name.split(' ')[0]} today. ${ME.recruiter} will reach out with times.`;toast(`Advanced. ${ME.recruiter} is on it.`);room()});
+  document.querySelectorAll('[data-time]').forEach(b=>b.onclick=()=>{const c=get(b.dataset.time);c.feedback=`You asked for a time with ${c.name.split(' ')[0]}. ${ME.recruiter} will send options.`;toast('Asked. You will get times by email.');room()});
+  document.querySelectorAll('[data-pass]').forEach(b=>b.onclick=()=>{const k=b.dataset.pass;const [si,ci]=k.split('-');const c=get(k);const why=prompt(`Passing on ${c.name}. A line on why helps the next release.`,'');if(why===null)return;SEARCHES[si].cands.splice(ci,1);toast('Passed. Noted for the next release.');room()});
+  document.querySelectorAll('[data-noop]').forEach(a=>a.onclick=e=>{e.preventDefault();toast('Files open with the live layer')});
+  window.scrollTo(0,0);
+}
+door();
+</script>
+</body>
+</html>
