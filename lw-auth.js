@@ -87,13 +87,13 @@
         '<div class="hl"><span class="bar"></span><h1>The Desk.</h1></div>' +
         '<p class="lede" style="margin:18px 0 26px">' +
           (step === 0
-            ? 'Staff only. Enter your LIVEWORK address and we will email you a code.'
-            : 'We emailed a code to ' + esc(pending) + '. It is good for ten minutes.') +
+            ? 'Staff only. Enter your LIVEWORK address and we will email you a six digit code.'
+            : 'We emailed a six digit code to ' + esc(pending) + '. It is good for ten minutes.') +
         '</p>' +
         (err ? '<p class="lwerr">' + esc(err) + '</p>' : '') +
         (step === 0
           ? '<div class="field"><label for="lwem">Work email</label><input id="lwem" type="email" autocomplete="email" placeholder="you@livework.inc" value="' + esc(pending) + '"></div>'
-          : '<div class="field"><label for="lwcd">Code</label><input id="lwcd" inputmode="numeric" autocomplete="one-time-code" maxlength="9" placeholder="00000000"></div>') +
+          : '<div class="field"><label for="lwcd">Six digit code</label><input id="lwcd" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000"></div>') +
         '<div style="display:flex;gap:12px;margin-top:22px;flex-wrap:wrap">' +
           '<button class="btn" id="lwgo">' + (step === 0 ? 'Email me a code' : 'Open the desk') + '</button>' +
           (step === 1 ? '<a class="btn ghost" href="#" id="lwback">Use another address</a>' : '') +
