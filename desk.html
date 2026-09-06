@@ -154,7 +154,8 @@ const MAP = {
   task:      { title:'title', due:'due_on', done:'done', company:'company_id', candidate:'candidate_id', search:'search_id',
                staff:'owner_id', created_by:'created_by' },
   note:      { candidate:'candidate_id', search:'search_id', kind:'kind', strong:'strong_at', concerns:'concerns',
-               comp:'compensation', availability:'availability', next:'next_step', staff:'staff_id' },
+               comp:'compensation', availability:'availability', next:'next_step', staff:'staff_id',
+               scheduled:'scheduled_at', completed:'completed', completed_at:'completed_at' },
   pool:      { name:'name', note:'description', owner:'owner_id' },
   poolmem:   { pool:'pool_id', candidate:'candidate_id' },
   placement: { pipeline:'pipeline_id', start:'start_date', salary:'base_salary', fee:'fee_amount', fee_pct:'fee_pct',
@@ -390,52 +391,131 @@ function myNumbers(){
     '</div>';
 }
 
-/* ---------- Today ---------- */
-function vToday(){
-  const openS = S.searches.filter(isOpen);
-  const live = S.pipeline.filter(p => stageOf(p)!=='Placed' && stageOf(p)!=='Passed');
-  const openT = S.tasks.filter(t => !t.done);
-  const dueToday = openT.filter(t => F(t,'due_at') && new Date(F(t,'due_at')) <= new Date(new Date().setHours(23,59,59)));
-  const calls = openT.filter(t => /call/i.test(F(t,'title','body')));
-  const stale = openS.filter(s => {
-    const last = S.activity.filter(a => String(a.search_id)===String(idOf(s))).map(a=>a.created_at).sort().pop();
-    return daysBetween(last || F(s,'opened_at','created_at')) >= 7;
-  });
-  const held = S.pipeline.filter(p => stageIx(p) >= 1 && !isReleased(p) && stageOf(p)!=='Passed' && stageOf(p)!=='Placed');
-  const overdue = S.invoices.filter(i => F(i,'due_at') && new Date(F(i,'due_at')) < new Date() && String(F(i,'status')).toLowerCase()!=='paid');
-  const premier = S.candidates.filter(c => c[MAP.candidate.premier] === true);
+/* ---------- Today: the home page. every row comes from data, nothing is typed to make it appear. ---------- */
+let SCOPE = 'mine';
+function amAdmin(){ return String(F(ME || {}, 'role')).toLowerCase() === 'admin'; }
+function myScope(){
+  const me = meId(), all = SCOPE === 'all' || !me;
+  const cos = S.companies.filter(c => all || String(F(c,'owner_id')) === String(me));
+  const coIds = cos.map(c => String(idOf(c)));
+  const ses = S.searches.filter(s => all || String(F(s,'owner_id')) === String(me) || coIds.indexOf(String(s.company_id)) >= 0);
+  const seIds = ses.map(s => String(idOf(s)));
+  const pipe = S.pipeline.filter(p => seIds.indexOf(String(p.search_id)) >= 0);
+  const tasks = S.tasks.filter(t => !t.done && (all || String(F(t,'staff_id','owner_id')) === String(me) || !F(t,'staff_id','owner_id')));
+  const notes = S.interview_notes.filter(n => all || String(F(n,'staff_id')) === String(me)
+    || seIds.indexOf(String(n.search_id)) >= 0);
+  return { all, cos, coIds, ses, seIds, pipe, tasks, notes };
+}
+const noteWhen = n => F(n,'scheduled_at');
+const noteOpen = n => noteWhen(n) && F(n,'completed') !== true;
+function coOfSearch(sid){ const s = search(sid); return s ? s.company_id : null; }
+function lastTouch(coId){
+  return S.activity.filter(a => String(a.company_id) === String(coId)).map(a => F(a,'created_at','occurred_at')).filter(Boolean).sort().pop();
+}
 
-  const callRow = t => {
-    const c = t.candidate_id ? cand(t.candidate_id) : null;
-    const co = t.company_id ? company(t.company_id) : null;
-    const who = c ? F(c,'name','full_name') : co ? F(co,'name') : 'Someone';
-    const phone = c ? F(c,'phone') : (co ? (F(contactsOf(idOf(co))[0]||{},'phone')) : '');
-    return '<div class="r" style="grid-template-columns:1.4fr 1.6fr 150px 120px" data-task="' + idOf(t) + '">' +
-      '<b>' + esc(who) + '</b><span class="muted">' + esc(F(t,'title','body')) + '</span>' +
-      '<span>' + (phone ? '<a class="btn sm ghost" href="tel:' + esc(String(phone).replace(/[^0-9+]/g,'')) + '">Call ' + esc(phone) + '</a>' : '<span class="muted small">No number</span>') + '</span>' +
-      '<span><button class="btn sm ghost" data-logcall="' + (c?idOf(c):'') + '|' + (co?idOf(co):'') + '">Log it</button></span></div>';
-  };
+/* the one list. sorted by how long it has been sitting. */
+function needsYou(sc){
+  const out = [];
+  const push = (days, what, why, open, act) => out.push({ days, what, why, open, act });
+
+  sc.ses.filter(isOpen).forEach(s => {
+    const rows = sc.pipe.filter(p => String(p.search_id) === String(idOf(s)) && stageIx(p) >= 1);
+    if(rows.length) return;
+    const d = daysBetween(F(s,'opened_at','created_at'));
+    if(d < 3) return;
+    push(d, esc(F(s,'title','role')) + ' · ' + esc(cname(s.company_id)), 'Open ' + d + ' days, nobody submitted yet', 'se:' + idOf(s), '');
+  });
+
+  sc.pipe.filter(p => stageIx(p) >= 1 && stageOf(p) !== 'Placed' && stageOf(p) !== 'Passed').forEach(p => {
+    const d = daysBetween(F(p,'since','created_at'));
+    if(d < 7) return;
+    push(d, esc(pname(p.candidate_id)) + ' · ' + esc(sname(p.search_id)),
+      'Sat at ' + stageOf(p) + ' for ' + d + ' days', 'cand:' + p.candidate_id,
+      '<button class="btn sm ghost" data-mail="pipe:' + idOf(p) + '">Nudge</button>');
+  });
+
+  sc.notes.filter(noteOpen).forEach(n => {
+    const d = daysBetween(noteWhen(n));
+    if(new Date(noteWhen(n)) > new Date()) return;
+    push(d, esc(pname(n.candidate_id)) + (n.search_id ? ' · ' + esc(sname(n.search_id)) : ''),
+      'Interviewed ' + short(noteWhen(n)) + ', no notes written', 'cand:' + n.candidate_id,
+      '<button class="btn sm" data-fillnote="' + idOf(n) + '">Write it up</button>');
+  });
+
+  sc.cos.forEach(c => {
+    const openSe = sc.ses.filter(s => String(s.company_id) === String(idOf(c)) && isOpen(s)).length;
+    if(!openSe) return;
+    const last = lastTouch(idOf(c));
+    const d = last ? daysBetween(last) : 999;
+    if(d < 14) return;
+    push(d, esc(F(c,'name')), last ? 'No contact in ' + d + ' days' : 'Never contacted',
+      'co:' + idOf(c), '<button class="btn sm ghost" data-logcall="|' + idOf(c) + '">Log a call</button>');
+  });
+
+  sc.tasks.filter(t => F(t,'due_at','due_on') && new Date(F(t,'due_at','due_on')) < new Date(new Date().setHours(0,0,0,0))).forEach(t => {
+    const d = daysBetween(F(t,'due_at','due_on'));
+    push(d, esc(F(t,'title','body')), 'Task overdue by ' + d + ' days',
+      t.candidate_id ? 'cand:' + t.candidate_id : t.company_id ? 'co:' + t.company_id : '',
+      '<button class="btn sm ghost" data-done="' + idOf(t) + '">Done</button>');
+  });
+
+  return out.sort((a,b) => b.days - a.days);
+}
+
+function vToday(){
+  const sc = myScope();
+  const openS = sc.ses.filter(isOpen);
+  const live = sc.pipe.filter(p => stageOf(p) !== 'Placed' && stageOf(p) !== 'Passed');
+  const now = new Date(), weekEnd = new Date(Date.now() + 7 * 86400000);
+  const booked = sc.notes.filter(noteOpen).filter(n => new Date(noteWhen(n)) >= new Date(new Date().setHours(0,0,0,0)))
+    .sort((a,b) => new Date(noteWhen(a)) - new Date(noteWhen(b)));
+  const thisWeek = booked.filter(n => new Date(noteWhen(n)) <= weekEnd);
+  const work = needsYou(sc);
+  const openT = sc.tasks;
+
+  const when = d => { const x = new Date(d), t = new Date(new Date().setHours(0,0,0,0));
+    const day = Math.round((new Date(x).setHours(0,0,0,0) - t) / 86400000);
+    const time = x.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    return (day === 0 ? 'Today' : day === 1 ? 'Tomorrow' : x.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })) + ', ' + time; };
+
+  const scopeBar = amAdmin() ? '<div class="tools">' +
+    '<button class="chip ' + (SCOPE === 'mine' ? 'on' : '') + '" data-scope="mine">Mine</button>' +
+    '<button class="chip ' + (SCOPE === 'all' ? 'on' : '') + '" data-scope="all">Everyone</button></div>' : '';
 
   return head('Today.',
       '<button class="btn ghost" data-new="task">Add a task</button>' +
       '<button class="btn ghost" data-new="visit">Visit note</button>' +
+      '<button class="btn ghost" data-new="interview">New interview</button>' +
       '<button class="btn" data-new="call">Log a call</button>') +
+    scopeBar +
     '<div class="stats">' +
       '<div class="stat"><b>' + openS.length + '</b><span>Open searches</span></div>' +
       '<div class="stat"><b>' + live.length + '</b><span>Candidates in play</span></div>' +
-      '<div class="stat y"><b>' + openT.length + '</b><span>Open tasks, ' + dueToday.length + ' due today</span></div>' +
-      '<div class="stat"><b>' + S.placements.filter(p => daysBetween(F(p,'start_date','created_at')) <= 90).length + '</b><span>Placements inside the guarantee</span></div>' +
+      '<div class="stat"><b>' + thisWeek.length + '</b><span>Interviews inside seven days</span></div>' +
+      '<div class="stat y"><b>' + work.length + '</b><span>Things sitting</span></div>' +
     '</div>' +
-    myNumbers() +
-    '<div class="sec"><h2>The queue.</h2><span class="muted small">' + openT.length + ' open</span></div>' +
-    table(['Task','Who','Due','Done'],
-      openT.slice(0,12).map(t => '<div class="r" style="grid-template-columns:2fr 1.2fr 120px 90px" data-task="' + idOf(t) + '">' +
-        '<b>' + esc(F(t,'title','body')) + '</b>' +
-        '<span class="muted">' + esc(t.candidate_id ? pname(t.candidate_id) : t.company_id ? cname(t.company_id) : '') + '</span>' +
-        '<span class="' + (F(t,'due_at') && new Date(F(t,'due_at')) < new Date() ? 'st overdue' : 'muted') + '">' + (short(F(t,'due_at')) || 'No date') + '</span>' +
-        '<span><button class="btn sm ghost" data-done="' + idOf(t) + '">Done</button></span></div>'),
-      '2fr 1.2fr 120px 90px') +
-    (invDue().length ? '<div class="sec"><h2>Billing.</h2><span class="muted small">' + invDue().length + ' need a send</span></div>' +
+
+    '<div class="sec"><h2>What needs you.</h2><span class="muted small">longest sitting first, nothing here was typed by hand</span></div>' +
+    table(['What','Why it is here','Sitting','Do it'],
+      work.slice(0, 15).map(w => '<div class="r" style="grid-template-columns:1.6fr 1.6fr 110px 150px"' +
+        (w.open ? ' data-' + w.open.split(':')[0] + '="' + w.open.split(':')[1] + '"' : '') + '>' +
+        '<b>' + w.what + '</b>' +
+        '<span class="muted">' + esc(w.why) + '</span>' +
+        '<span class="' + (w.days >= 14 ? 'st overdue' : 'muted') + '">' + w.days + ' days</span>' +
+        '<span>' + (w.act || '') + '</span></div>'),
+      '1.6fr 1.6fr 110px 150px') +
+
+    '<div class="sec"><h2>Interviews booked.</h2><span class="muted small">the meeting lives in Outlook, the notes live here</span></div>' +
+    table(['When','Candidate','Search','Kind','Notes'],
+      booked.slice(0, 10).map(n => '<div class="r" style="grid-template-columns:180px 1.2fr 1.4fr 130px 140px" data-cand="' + n.candidate_id + '">' +
+        '<b>' + esc(when(noteWhen(n))) + '</b>' +
+        '<span>' + esc(pname(n.candidate_id)) + '</span>' +
+        '<span class="muted">' + esc(n.search_id ? sname(n.search_id) + ' · ' + cname(coOfSearch(n.search_id)) : 'No search') + '</span>' +
+        '<span class="muted small">' + esc(String(F(n,'kind') || 'interview').replace(/_/g,' ')) + '</span>' +
+        '<span><button class="btn sm ghost" data-fillnote="' + idOf(n) + '">Write it up</button></span></div>'),
+      '180px 1.2fr 1.4fr 130px 140px') +
+
+    (amAdmin() && invDue().length ? '<div class="sec"><h2>Billing.</h2><span class="muted small">' + invDue().length + ' need a send</span></div>' +
       table(['Invoice','Company','Amount','Where it stands','Action'],
         invDue().slice(0,10).map(i => '<div class="r" style="grid-template-columns:130px 1.4fr 120px 1fr 130px">' +
           '<b>' + esc(F(i,'invoice_no','number') || 'Draft') + '</b>' +
@@ -445,22 +525,17 @@ function vToday(){
             (!F(i,'sent_at') ? 'Not sent yet' : invDays(i) > 0 ? invDays(i) + ' days past due' : invDays(i) === 0 ? 'Due today' : 'Due in ' + Math.abs(invDays(i)) + ' days') + '</span>' +
           '<span><button class="btn sm" data-send="' + idOf(i) + '" data-kind="' + sendKind(i) + '">' + sendLabel(i) + '</button></span></div>'),
         '130px 1.4fr 120px 1fr 130px') : '') +
-    '<div class="sec"><h2>Calls to make.</h2></div>' +
-    table(['Who','Why','Number','Log'], calls.slice(0,10).map(callRow), '1.4fr 1.6fr 150px 120px') +
-    '<div class="sec"><h2>Alerts.</h2></div>' +
-    '<div class="docs">' +
-      '<div class="doc"><h3>' + stale.length + ' quiet searches.</h3><p>Seven days or more with no logged activity. They go cold fast.</p><button class="btn ghost" data-v="searches">Open searches</button></div>' +
-      '<div class="doc"><h3>' + held.length + ' held back.</h3><p>Submitted internally but not released to the client room yet.</p><button class="btn ghost" data-v="pipeline">Open the pipeline</button></div>' +
-      '<div class="doc"><h3>' + overdue.length + ' invoices past due.</h3><p>Terms are net thirty from the start date.</p><button class="btn ghost" data-v="invoices">Open invoices</button></div>' +
-    '</div>' +
-    '<div class="sec"><h2>Premier bench.</h2><span class="muted small">Human flag, always with a reason</span></div>' +
-    table(['Candidate','Title','Why premier','Signal'],
-      premier.slice(0,10).map(c => '<div class="r" style="grid-template-columns:1.2fr 1.2fr 2fr 120px" data-cand="' + idOf(c) + '">' +
-        '<b class="premier">' + esc(F(c,'name','full_name')) + '</b>' +
-        '<span class="muted">' + esc(F(c,'title','headline')) + '</span>' +
-        '<span class="muted">' + esc(F(c,'premier_reason','premier_note') || 'No reason recorded') + '</span>' +
-        '<span>' + sigBar(signal(c)) + '</span></div>'),
-      '1.2fr 1.2fr 2fr 120px');
+
+    myNumbers() +
+
+    '<div class="sec"><h2>The queue.</h2><span class="muted small">' + openT.length + ' open</span></div>' +
+    table(['Task','Who','Due','Done'],
+      openT.slice(0,10).map(t => '<div class="r" style="grid-template-columns:2fr 1.2fr 120px 90px" data-task="' + idOf(t) + '">' +
+        '<b>' + esc(F(t,'title','body')) + '</b>' +
+        '<span class="muted">' + esc(t.candidate_id ? pname(t.candidate_id) : t.company_id ? cname(t.company_id) : '') + '</span>' +
+        '<span class="' + (F(t,'due_at') && new Date(F(t,'due_at')) < new Date() ? 'st overdue' : 'muted') + '">' + (short(F(t,'due_at')) || 'No date') + '</span>' +
+        '<span><button class="btn sm ghost" data-done="' + idOf(t) + '">Done</button></span></div>'),
+      '2fr 1.2fr 120px 90px');
 }
 
 /* ---------- Companies ---------- */
@@ -1270,7 +1345,7 @@ function wireMailForm(ctx){
 }
 
 /* ---------- editing: the same form, prefilled, saving with a patch ---------- */
-const EDIT_TABLE = { company:'companies', contact:'contacts', search:'searches', candidate:'candidates' };
+const EDIT_TABLE = { company:'companies', contact:'contacts', search:'searches', candidate:'candidates', note:'interview_notes' };
 function editRow(kind, id){
   const t = EDIT_TABLE[kind]; if(!t) return null;
   return byId(S[t], id) || null;
@@ -1288,6 +1363,9 @@ function prefill(kind, r){
     setv('f_min', F(r,'comp_min','comp_low')); setv('f_max', F(r,'comp_max','comp_high')); setv('f_notes', F(r,'notes')); }
   if(kind === 'candidate'){ setv('f_name', F(r,'name','full_name')); setv('f_title', F(r,'title','headline'));
     setv('f_email', F(r,'email')); setv('f_phone', F(r,'phone')); setv('f_loc', F(r,'location')); setv('f_notes', F(r,'notes','summary')); }
+  if(kind === 'note'){ setv('f_cand', r.candidate_id); setv('f_se', r.search_id); setv('f_kind', F(r,'kind'));
+    setv('f_strong', F(r,'strong_at')); setv('f_conc', F(r,'concerns')); setv('f_comp', F(r,'compensation','comp'));
+    setv('f_avail', F(r,'availability')); setv('f_next', F(r,'next_step')); }
 }
 /* one door for both. an edit patches, everything else inserts. */
 function put(table, row, ctx, msg){
@@ -1363,6 +1441,12 @@ function form(kind, ctx){
       '<div class="two"><div class="field"><label for="f_comp">Comp</label><input id="f_comp"></div>' +
       '<div class="field"><label for="f_avail">Availability</label><input id="f_avail"></div></div>' +
       '<div class="field"><label for="f_next">Next step</label><input id="f_next"></div>'],
+    interview: ['New interview.', 'The meeting itself lives in Outlook. This is the record the notes land on afterwards.',
+      '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
+      '<div class="field"><label for="f_se">Search</label><select id="f_se">' + opts(S.searches.filter(isOpen), s => F(s,'title','role') + ' \u00b7 ' + cname(s.company_id), ctx.se) + '</select></div>' +
+      '<div class="two"><div class="field"><label for="f_when">When</label><input id="f_when" type="datetime-local"></div>' +
+      '<div class="field"><label for="f_kind">Kind</label><select id="f_kind"><option value="client_interview">Client interview</option><option value="screen">Screen</option><option value="panel">Panel</option><option value="site_visit">Site visit</option><option value="reference">Reference</option><option value="other">Other</option></select></div></div>' +
+      '<div class="field"><label for="f_next">Anything to remember going in</label><input id="f_next" placeholder="Second round, meets the ops director"></div>'],
     task: ['Add a task.', '',
       '<div class="field"><label for="f_task">Task</label><input id="f_task"></div>' +
       '<div class="two"><div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
@@ -1542,11 +1626,22 @@ async function save(kind, ctx){
         subject: 'Good seeing you', html: '<p>' + esc(body) + '</p>', company_id: val('f_co'), sent_by: 'desk-visit-recap', staff_id: meId(), status: 'queued' })));
     }
   }
+  if(kind === 'interview'){
+    if(!val('f_cand')) return toast('Pick the candidate.', true);
+    if(!val('f_when')) return toast('Put a date and time on it.', true);
+    r = await tryWrite(() => insert('interview_notes', clean({ [M.note.candidate]: val('f_cand'), [M.note.search]: val('f_se'),
+      [M.note.kind]: val('f_kind') || 'client_interview', [M.note.next]: val('f_next'),
+      [M.note.scheduled]: new Date(val('f_when')).toISOString(), [M.note.completed]: false, [M.note.staff]: meId() })), 'Interview on the board.');
+    if(r) await tryWrite(() => insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: 'Interview set',
+      [M.activity.body]: 'Interview set for ' + val('f_when').replace('T', ' '),
+      [M.activity.candidate]: val('f_cand'), [M.activity.search]: val('f_se'), [M.activity.staff]: meId() })));
+  }
   if(kind === 'note'){
     if(!val('f_cand')) return toast('Pick the candidate.', true);
-    r = await tryWrite(() => insert('interview_notes', clean({ [M.note.candidate]: val('f_cand'), [M.note.search]: val('f_se'),
+    r = await put('interview_notes', clean({ [M.note.candidate]: val('f_cand'), [M.note.search]: val('f_se'),
       [M.note.kind]: val('f_kind'), [M.note.strong]: val('f_strong'), [M.note.concerns]: val('f_conc'),
-      [M.note.comp]: val('f_comp'), [M.note.availability]: val('f_avail'), [M.note.next]: val('f_next'), [M.note.staff]: meId() })), 'Note saved to the candidate.');
+      [M.note.comp]: val('f_comp'), [M.note.availability]: val('f_avail'), [M.note.next]: val('f_next'), [M.note.staff]: meId(),
+      [M.note.completed]: true, [M.note.completed_at]: new Date().toISOString() }), ctx, 'Note saved to the candidate.');
     if(r) await tryWrite(() => insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: 'Interview note', [M.activity.body]: val('f_kind') + ' interview note added',
       [M.activity.candidate]: val('f_cand'), [M.activity.search]: val('f_se'), [M.activity.staff]: meId() })));
   }
@@ -1687,6 +1782,10 @@ function common(root){
     const [c, co] = b.dataset.logcall.split('|'); form('call', { cand: c, co: co }); });
   root.querySelectorAll('[data-note]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [c, s] = b.dataset.note.split('|'); form('note', { cand: c, se: s }); });
+  root.querySelectorAll('[data-fillnote]').forEach(b => b.onclick = e => { e.stopPropagation();
+    form('note', { edit: b.dataset.fillnote }); });
+  root.querySelectorAll('[data-scope]').forEach(b => b.onclick = e => { e.stopPropagation();
+    SCOPE = b.dataset.scope; draw(); });
   root.querySelectorAll('[data-adv]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const p = byId(S.pipeline, b.dataset.adv);
     const next = STAGES[Math.min(4, stageIx(p) + 1)];
