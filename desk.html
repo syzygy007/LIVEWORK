@@ -954,7 +954,7 @@ function form(kind, ctx){
     invoice: ['Raise an invoice.', 'It saves as a draft. Send it from the Invoices screen when you are ready.',
       '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="field"><label for="f_place">Placement, if any</label><select id="f_place">' + opts(S.placements, p => pname(p.candidate_id) + ' · ' + cname(p.company_id), ctx.place) + '</select></div>' +
-      '<div class="field"><label for="f_desc">What it is for</label><input id="f_desc" placeholder="Placement fee · Elena Vasquez · Director of Fleet Operations"></div>' +
+      '<div class="field"><label for="f_desc">What it is for</label><input id="f_desc" placeholder="Pick the placement above and this fills itself"></div>' +
       '<div class="two"><div class="field"><label for="f_amt">Amount</label><input id="f_amt" inputmode="numeric"></div>' +
       '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date" value="' + plusDays(30) + '"></div></div>' +
       '<div class="field"><label for="f_po">PO number, if their AP requires one</label><input id="f_po"></div>'],
@@ -965,6 +965,37 @@ function form(kind, ctx){
   shell(F_[0], F_[1], '<div class="form">' + F_[2] + '<button class="btn" id="fsave">Save</button></div>');
   const first = $('#sheet').querySelector('input,select,textarea'); if(first) first.focus();
   $('#fsave').onclick = () => save(kind, ctx);
+  if(kind === 'invoice') wireInvoiceForm(ctx);
+}
+/* picking a placement fills the company, the amount and the description,
+   so nobody types "Placement Feed" onto a client invoice again. */
+function invoiceLine(p){
+  if(!p) return '';
+  const s = search(p.search_id) || {};
+  const role = F(s,'title','role');
+  return 'Placement fee · ' + pname(p.candidate_id) + (role ? ' · ' + role : '');
+}
+function wireInvoiceForm(ctx){
+  const pl = document.getElementById('f_place'); if(!pl) return;
+  const fill = () => {
+    const p = byId(S.placements, pl.value); if(!p) return;
+    const co = document.getElementById('f_co');
+    const coid = p.company_id || (search(p.search_id) || {}).company_id;
+    if(co && coid) co.value = coid;
+    const d = document.getElementById('f_desc'); if(d) d.value = invoiceLine(p);
+    const a = document.getElementById('f_amt');
+    if(a && !a.value){
+      const fee = num(F(p,'fee_amount','fee')) || Math.round(num(F(p,'base_salary','salary')) * (num(p.fee_pct || 20) / 100));
+      if(fee) a.value = fee;
+    }
+    const due = document.getElementById('f_due');
+    if(due && F(p,'start_date')){
+      const st = new Date(F(p,'start_date')); st.setDate(st.getDate() + 30);
+      due.value = st.toISOString().slice(0,10);
+    }
+  };
+  pl.onchange = fill;
+  if(pl.value) fill();
 }
 const today = () => new Date().toISOString().slice(0,10);
 const plusDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); };
