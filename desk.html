@@ -143,7 +143,7 @@ body{background:var(--paper)}
 /* locked to schema v2 (column dump Sep 2026) */
 const MAP = {
   company:   { name:'name', status:'status', kind:'engagement_type', city:'city', industry:'industry', notes:'notes' },
-  contact:   { company:'company_id', name:'name', email:'email', title:'title', phone:'phone', room:'room_access' },
+  contact:   { company:'company_id', name:'name', email:'email', title:'title', phone:'phone', room:'room_access', billing:'is_billing' },
   search:    { company:'company_id', title:'title', location:'location', kind:'engagement_type', status:'status',
                comp_min:'comp_low', comp_max:'comp_high', opened:'opened_at', notes:'notes', owner:'owner_id' },
   candidate: { name:'name', email:'email', phone:'phone', title:'title', location:'location',
@@ -768,8 +768,11 @@ function sheetCompany(){
     ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button></div>';
   if(T===1) body = contactsOf(idOf(c)).map(ct =>
       '<div class="toggle"><div><b>' + esc(F(ct,'name')) + '</b><small>' + esc(F(ct,'title')) + ' · ' + esc(F(ct,'email')) + (F(ct,'phone') ? ' · <a href="tel:' + esc(String(F(ct,'phone')).replace(/[^0-9+]/g,'')) + '">' + esc(F(ct,'phone')) + '</a>' : '') + '</small></div>' +
-      '<button class="sw ' + (ct[MAP.contact.room]===true?'on':'') + '" data-room="' + idOf(ct) + '" aria-label="Client room access"></button></div>').join('') +
-      '<p class="muted small">The switch is client room access. On means they can sign in at the room with a code.</p>' +
+      '<div style="display:flex;gap:16px;align-items:center">' +
+        '<span class="muted small">Room</span><button class="sw ' + (ct[MAP.contact.room]===true?'on':'') + '" data-room="' + idOf(ct) + '" aria-label="Client room access"></button>' +
+        '<span class="muted small">Billing</span><button class="sw ' + (ct[MAP.contact.billing]===true?'on':'') + '" data-bill="' + idOf(ct) + '" aria-label="Billing contact"></button>' +
+      '</div></div>').join('') +
+      '<p class="muted small">Room lets them sign in at the client room with a code. Billing sends invoices and payment reminders to them. One billing contact per company.</p>' +
       '<button class="btn" data-new="contact" data-co="' + idOf(c) + '">Add a contact</button>';
   if(T===2) body = (ss.length ? ss.map(s => '<div class="toggle"><div><b>' + esc(F(s,'title','role')) + '</b><small>' + esc(F(s,'location')) + ' · ' + (isOpen(s)?'Open':'Closed') + '</small></div><button class="btn sm ghost" data-se="' + idOf(s) + '">Open</button></div>').join('') : '<p class="muted small">No searches yet.</p>') +
       '<button class="btn" data-new="search" data-co="' + idOf(c) + '">Open a search</button>';
@@ -889,7 +892,8 @@ function form(kind, ctx){
       '<div class="field"><label for="f_title">Title</label><input id="f_title"></div></div>' +
       '<div class="two"><div class="field"><label for="f_email">Work email</label><input id="f_email" type="email"></div>' +
       '<div class="field"><label for="f_phone">Phone</label><input id="f_phone"></div></div>' +
-      '<div class="field"><label><input type="checkbox" id="f_room" style="height:auto;width:auto;margin-right:8px">Client room access</label></div>'],
+      '<div class="field"><label><input type="checkbox" id="f_room" style="height:auto;width:auto;margin-right:8px">Client room access</label></div>' +
+      '<div class="field"><label><input type="checkbox" id="f_bill" style="height:auto;width:auto;margin-right:8px">Billing contact, invoices go to this person</label></div>'],
     search: ['Open a search.', 'The job order the client agreed to.',
       '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="field"><label for="f_title">Title</label><input id="f_title" placeholder="Director of Fleet Operations"></div>' +
@@ -974,7 +978,7 @@ async function save(kind, ctx){
   if(kind === 'contact'){
     r = await tryWrite(() => insert('contacts', clean({ [M.contact.company]: val('f_co'), [M.contact.name]: val('f_name'),
       [M.contact.title]: val('f_title'), [M.contact.email]: val('f_email').toLowerCase(), [M.contact.phone]: val('f_phone'),
-      [M.contact.room]: val('f_room') })), 'Contact added.');
+      [M.contact.room]: val('f_room'), [M.contact.billing]: val('f_bill') })), 'Contact added.');
   }
   if(kind === 'search'){
     if(!val('f_co')) return toast('Pick the company.', true);
@@ -1066,6 +1070,17 @@ function wireSheet(){
     const ct = byId(S.contacts, b.dataset.room);
     const r = await tryWrite(() => patch('contacts', b.dataset.room, { [MAP.contact.room]: !(ct[MAP.contact.room] === true) }),
       ct[MAP.contact.room] === true ? 'Room access off.' : 'Room access on.');
+    if(r){ await loadAll(); paintSheet(); }
+  });
+  sh.querySelectorAll('[data-bill]').forEach(b => b.onclick = async () => {
+    const ct = byId(S.contacts, b.dataset.bill); if(!ct) return;
+    const on = !(ct[MAP.contact.billing] === true);
+    if(on && !F(ct,'email')) return toast('That contact needs a work email first.', true);
+    const others = contactsOf(ct.company_id).filter(x => String(idOf(x)) !== String(idOf(ct)) && x[MAP.contact.billing] === true);
+    const r = await tryWrite(async () => {
+      if(on) for(const o of others) await patch('contacts', idOf(o), { [MAP.contact.billing]: false });
+      return patch('contacts', idOf(ct), { [MAP.contact.billing]: on });
+    }, on ? 'Invoices go to ' + F(ct,'name') + '.' : 'Billing contact cleared.');
     if(r){ await loadAll(); paintSheet(); }
   });
   sh.querySelectorAll('[data-prem]').forEach(b => b.onclick = async () => {
