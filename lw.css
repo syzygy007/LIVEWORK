@@ -69,3 +69,19 @@ img{display:block;max-width:100%}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink)}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ============================================================
+   App layer, added with the web app build (Sep 2026).
+   Offline bar and the Add to Home Screen chip. Both float above
+   everything and sit clear of the phone's home indicator.
+   ============================================================ */
+.lw-bar{position:fixed;left:0;right:0;top:0;z-index:60;background:var(--warn);color:#fff;
+  font-weight:600;font-size:14px;text-align:center;padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
+.lw-install{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));
+  z-index:60;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
+  background:var(--ink);color:#fff;border-radius:var(--r);padding:14px 16px;
+  width:min(520px,calc(100% - 32px));font-size:14px;line-height:1.35;box-shadow:0 18px 40px rgba(0,0,0,.28)}
+.lw-install .go{height:38px;padding:0 16px;border:0;border-radius:var(--r);background:var(--yellow);color:var(--ink);font-weight:600;cursor:pointer}
+.lw-install .x{height:38px;padding:0 6px;border:0;background:transparent;color:#BDB9B1;font-weight:600;font-size:13px;cursor:pointer}
+@media (max-width:900px){ .lw-install{bottom:calc(78px + env(safe-area-inset-bottom))} }
+@media (min-width:901px){ .lw-install{left:auto;right:24px;transform:none;width:auto;max-width:440px} }

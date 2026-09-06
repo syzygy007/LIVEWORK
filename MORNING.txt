@@ -1,0 +1,12 @@
+LIVEWORK web app. One press.
+
+DRAG the 12 files in this folder to the repo root (syzygy007/LIVEWORK).
+Overwrite when asked. No SQL, no edge functions this time.
+
+Then on your phone:
+  livework.inc/desk.html  ->  Share  ->  Add to Home Screen
+  livework.inc/room.html  ->  same, that one installs as Room
+
+New files:  sw.js  lw-app.js  offline.html  desk.webmanifest  room.webmanifest
+            icon-192.png  icon-512.png  icon-maskable-512.png
+Replaced:   desk.html  room.html  lw.css  apple-touch-icon.png

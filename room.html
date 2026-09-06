@@ -2,17 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Your room. LIVEWORK</title>
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="room.webmanifest">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="lw.css">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Room">
+<link rel="stylesheet" href="lw.css?v=2">
 <script src="lw-config.js?v=3"></script>
+<script src="lw-app.js?v=1" defer></script>
 <style>
 .wrap{width:min(1040px,100% - 96px);margin:0 auto}
 @media (max-width:720px){.wrap{width:calc(100% - 40px)}}
-.nav{border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:5}
+.nav{border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:5;padding-top:env(safe-area-inset-top)}
+body{padding-bottom:env(safe-area-inset-bottom)}
 .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
 .nav img{height:20px}
 .nav .who{font-size:14px;color:var(--stone)}

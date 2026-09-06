@@ -2,14 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>The Desk. LIVEWORK</title>
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="desk.webmanifest">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="lw.css">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Desk">
+<link rel="stylesheet" href="lw.css?v=2">
 <script src="lw-config.js?v=3"></script>
 <script src="lw-auth.js?v=6"></script>
+<script src="lw-app.js?v=1" defer></script>
 <style>
 body{background:var(--paper)}
 .app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
@@ -115,18 +122,87 @@ body{background:var(--paper)}
 .lwdoor h1{font-size:48px}
 .lwerr{color:var(--warn);font-weight:600;font-size:14px;margin-bottom:14px}
 .load{padding:80px 0;color:var(--stone)}
-@media (max-width:900px){.app{grid-template-columns:1fr}.rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:16px}.rail nav{display:flex;flex-wrap:wrap}.rail .me{display:none}.main{padding:24px 20px 80px}.stats{grid-template-columns:1fr 1fr}.docs{grid-template-columns:1fr}.top h1{font-size:34px}.form .two{grid-template-columns:1fr}.barrow{grid-template-columns:110px 1fr 44px}}
+
+/* ------------------------------------------------------------
+   Phone shell. Black bar on top, five tabs on the bottom, the
+   full rail as a drawer behind More. Everything clears the
+   notch and the home indicator so it reads as an app, not a
+   page squeezed onto a phone.
+   ------------------------------------------------------------ */
+.topbar,.tabbar,.scrim{display:none}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .topbar{display:flex;position:fixed;top:0;left:0;right:0;z-index:22;align-items:center;justify-content:space-between;
+    gap:12px;background:var(--ink);color:var(--white);height:calc(54px + env(safe-area-inset-top));
+    padding:env(safe-area-inset-top) 16px 0}
+  .topbar img{height:15px}
+  .topbar b{font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .topbar button{height:34px;padding:0 12px;border:1px solid #2A2A2A;border-radius:var(--r);
+    background:transparent;color:#BDB9B1;font-weight:600;font-size:13px;cursor:pointer}
+  .rail{position:fixed;top:0;bottom:0;left:0;width:min(286px,84vw);height:100dvh;z-index:24;
+    transform:translateX(-100%);transition:transform .22s ease;
+    padding:calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom))}
+  .rail.on{transform:none}
+  .rail nav{display:grid}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:23;opacity:0;
+    pointer-events:none;transition:opacity .2s}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .main{padding:calc(72px + env(safe-area-inset-top)) 18px calc(104px + env(safe-area-inset-bottom))}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:22;
+    background:var(--ink);border-top:1px solid #1E1E1E;padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar button{position:relative;height:58px;border:0;background:transparent;color:#8A867F;
+    font-weight:600;font-size:11px;letter-spacing:.01em;cursor:pointer;padding:0 2px}
+  .tabbar button .d{display:block;width:18px;height:3px;margin:0 auto 8px;background:transparent;border-radius:2px}
+  .tabbar button.on{color:var(--yellow)}
+  .tabbar button.on .d{background:var(--yellow)}
+  .tabbar button .n{position:absolute;top:8px;right:calc(50% - 26px);min-width:17px;height:17px;padding:0 4px;
+    border-radius:9px;background:var(--yellow);color:var(--ink);font-size:10px;line-height:17px}
+  .sheet{width:100%;padding:calc(20px + env(safe-area-inset-top)) 20px calc(96px + env(safe-area-inset-bottom))}
+  .sheet .x{position:sticky;top:0;float:right;margin:-4px -4px 0 12px;width:auto;padding:0 14px;height:38px;font-size:13px;font-weight:600;z-index:2}
+  .toast{bottom:calc(76px + env(safe-area-inset-bottom))}
+  .stats{grid-template-columns:1fr 1fr}
+  .docs{grid-template-columns:1fr}
+  .top{flex-direction:column;align-items:flex-start;gap:14px}
+  .top h1{font-size:34px}
+  .form .two{grid-template-columns:1fr}
+  .barrow{grid-template-columns:110px 1fr 44px}
+  .board{grid-auto-columns:minmax(78vw,1fr);scroll-snap-type:x mandatory}
+  .col{scroll-snap-align:start}
+  .rail img{height:16px}
+  .sec{flex-direction:column;align-items:flex-start;gap:6px}
+
+  /* a table row becomes a card: the name on its own line, the rest
+     in two columns, each carrying its column heading */
+  .tbl .h{display:none}
+  .tbl .r{grid-template-columns:1fr 1fr!important;gap:12px 14px;padding:16px 18px;align-items:start}
+  .tbl .r > *{min-width:0}
+  .tbl .r > *:empty{display:none}
+  .tbl .r > *:first-child{grid-column:1 / -1;font-size:17px;font-weight:600}
+  .tbl .r > *:not(:first-child)::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;
+    color:var(--stone);letter-spacing:.02em;margin-bottom:3px}
+  .tbl .r .btn{width:100%}
+}
+@media (max-width:900px) and (display-mode:standalone){
+  .main{padding-top:calc(76px + env(safe-area-inset-top))}
+}
 </style>
 </head>
 <body>
 <div id="gate"></div>
 <div class="app" id="app" style="display:none">
-  <aside class="rail">
+  <header class="topbar" id="topbar">
+    <img src="livework-primary-all-yellow.png" alt="LIVE | WORK">
+    <b id="tbTitle">Today</b>
+    <button type="button" id="tbMenu">Menu</button>
+  </header>
+  <div class="scrim" id="scrim"></div>
+  <aside class="rail" id="rail">
     <img src="livework-primary-all-yellow.png" alt="LIVE | WORK">
     <nav id="nav"></nav>
     <div class="me"><b id="meName">Loading</b><span id="meRole"></span><br><a href="#" id="signout">Sign out</a></div>
   </aside>
   <main class="main" id="main"><div class="load">Loading the desk.</div></main>
+  <nav class="tabbar" id="tabbar"></nav>
 </div>
 <div class="veil" id="veil"></div>
 <aside class="sheet" id="sheet"></aside>
@@ -335,8 +411,28 @@ function drawNav(){
     '<button data-v="' + k + '" class="' + (VIEW===k?'on':'') + '">' + l +
     '<span class="n">' + (counts(k)||'') + '</span></button>').join('');
   document.querySelectorAll('#nav button').forEach(b => b.onclick = () => go(b.dataset.v));
+  drawTabs();
 }
-function go(v){ VIEW = v; closeSheet(); drawNav(); draw(); window.scrollTo(0,0); }
+
+/* phone shell: five tabs, the rest lives behind More */
+const TABS = [['today','Today'],['companies','Companies'],['candidates','Candidates'],['pipeline','Pipeline']];
+function drawTabs(){
+  const bar = $('#tabbar'); if(!bar) return;
+  const onMore = !TABS.some(([k]) => k === VIEW);
+  bar.innerHTML = TABS.map(([k,l]) => {
+    const n = counts(k);
+    return '<button data-v="' + k + '" class="' + (VIEW===k?'on':'') + '"><span class="d"></span>' + l +
+      (n ? '<span class="n">' + (n > 99 ? '99+' : n) + '</span>' : '') + '</button>';
+  }).join('') + '<button id="tbMore" class="' + (onMore?'on':'') + '"><span class="d"></span>More</button>';
+  bar.querySelectorAll('button[data-v]').forEach(b => b.onclick = () => go(b.dataset.v));
+  $('#tbMore').onclick = openDrawer;
+  const t = $('#tbTitle'); if(t) t.textContent = (NAV.find(([k]) => k === VIEW) || [,'Desk'])[1];
+}
+function openDrawer(){ $('#rail').classList.add('on'); $('#scrim').classList.add('on'); }
+function closeDrawer(){ $('#rail').classList.remove('on'); $('#scrim').classList.remove('on'); }
+
+function go(v){ VIEW = v; closeSheet(); closeDrawer(); drawNav(); draw(); window.scrollTo(0,0);
+  try{ history.replaceState(null,'','#'+v); }catch(e){} }
 function head(title, acts){
   return '<div class="top"><h1>' + title + '</h1><div class="acts">' + (acts||'') + '</div></div>';
 }
@@ -353,6 +449,20 @@ function draw(){
     invoices: vInvoices, mail: vMail, reports: vReports, settings: vSettings
   }[VIEW])();
   wire();
+  labelCells(m);
+}
+
+/* On a phone a wide table row becomes a stacked card, so every cell
+   carries the column heading with it. Read once from the header row,
+   written onto the cells, painted by CSS. */
+function labelCells(root){
+  (root || document).querySelectorAll('.tbl').forEach(t => {
+    const head = t.querySelector('.r.h'); if(!head) return;
+    const cols = [...head.children].map(c => c.textContent.trim());
+    t.querySelectorAll('.r:not(.h)').forEach(r => {
+      [...r.children].forEach((c,i) => { if(cols[i]) c.setAttribute('data-l', cols[i]); });
+    });
+  });
 }
 
 /* ---------- My numbers: activity first, revenue last. thirty day window. ---------- */
@@ -1132,6 +1242,7 @@ function shell(title, sub, body){
   $('#sheet').classList.add('on'); $('#veil').classList.add('on');
   $('#sx').onclick = closeSheet;
   wireSheet();
+  labelCells($('#sheet'));
 }
 function tabs(names){
   return '<div class="tabs">' + names.map((n,i) => '<button data-tab="' + i + '" class="' + (SHEET.tab===i?'on':'') + '">' + n + '</button>').join('') + '</div>';
@@ -1909,6 +2020,10 @@ LWAuth.gate(document.getElementById('gate'), async function(staff){
   document.getElementById('meName').textContent = F(staff,'name','email');
   document.getElementById('meRole').textContent = 'The Desk · ' + (F(staff,'role') || 'staff');
   document.getElementById('signout').onclick = e => { e.preventDefault(); LWAuth.signOut(); };
+  $('#tbMenu').onclick = openDrawer;
+  $('#scrim').onclick = closeDrawer;
+  const jump = (location.hash || '').replace('#','');
+  if(NAV.some(([k]) => k === jump)) VIEW = jump;
   try{ await loadAll(); }catch(e){ toast('Could not load. ' + e.message, true); }
   try{ intakeRestore(); }catch(e){ console.warn('tray', e.message); }
   drawNav(); draw();

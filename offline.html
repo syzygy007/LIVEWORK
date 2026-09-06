@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>No signal. LIVEWORK</title>
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="lw.css?v=2">
+<style>
+body{display:grid;place-items:center;min-height:100dvh;padding:32px}
+.card{width:min(520px,100%);text-align:left}
+.bar{width:64px;height:8px;background:var(--yellow);margin-bottom:28px}
+h1{font-size:clamp(44px,12vw,84px);letter-spacing:-.03em;margin-bottom:18px}
+p{color:var(--stone);font-size:17px;max-width:38ch}
+button{margin-top:28px;height:52px;padding:0 26px;border:0;border-radius:var(--r);background:var(--ink);color:#fff;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="bar"></div>
+  <h1>No signal.</h1>
+  <p>The desk needs a connection to read and to save. Nothing was lost. Try again when you are back on.</p>
+  <button onclick="location.reload()">Try again</button>
+</div>
+</body>
+</html>
