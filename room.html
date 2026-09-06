@@ -79,10 +79,20 @@ async function fn(name, body){
   const r = await fetch(`${LW.url}/functions/v1/${name}`, {method:'POST', headers:{'content-type':'application/json', apikey:LW.anon, Authorization:'Bearer '+LW.anon}, body:JSON.stringify(body)});
   return r.json().catch(()=>({ok:false}));
 }
+let TOK='';
 async function pull(tok){
   if(!LIVE||!tok) return false;
+  TOK=tok;
   const d = await fn('room-data',{token:tok});
   if(!d||!d.ok) return false;
+  ME = {...ME, ...(d.contact||{}), ...(d.terms||{})};
+  SEARCHES = (d.searches||[]).map(s=>({...s, cands:(s.cands||[]).map(c=>({...c, fit:c.fit||[]}))}));
+  return true;
+}
+async function act(action, c, note){
+  if(!LIVE) return true;
+  const d = await fn('room-data',{token:TOK, action, pipeline_id:c.pipeline_id, note:note||''});
+  if(!d||!d.ok){toast('That did not save. Try again.');return false}
   ME = {...ME, ...(d.contact||{}), ...(d.terms||{})};
   SEARCHES = (d.searches||[]).map(s=>({...s, cands:(s.cands||[]).map(c=>({...c, fit:c.fit||[]}))}));
   return true;
@@ -157,7 +167,7 @@ function room(){
         <div class="acts"><button class="btn ghost" data-view="${si}-${ci}">Profile</button>${c.stage<2?`<button class="btn" data-adv="${si}-${ci}">Advance</button><button class="btn ghost" data-time="${si}-${ci}">Ask for a time</button><button class="btn ghost" data-pass="${si}-${ci}">Pass</button>`:''}</div>
         <div class="detail" id="d${si}-${ci}">
           <p class="why">${esc(c.why)}</p>
-          <div class="spec">${c.fit.map(f=>`<div class="row"><b>Fit</b><span>${esc(f)}</span></div>`).join('')}<div class="row"><b>Resume</b><span><a href="#" data-noop>${esc(c.resume)}</a></span></div></div>
+          <div class="spec">${c.fit.map(f=>`<div class="row"><b>Fit</b><span>${esc(f)}</span></div>`).join('')}<div class="row"><b>Resume</b><span>${c.resume_url?`<a href="${esc(c.resume_url)}" target="_blank" rel="noopener">${esc(c.resume)}</a>`:`<a href="#" data-noop>${esc(c.resume)}</a>`}</span></div></div>
         </div>
         ${c.feedback?`<div class="fb"><b>Your feedback.</b> ${esc(c.feedback)}</div>`:''}
       </article>`).join(''):`<div class="empty">Nothing released yet. You will get an email the moment there is someone to see.</div>`}</div>
@@ -167,16 +177,16 @@ function room(){
       <div class="row"><b>Fee</b><span>${ME.fee}</span></div>
       <div class="row"><b>Billing</b><span>${ME.billing}</span></div>
       <div class="row"><b>Guarantee</b><span>${ME.guarantee} replacement on every placement</span></div>
-      <div class="row"><b>Agreement</b><span><a href="#" data-noop>Retained search agreement, signed Aug 12, 2026</a></span></div>
+      ${LIVE?`<div class="row"><b>Agreement</b><span><a href="engagement.html" target="_blank">Client engagement agreement</a></span></div>`:`<div class="row"><b>Agreement</b><span><a href="#" data-noop>Retained search agreement, signed Aug 12, 2026</a></span></div>`}
       <div class="row"><b>Your recruiter</b><span>${ME.recruiter} · <a href="mailto:hello@livework.inc">hello@livework.inc</a></span></div>
     </div></div>`:`<div class="terms"><h3>Your engagement with LIVEWORK.</h3><div class="spec"><div class="row"><b>Your recruiter</b><span>${ME.recruiter} · <a href="mailto:hello@livework.inc">hello@livework.inc</a></span></div></div></div>`}
   </div></section>`;
   document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const d=$('#d'+b.dataset.view);d.classList.toggle('on');b.textContent=d.classList.contains('on')?'Close':'Profile'});
   const get=k=>{const [si,ci]=k.split('-');return SEARCHES[si].cands[ci]};
-  document.querySelectorAll('[data-adv]').forEach(b=>b.onclick=()=>{const c=get(b.dataset.adv);c.stage=Math.max(c.stage,1);c.feedback=`You advanced ${c.name.split(' ')[0]} today. ${ME.recruiter} will reach out with times.`;toast(`Advanced. ${ME.recruiter} is on it.`);room()});
-  document.querySelectorAll('[data-time]').forEach(b=>b.onclick=()=>{const c=get(b.dataset.time);c.feedback=`You asked for a time with ${c.name.split(' ')[0]}. ${ME.recruiter} will send options.`;toast('Asked. You will get times by email.');room()});
-  document.querySelectorAll('[data-pass]').forEach(b=>b.onclick=()=>{const k=b.dataset.pass;const [si,ci]=k.split('-');const c=get(k);const why=prompt(`Passing on ${c.name}. A line on why helps the next release.`,'');if(why===null)return;SEARCHES[si].cands.splice(ci,1);toast('Passed. Noted for the next release.');room()});
-  document.querySelectorAll('[data-noop]').forEach(a=>a.onclick=e=>{e.preventDefault();toast('Files open with the live layer')});
+  document.querySelectorAll('[data-adv]').forEach(b=>b.onclick=async()=>{const c=get(b.dataset.adv);b.disabled=true;if(!await act('advance',c))return room();if(!LIVE){c.stage=Math.max(c.stage,1);c.feedback=`You advanced ${c.name.split(' ')[0]} today. ${ME.recruiter} will reach out with times.`}toast(`Advanced. ${ME.recruiter} is on it.`);room()});
+  document.querySelectorAll('[data-time]').forEach(b=>b.onclick=async()=>{const c=get(b.dataset.time);b.disabled=true;if(!await act('time',c))return room();if(!LIVE){c.feedback=`You asked for a time with ${c.name.split(' ')[0]}. ${ME.recruiter} will send options.`}toast('Asked. You will get times by email.');room()});
+  document.querySelectorAll('[data-pass]').forEach(b=>b.onclick=async()=>{const k=b.dataset.pass;const [si,ci]=k.split('-');const c=get(k);const why=prompt(`Passing on ${c.name}. A line on why helps the next release.`,'');if(why===null)return;b.disabled=true;if(!await act('pass',c,why))return room();if(!LIVE){SEARCHES[si].cands.splice(ci,1)}toast('Passed. Noted for the next release.');room()});
+  document.querySelectorAll('[data-noop]').forEach(a=>a.onclick=e=>{e.preventDefault();toast(LIVE?'Ask your recruiter for the file':'Files open with the live layer')});
   window.scrollTo(0,0);
 }
 const S0=LIVE?loadSession():null;
