@@ -398,6 +398,16 @@ function vToday(){
         '<span class="' + (F(t,'due_at') && new Date(F(t,'due_at')) < new Date() ? 'st overdue' : 'muted') + '">' + (short(F(t,'due_at')) || 'No date') + '</span>' +
         '<span><button class="btn sm ghost" data-done="' + idOf(t) + '">Done</button></span></div>'),
       '2fr 1.2fr 120px 90px') +
+    (invDue().length ? '<div class="sec"><h2>Billing.</h2><span class="muted small">' + invDue().length + ' need a send</span></div>' +
+      table(['Invoice','Company','Amount','Where it stands','Action'],
+        invDue().slice(0,10).map(i => '<div class="r" style="grid-template-columns:130px 1.4fr 120px 1fr 130px">' +
+          '<b>' + esc(F(i,'invoice_no','number') || 'Draft') + '</b>' +
+          '<span class="muted">' + esc(cname(i.company_id)) + '</span>' +
+          '<span>' + money(F(i,'amount')) + '</span>' +
+          '<span class="' + (invDays(i) > 0 ? 'st overdue' : 'muted small') + '">' +
+            (!F(i,'sent_at') ? 'Not sent yet' : invDays(i) > 0 ? invDays(i) + ' days past due' : invDays(i) === 0 ? 'Due today' : 'Due in ' + Math.abs(invDays(i)) + ' days') + '</span>' +
+          '<span><button class="btn sm" data-send="' + idOf(i) + '" data-kind="' + sendKind(i) + '">' + sendLabel(i) + '</button></span></div>'),
+        '130px 1.4fr 120px 1fr 130px') : '') +
     '<div class="sec"><h2>Calls to make.</h2></div>' +
     table(['Who','Why','Number','Log'], calls.slice(0,10).map(callRow), '1.4fr 1.6fr 150px 120px') +
     '<div class="sec"><h2>Alerts.</h2></div>' +
@@ -563,6 +573,37 @@ function vPlacements(){
 }
 
 /* ---------- Invoices ---------- */
+/* the ladder. days is negative before the due date, positive after. */
+function invDays(i){ const d = F(i,'due_at','due_on'); if(!d) return null;
+  return Math.round((Date.now() - new Date(d).getTime()) / 86400000); }
+function sendKind(i){
+  if(!F(i,'sent_at')) return 'send';
+  const d = invDays(i);
+  if(d === null) return 'courtesy';
+  if(d >= 30) return 'final';
+  if(d >= 1) return 'past';
+  if(d === 0) return 'due';
+  return 'courtesy';
+}
+function sendLabel(i){
+  const k = sendKind(i);
+  return k === 'send' ? 'Send' : k === 'final' ? 'Final notice' : k === 'past' ? 'Chase' : 'Remind';
+}
+/* what the desk thinks needs doing today, invoice side */
+function invDue(){
+  return S.invoices.filter(i => {
+    if(String(F(i,'status')).toLowerCase() === 'paid') return false;
+    if(!F(i,'sent_at')) return true;
+    const d = invDays(i); if(d === null) return false;
+    const stage = num(F(i,'reminder_stage'));
+    if(d >= 30) return stage < 4;
+    if(d >= 15) return stage < 3;
+    if(d >= 7)  return stage < 2;
+    if(d >= 0)  return stage < 1;
+    return d >= -7 && stage < 1;
+  });
+}
+
 function vInvoices(){
   const age = i => {
     if(String(F(i,'status')).toLowerCase() === 'paid') return 'Paid';
@@ -578,15 +619,20 @@ function vInvoices(){
       '<div class="stat"><b>' + out.filter(i => F(i,'due_at') && new Date(F(i,'due_at')) < new Date()).length + '</b><span>Past due</span></div>' +
       '<div class="stat"><b>20%</b><span>Placement fee, net thirty</span></div>' +
     '</div>' +
-    table(['Invoice','Company','Amount','Aging','Status','PDF'],
-      S.invoices.map(i => '<div class="r" style="grid-template-columns:130px 1.4fr 130px 1fr 120px 140px" data-inv="' + idOf(i) + '">' +
+    table(['Invoice','Company','Amount','Aging','Status','Billing'],
+      S.invoices.map(i => '<div class="r" style="grid-template-columns:130px 1.4fr 130px 1fr 120px 210px" data-inv="' + idOf(i) + '">' +
         '<b>' + esc(F(i,'invoice_no','number') || 'Draft') + '</b>' +
         '<span class="muted">' + esc(cname(i.company_id)) + '</span>' +
         '<span>' + money(F(i,'amount')) + '</span>' +
         '<span class="muted small">' + age(i) + '</span>' +
         '<span class="st ' + esc(String(F(i,'status')||'').toLowerCase()) + '">' + esc(F(i,'status') || 'Draft') + '</span>' +
-        '<span><button class="btn sm ghost" data-pdf="' + idOf(i) + '">Download PDF</button></span></div>'),
-      '130px 1.4fr 130px 1fr 120px 140px') +
+        '<span style="display:flex;gap:6px;flex-wrap:wrap">' +
+          '<button class="btn sm ghost" data-pdf="' + idOf(i) + '">PDF</button>' +
+          (String(F(i,'status')).toLowerCase() === 'paid' ? '' :
+            '<button class="btn sm ghost" data-send="' + idOf(i) + '" data-kind="' + sendKind(i) + '">' + sendLabel(i) + '</button>' +
+            '<button class="btn sm ghost" data-paid="' + idOf(i) + '">Paid</button>') +
+        '</span></div>'),
+      '130px 1.4fr 130px 1fr 120px 210px') +
     '<p class="muted small" style="margin-top:16px">Invoices are issued by GERMANN INC dba LIVEWORK. Numbering runs from 1001.</p>';
 }
 
@@ -1092,6 +1138,26 @@ function wire(){
   m.querySelectorAll('[data-inv]').forEach(r => r.onclick = e => {
     if(e.target.closest('button')) return;
     const i = byId(S.invoices, r.dataset.inv); if(i) openSheet('company', i.company_id);
+  });
+  m.querySelectorAll('[data-send]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const i = byId(S.invoices, b.dataset.send); if(!i) return;
+    const kind = b.dataset.kind, co = cname(i.company_id);
+    const what = kind === 'send' ? 'Send invoice ' + (F(i,'invoice_no','number')||'') + ' to the billing contact at ' + co + '?'
+                                 : 'Send a payment reminder to ' + co + '?';
+    if(!confirm(what + '\n\nThe PDF goes with it and the send is logged.')) return;
+    const lbl = b.textContent; b.disabled = true; b.textContent = 'Sending';
+    try{
+      const j = await fnCall('invoice-mail', { invoice_id: idOf(i), kind });
+      toast('Sent to ' + j.to + '.');
+      await loadAll(); drawNav(); draw();
+    }catch(err){ toast('Not sent. ' + err.message, true); console.error(err);
+      b.disabled = false; b.textContent = lbl; }
+  });
+  m.querySelectorAll('[data-paid]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const i = byId(S.invoices, b.dataset.paid); if(!i) return;
+    if(!confirm('Mark ' + (F(i,'invoice_no','number')||'this invoice') + ' paid? Reminders stop.')) return;
+    const r = await tryWrite(() => patch('invoices', idOf(i), { status:'paid', paid_at: today() }), 'Marked paid.');
+    if(r){ await loadAll(); drawNav(); draw(); }
   });
   m.querySelectorAll('[data-pdf]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const lbl = b.textContent; b.disabled = true; b.textContent = 'Building';
