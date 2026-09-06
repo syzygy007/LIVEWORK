@@ -242,7 +242,7 @@ async function tryWrite(fn, okMsg){
 const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_tags:[], candidates:[],
   candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
   automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[],
-  pools:[], pool_members:[] };
+  pools:[], pool_members:[], intake_queue:[] };
 let ME = null;
 
 async function loadAll(){
@@ -572,74 +572,213 @@ function vPlacements(){
       }), '1.3fr 1.3fr 130px 120px 120px 1fr');
 }
 
-/* ---------- Intake: drop up to ten resumes, review, tag, save all ---------- */
+/* ---------- Intake: drop up to a hundred resumes, one queue, dedupe, batch stamp ---------- */
 const INTAKE = [];
+const INTAKE_CAP = 100;
 const INDUSTRIES = ['Electrical','Construction','Finance','IT','Sales','Operations','Engineering','Logistics','Manufacturing','HR','Marketing','Legal','Healthcare','Other'];
+const ROLETYPES = ['Outside Sales','Inside Sales','Estimating','Project Management','Operations','Engineering','Field and Trades','Warehouse','Accounting and Finance','Administrative','IT','Executive','Other'];
+const SOURCES = ['LinkedIn','Indeed','Referral','Sourced','Direct apply','Career site','Other'];
+let BATCH = { id: null, company_id:'', search_id:'', source:'', role_type:'', campaign:'' };
+function batchId(){ if(!BATCH.id) BATCH.id = uuid(); return BATCH.id; }
+function uuid(){ return (crypto.randomUUID ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0;
+    return (c === 'x' ? r : (r & 3 | 8)).toString(16); })); }
 function industryTags(){ return S.tags.filter(t => String(F(t,'kind')).toLowerCase() === 'industry').map(t => F(t,'name','label')).filter(Boolean); }
+const digits = v => String(v || '').replace(/\D+/g, '');
+const norm = v => String(v || '').trim().toLowerCase().replace(/\s+/g, ' ');
+async function hashFile(blob){
+  try{
+    const buf = await blob.arrayBuffer();
+    const h = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return ''; }
+}
+/* the stamp travels with the row so a reloaded tray remembers where the batch came from */
+function stampRow(){ return clean({ batch_id: batchId(), company_id: BATCH.company_id || undefined,
+  search_id: BATCH.search_id || undefined, source: BATCH.source || undefined,
+  role_type: BATCH.role_type || undefined, campaign: BATCH.campaign || undefined }); }
+async function queueWrite(x, row){
+  try{ if(x.qid) await patch('intake_queue', x.qid, row); }catch(e){ console.warn('queue', e.message); }
+}
+async function stampAll(){
+  const row = stampRow();
+  for(const x of INTAKE){ if(x.qid && x.status !== 'saved') await queueWrite(x, row); }
+}
+
 function vIntake(){
   const inds = industryTags().length ? industryTags() : INDUSTRIES;
   const ready = INTAKE.filter(x => x.status === 'ready').length;
+  const held = INTAKE.filter(x => x.status === 'held').length;
+  const busy = INTAKE.some(x => x.status === 'reading' || x.status === 'uploading');
+  const done = INTAKE.filter(x => x.status === 'saved').length;
   const cards = INTAKE.map((x, i) => {
     const f = x.fields || {};
-    const st = x.status === 'held' ? '<span class="muted small">In the tray</span>'
+    const st = x.status === 'uploading' ? '<span class="muted small">Uploading</span>'
+      : x.status === 'held' ? '<span class="muted small">In the tray</span>'
       : x.status === 'reading' ? '<span class="muted small">Reading now</span>'
+      : x.status === 'skipped' ? '<span class="st draft">' + esc(x.note || 'Skipped') + '</span>'
       : x.status === 'error' ? '<span class="st overdue">' + esc(x.error) + '</span> <button class="btn sm ghost" data-iretry="' + i + '">Read again</button>'
       : x.status === 'saved' ? '<span class="st paid">Saved · ' + esc(x.ref || '') + '</span>'
-      : x.existing ? '<span class="st sent">Already on file, will update</span>'
+      : x.existing ? '<span class="st sent">Already on file, blanks get filled</span>'
+      : x.maybe ? '<span class="st draft">Possible match: ' + esc(pname(idOf(x.maybe))) + '</span>'
       : x.source === 'rough' ? '<span class="st draft">Rough read, check every field</span>'
       : '<span class="muted small">Read by the model, check and tag</span>';
-    const inp = (k, label, ph) => '<div class="field"><label>' + label + '</label><input data-ik="' + k + '" data-ii="' + i + '" value="' + esc(f[k] || '') + '" placeholder="' + (ph||'') + '"' + (x.status === 'saved' ? ' disabled' : '') + '></div>';
+    if(x.status === 'skipped'){
+      return '<div class="toggle" style="display:block;padding:14px" data-card="' + i + '">' +
+        '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center">' +
+        '<div><b>' + esc(x.file || 'Resume') + '</b></div>' +
+        '<div style="display:flex;gap:10px;align-items:center">' + st +
+        '<button class="btn sm ghost" data-irm="' + i + '">Remove</button></div></div></div>';
+    }
+    const dis = x.status === 'saved' ? ' disabled' : '';
+    const inp = (k, label, ph) => '<div class="field"><label>' + label + '</label><input data-ik="' + k + '" data-ii="' + i + '" value="' + esc(f[k] || '') + '" placeholder="' + (ph||'') + '"' + dis + '></div>';
     return '<div class="toggle" style="display:block;padding:18px" data-card="' + i + '">' +
       '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px">' +
         '<div><b>' + esc(f.name || x.file || 'Resume') + '</b><small style="display:block">' + esc(x.file || '') + '</small></div>' +
         '<div style="display:flex;gap:10px;align-items:center">' + st +
           (x.status !== 'saved' ? '<button class="btn sm ghost" data-irm="' + i + '">Remove</button>' : '') + '</div></div>' +
-      '<div class="form">' +
+      (x.fields ? '<div class="form">' +
         '<div class="two">' + inp('name','Name') + inp('title','Current title') + '</div>' +
         '<div class="two">' + inp('email','Email') + inp('phone','Phone') + '</div>' +
         '<div class="two">' + inp('location','Location','City, ST') +
-          '<div class="field"><label>Industry</label><select data-ik="industry" data-ii="' + i + '"' + (x.status === 'saved' ? ' disabled' : '') + '>' +
+          '<div class="field"><label>Industry</label><select data-ik="industry" data-ii="' + i + '"' + dis + '>' +
             '<option value="">Pick one</option>' + inds.map(n => '<option' + (f.industry === n ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></div></div>' +
-        '<div class="field"><label>Summary</label><textarea data-ik="summary" data-ii="' + i + '"' + (x.status === 'saved' ? ' disabled' : '') + '>' + esc(f.summary || '') + '</textarea></div>' +
+        '<div class="field"><label>Summary</label><textarea data-ik="summary" data-ii="' + i + '"' + dis + '>' + esc(f.summary || '') + '</textarea></div>' +
+        (x.maybe && x.status !== 'saved' ? '<label class="toggle" style="margin-top:4px"><input type="checkbox" data-isame="' + i + '"' + (x.same ? ' checked' : '') + '><span>Same person as ' + esc(pname(idOf(x.maybe))) + ', fill their record instead of making a new one</span></label>' : '') +
         (x.parsed && x.parsed.tags && x.parsed.tags.length ? '<div class="muted small">Skills read: ' + esc(x.parsed.tags.join(', ')) + '</div>' : '') +
-      '</div></div>';
+      '</div>' : '') + '</div>';
   }).join('');
-  const held = INTAKE.filter(x => x.status === 'held').length;
-  const busy = INTAKE.some(x => x.status === 'reading');
-  return head('Intake.', (held ? '<button class="btn" id="ireadall"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Reading' : 'Read ' + held) + '</button> ' : '') +
-      (ready ? '<button class="btn" id="isaveall">Save all ' + ready + '</button>' : '')) +
+
+  const cos = S.companies.slice().sort((a,b) => String(F(a,'name')).localeCompare(String(F(b,'name'))));
+  const srch = S.searches.filter(s => isOpen(s) && (!BATCH.company_id || String(s.company_id) === String(BATCH.company_id)));
+  const opts = (list, val) => '<option value="">Not set</option>' + list.map(n => '<option' + (val === n ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
+  const stamp = '<div class="form" style="background:var(--paper);padding:16px;margin-bottom:18px">' +
+    '<div class="muted small" style="margin-bottom:10px">Where this batch came from. Set it once, it lands on every candidate below.</div>' +
+    '<div class="two">' +
+      '<div class="field"><label>Company</label><select data-bk="company_id"><option value="">Not set</option>' +
+        cos.map(c => '<option value="' + idOf(c) + '"' + (String(BATCH.company_id) === String(idOf(c)) ? ' selected' : '') + '>' + esc(F(c,'name')) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label>Search</label><select data-bk="search_id"><option value="">Not set</option>' +
+        srch.map(s => '<option value="' + idOf(s) + '"' + (String(BATCH.search_id) === String(idOf(s)) ? ' selected' : '') + '>' + esc(F(s,'title')) + ' · ' + esc(cname(s.company_id)) + '</option>').join('') + '</select></div>' +
+    '</div>' +
+    '<div class="two">' +
+      '<div class="field"><label>Source</label><select data-bk="source">' + opts(SOURCES, BATCH.source) + '</select></div>' +
+      '<div class="field"><label>Role type</label><select data-bk="role_type">' + opts(ROLETYPES, BATCH.role_type) + '</select></div>' +
+    '</div>' +
+    '<div class="field"><label>Campaign</label><input data-bk="campaign" value="' + esc(BATCH.campaign) + '" placeholder="Indeed · Outside Sales · September"></div>' +
+    '</div>';
+
+  return head('Intake.', (held ? '<button class="btn" id="ireadall"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Working' : 'Read ' + held) + '</button> ' : '') +
+      (ready ? '<button class="btn" id="isaveall">Save all ' + ready + '</button> ' : '') +
+      (done ? '<button class="btn ghost" id="iclear">Clear ' + done + ' saved</button>' : '')) +
+    stamp +
     '<div id="idrop" style="border:2px dashed var(--line);padding:28px;text-align:center;cursor:pointer;background:var(--paper);margin-bottom:18px">' +
-      '<b>Drop up to ten resume PDFs here, or click to pick them</b><br>' +
-      '<span class="muted small">They wait in the tray. Press Read and they go to the server one at a time. Check the fields, pick an industry, then save them all at once. Or forward the email to resumes@livework.inc and skip this screen.</span>' +
+      '<b>Drop up to a hundred resume PDFs here, or click to pick them</b><br>' +
+      '<span class="muted small">They upload first, then press Read and they go to the reader one at a time. Close the tab if you want, the tray is waiting when you come back. Check the fields, pick an industry, then save them all at once.</span>' +
       '<input id="ifiles" type="file" accept="application/pdf" multiple style="display:none"></div>' +
     (INTAKE.length ? '<div style="display:grid;gap:14px">' + cards + '</div>' : '<p class="muted small">Nothing in the tray.</p>');
 }
-async function intakeRead(x){
-  try{
-    await alive();
-    const safe = x.file.replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60);
-    const path = 'originals/' + Date.now() + '-' + Math.random().toString(36).slice(2,6) + '-' + safe;
-    const up = await fetch(LW.url + '/storage/v1/object/resumes/' + path, { method:'POST',
-      headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/pdf', 'x-upsert':'true' }, body: x.blob });
-    if(!up.ok) throw new Error('upload refused. ' + (await up.text()).slice(0, 120));
-    const j = await Promise.race([fnCall('resume-read', { path }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('No answer from the reader in two minutes.')), 120000))]);
-    const p = j.parsed || {};
-    x.path = path; x.parsed = p; x.source = p.source || 'model';
-    x.fields = { name: p.name || '', title: p.title || '', email: (p.email || '').toLowerCase(), phone: p.phone || '', location: p.location || '', summary: p.summary || '', industry: '' };
-    x.existing = p.email ? (S.candidates.find(c => String(F(c,'email')||'').toLowerCase() === String(p.email).toLowerCase()) || null) : null;
-    x.status = 'ready';
-  }catch(err){ x.status = 'error'; x.error = err.message; console.error(err); }
-  if(VIEW === 'intake') draw();
+
+/* rehydrate an unfinished tray from the queue table */
+function intakeRestore(){
+  if(INTAKE.length) return;
+  let rows = (S.intake_queue || []).filter(r => ['pending','reading','read','error'].indexOf(String(F(r,'status'))) >= 0);
+  if(!rows.length) return;
+  const when = r => String(F(r,'created_at') || '');
+  rows.sort((a,b) => when(a) < when(b) ? -1 : when(a) > when(b) ? 1 : 0);
+  /* one tray at a time. the newest unfinished batch comes back, older orphans stay in the table. */
+  const newest = F(rows[rows.length - 1], 'batch_id');
+  rows = rows.filter(r => String(F(r,'batch_id')) === String(newest));
+  for(const r of rows){
+    const p = r.parsed || null;
+    INTAKE.push({ qid: idOf(r), file: F(r,'filename') || 'Resume', blob: null, path: F(r,'path'),
+      hash: F(r,'file_hash') || '', parsed: p, source: p ? (p.source || 'model') : '',
+      fields: p ? fieldsFrom(p) : null, existing: p ? matchExisting(p) : null,
+      maybe: p ? matchMaybe(p) : null, same: false,
+      status: p ? 'ready' : (String(F(r,'status')) === 'error' ? 'error' : 'held'),
+      error: F(r,'error') || '' });
+  }
+  if(rows.length){
+    const r0 = rows[rows.length - 1];
+    BATCH = { id: F(r0,'batch_id') || null, company_id: r0.company_id || '', search_id: r0.search_id || '',
+      source: F(r0,'source') || '', role_type: F(r0,'role_type') || '', campaign: F(r0,'campaign') || '' };
+  }
 }
+function fieldsFrom(p){
+  return { name: p.name || '', title: p.title || '', email: String(p.email || '').toLowerCase(),
+    phone: p.phone || '', location: p.location || '', summary: p.summary || '', industry: '' };
+}
+function matchExisting(p){
+  const em = String(p.email || '').toLowerCase();
+  if(em){ const c = S.candidates.find(c => String(F(c,'email')||'').toLowerCase() === em); if(c) return c; }
+  const ph = digits(p.phone);
+  if(ph.length >= 10 && p.name){
+    const c = S.candidates.find(c => norm(F(c,'name')) === norm(p.name) && digits(F(c,'phone')).slice(-10) === ph.slice(-10));
+    if(c) return c;
+  }
+  return null;
+}
+/* a name on its own is never enough to merge. flag it and let a person decide. */
+function matchMaybe(p){
+  if(!p.name || matchExisting(p)) return null;
+  return S.candidates.find(c => norm(F(c,'name')) === norm(p.name)) || null;
+}
+
 async function intakeAdd(files){
   const list = Array.from(files || []).filter(f => /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name));
   if(!list.length) return toast('PDF only for now.', true);
-  const room = 10 - INTAKE.filter(x => x.status !== 'saved').length;
-  if(list.length > room) toast('Ten at a time. Taking the first ' + room + '.', true);
+  const room = INTAKE_CAP - INTAKE.filter(x => x.status !== 'saved' && x.status !== 'skipped').length;
+  if(list.length > room) toast('A hundred at a time. Taking the first ' + room + '.', true);
   const take = list.slice(0, Math.max(0, room));
-  for(const f of take) INTAKE.push({ file: f.name, blob: f, status: 'held', fields: null });
-  draw();
+  if(!take.length) return;
+  batchId();
+  let dupFile = 0, dupOld = 0;
+  for(const f of take){
+    const x = { file: f.name, blob: f, status: 'uploading', fields: null, hash: '' };
+    INTAKE.push(x); draw();
+    x.hash = await hashFile(f);
+    const twice = x.hash && INTAKE.some(y => y !== x && y.hash === x.hash);
+    const old = x.hash && S.candidates.find(c => F(c,'file_hash') === x.hash);
+    if(twice || old){
+      x.status = 'skipped';
+      x.note = twice ? 'Same file twice in this drop' : 'Same file already imported for ' + pname(idOf(old));
+      twice ? dupFile++ : dupOld++;
+      draw(); continue;
+    }
+    try{
+      await alive();
+      const safe = f.name.replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60);
+      const path = 'originals/' + Date.now() + '-' + Math.random().toString(36).slice(2,6) + '-' + safe;
+      const up = await fetch(LW.url + '/storage/v1/object/resumes/' + path, { method:'POST',
+        headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/pdf', 'x-upsert':'true' }, body: f });
+      if(!up.ok) throw new Error('upload refused. ' + (await up.text()).slice(0, 120));
+      x.path = path;
+      const q = await insert('intake_queue', Object.assign({ filename: f.name, path: path, file_hash: x.hash, status: 'pending' }, stampRow()));
+      x.qid = idOf(q);
+      x.status = 'held';
+    }catch(err){ x.status = 'error'; x.error = 'Upload failed. ' + err.message; console.error(err); }
+    draw();
+  }
+  if(dupFile || dupOld) toast((dupFile + dupOld) + ' skipped as duplicates.');
+}
+
+async function intakeRead(x){
+  try{
+    if(!x.path) throw new Error('no file on the server');
+    await queueWrite(x, { status: 'reading' });
+    const j = await Promise.race([fnCall('resume-read', { path: x.path }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('No answer from the reader in two minutes.')), 120000))]);
+    const p = j.parsed || {};
+    x.parsed = p; x.source = p.source || 'model';
+    x.fields = fieldsFrom(p);
+    x.existing = matchExisting(p);
+    x.maybe = matchMaybe(p);
+    x.status = 'ready';
+    await queueWrite(x, { status: 'read', parsed: p, read_at: new Date().toISOString(), error: null });
+  }catch(err){
+    x.status = 'error'; x.error = err.message; console.error(err);
+    await queueWrite(x, { status: 'error', error: String(err.message).slice(0, 300) });
+  }
+  if(VIEW === 'intake') draw();
 }
 let INTAKE_BUSY = false;
 async function intakeReadAll(){
@@ -661,29 +800,68 @@ async function intakeTag(cid, industry){
   const dup = S.candidate_tags.find(t => String(t.candidate_id) === String(cid) && String(t.tag_id) === String(idOf(tag)));
   if(!dup) await insert('candidate_tags', { candidate_id: cid, tag_id: idOf(tag) });
 }
+/* a reapply never overwrites what a recruiter typed. blanks only, plus a new document and a line on the file. */
+function fillBlanks(existing, f, x){
+  const want = { name: f.name, title: f.title, email: f.email, phone: f.phone, location: f.location,
+    summary: f.summary, linkedin: (x.parsed || {}).linkedin || '' };
+  const row = {};
+  for(const k in want){ if(want[k] && !F(existing, k)) row[k] = want[k]; }
+  if(!F(existing,'profile_json') && x.parsed) row.profile_json = { tags: x.parsed.tags || [], sections: x.parsed.sections || [] };
+  if(!F(existing,'role_type') && BATCH.role_type) row.role_type = BATCH.role_type;
+  return row;
+}
 async function intakeSaveAll(){
   const todo = INTAKE.filter(x => x.status === 'ready');
   const bad = todo.filter(x => !x.fields.name);
   if(bad.length) return toast(bad.length + ' still need a name.', true);
-  const noInd = todo.filter(x => !x.fields.industry);
+  /* same email twice inside one batch collapses to the first card */
+  const seen = {};
+  for(const x of todo){
+    const em = String(x.fields.email || '').toLowerCase();
+    if(!em) continue;
+    if(seen[em]){ x.status = 'skipped'; x.note = 'Same email as ' + (seen[em].fields.name || 'another card') + ' in this batch';
+      await queueWrite(x, { status: 'skipped' }); }
+    else seen[em] = x;
+  }
+  const live = todo.filter(x => x.status === 'ready');
+  const noInd = live.filter(x => !x.fields.industry);
   if(noInd.length && !confirm(noInd.length + ' have no industry tag. Save anyway?')) return;
   const b = $('#isaveall'); if(b){ b.disabled = true; b.textContent = 'Saving'; }
   let ok = 0;
-  for(const x of todo){
+  for(const x of live){
     const f = x.fields;
-    const row = clean({ name: f.name, title: f.title, email: f.email, phone: f.phone, location: f.location, summary: f.summary,
-      linkedin: x.parsed.linkedin || undefined, resume_path: x.path, resume_read_at: new Date().toISOString(),
-      profile_json: { tags: x.parsed.tags || [], sections: x.parsed.sections || [] }, source: 'intake' });
+    const target = x.existing || (x.same ? x.maybe : null);
     try{
-      const c = x.existing ? await patch('candidates', idOf(x.existing), row) : await insert('candidates', row);
+      let c;
+      if(target){
+        const row = fillBlanks(target, f, x);
+        c = Object.keys(row).length ? await patch('candidates', idOf(target), row) : target;
+        await insert('documents', clean({ candidate_id: idOf(c), kind: 'resume', title: x.file, storage_path: x.path }));
+        await insert('activity', clean({ type: 'note', title: 'Reapplied', candidate_id: idOf(c),
+          body: 'New resume received' + (BATCH.campaign ? ' · ' + BATCH.campaign : '') + (BATCH.source ? ' · ' + BATCH.source : ''),
+          occurred_at: new Date().toISOString() }));
+        x.ref = F(c,'reference_code','ref_code') || 'updated';
+      }else{
+        const row = clean({ name: f.name, title: f.title, email: f.email, phone: f.phone, location: f.location,
+          summary: f.summary, linkedin: (x.parsed || {}).linkedin || undefined,
+          resume_path: x.path, resume_read_at: new Date().toISOString(), file_hash: x.hash || undefined,
+          profile_json: { tags: (x.parsed || {}).tags || [], sections: (x.parsed || {}).sections || [] },
+          source: BATCH.source || 'intake', source_company_id: BATCH.company_id || undefined,
+          source_search_id: BATCH.search_id || undefined, role_type: BATCH.role_type || undefined,
+          campaign: BATCH.campaign || undefined });
+        c = await insert('candidates', row);
+        try{ const pj = await fnCall('profile-pdf', { candidate_id: idOf(c) }); x.ref = pj.ref; }
+        catch(e){ x.ref = 'no PDF: ' + e.message; }
+      }
       await intakeTag(idOf(c), f.industry);
-      try{ const pj = await fnCall('profile-pdf', { candidate_id: idOf(c) }); x.ref = pj.ref; }catch(e){ x.ref = 'no PDF: ' + e.message; }
       x.status = 'saved'; ok++;
-    }catch(err){ x.status = 'error'; x.error = 'Did not save. ' + err.message; }
+      await queueWrite(x, { status: 'saved', candidate_id: idOf(c), saved_at: new Date().toISOString() });
+    }catch(err){ x.status = 'error'; x.error = 'Did not save. ' + err.message;
+      await queueWrite(x, { status: 'error', error: String(err.message).slice(0, 300) }); }
     draw();
   }
   await loadAll(); drawNav(); draw();
-  toast(ok + ' of ' + todo.length + ' saved.');
+  toast(ok + ' of ' + live.length + ' saved.');
 }
 /* ---------- Invoices ---------- */
 /* the ladder. days is negative before the due date, positive after. */
@@ -1370,9 +1548,21 @@ function wire(){
     idrop.ondragleave = () => { idrop.style.borderColor = ''; };
     idrop.ondrop = e => { e.preventDefault(); idrop.style.borderColor = ''; intakeAdd(e.dataTransfer.files); };
     m.querySelectorAll('[data-ik]').forEach(el => el.oninput = el.onchange = () => { const x = INTAKE[+el.dataset.ii]; if(x && x.fields) x.fields[el.dataset.ik] = el.value.trim(); });
-    m.querySelectorAll('[data-irm]').forEach(b => b.onclick = () => { INTAKE.splice(+b.dataset.irm, 1); draw(); });
+    m.querySelectorAll('[data-irm]').forEach(b => b.onclick = async () => { const x = INTAKE[+b.dataset.irm];
+      if(x && x.qid) await queueWrite(x, { status: 'skipped' });
+      INTAKE.splice(+b.dataset.irm, 1); draw(); });
+    m.querySelectorAll('[data-isame]').forEach(cb => cb.onchange = () => { const x = INTAKE[+cb.dataset.isame]; if(x) x.same = cb.checked; draw(); });
+    m.querySelectorAll('[data-bk]').forEach(el => el.onchange = async () => {
+      BATCH[el.dataset.bk] = el.value;
+      if(el.dataset.bk === 'company_id') BATCH.search_id = '';
+      if(el.dataset.bk === 'search_id' && el.value){ const s = search(el.value); if(s && s.company_id) BATCH.company_id = s.company_id; }
+      draw(); await stampAll(); });
+    m.querySelectorAll('[data-bk="campaign"]').forEach(el => el.oninput = () => { BATCH.campaign = el.value; });
     const sa = m.querySelector('#isaveall'); if(sa) sa.onclick = intakeSaveAll;
     const ra = m.querySelector('#ireadall'); if(ra) ra.onclick = intakeReadAll;
+    const cl = m.querySelector('#iclear'); if(cl) cl.onclick = () => {
+      for(let i = INTAKE.length - 1; i >= 0; i--) if(INTAKE[i].status === 'saved') INTAKE.splice(i, 1);
+      draw(); };
     m.querySelectorAll('[data-iretry]').forEach(b => b.onclick = () => { const x = INTAKE[+b.dataset.iretry]; if(x){ x.status = 'held'; x.error = ''; } intakeReadAll(); });
   }
   m.querySelectorAll('[data-send]').forEach(b => b.onclick = async e => { e.stopPropagation();
@@ -1435,6 +1625,7 @@ LWAuth.gate(document.getElementById('gate'), async function(staff){
   document.getElementById('meRole').textContent = 'The Desk · ' + (F(staff,'role') || 'staff');
   document.getElementById('signout').onclick = e => { e.preventDefault(); LWAuth.signOut(); };
   try{ await loadAll(); }catch(e){ toast('Could not load. ' + e.message, true); }
+  try{ intakeRestore(); }catch(e){ console.warn('tray', e.message); }
   drawNav(); draw();
 });
 </script>
