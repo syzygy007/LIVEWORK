@@ -142,7 +142,7 @@ body{background:var(--paper)}
    ============================================================ */
 /* locked to schema v2 (column dump Sep 2026) */
 const MAP = {
-  company:   { name:'name', status:'status', kind:'engagement_type', city:'city', industry:'industry', notes:'notes' },
+  company:   { name:'name', status:'status', kind:'engagement_type', city:'city', industry:'industry', notes:'notes', owner:'owner_id' },
   contact:   { company:'company_id', name:'name', email:'email', title:'title', phone:'phone', room:'room_access', billing:'is_billing' },
   search:    { company:'company_id', title:'title', location:'location', kind:'engagement_type', status:'status',
                comp_min:'comp_low', comp_max:'comp_high', opened:'opened_at', notes:'notes', owner:'owner_id' },
@@ -354,6 +354,42 @@ function draw(){
   wire();
 }
 
+/* ---------- My numbers: activity first, revenue last. thirty day window. ---------- */
+function myNumbers(){
+  const me = meId(); if(!me) return '';
+  const since = Date.now() - 30 * 86400000;
+  const recent = (d) => d && new Date(d).getTime() >= since;
+  const mine = a => String(F(a,'staff_id')) === String(me);
+  const acts = S.activity.filter(a => mine(a) && recent(F(a,'created_at','occurred_at')));
+  const callsMade = acts.filter(a => String(F(a,'kind','type')) === 'call').length;
+  const visits = acts.filter(a => String(F(a,'kind','type')) === 'visit').length;
+  const mail = S.outbound.filter(o => String(F(o,'staff_id')) === String(me) && recent(F(o,'sent_at','created_at','queued_at'))).length;
+  const sent = S.outbound.filter(o => String(F(o,'staff_id')) === String(me)
+    && String(F(o,'template')) === 'presentation' && recent(F(o,'sent_at','created_at','queued_at'))).length;
+  const myCos = S.companies.filter(c => String(F(c,'owner_id')) === String(me));
+  const myIds = myCos.map(c => String(idOf(c)));
+  const mySearch = S.searches.filter(s => String(F(s,'owner_id')) === String(me) || myIds.indexOf(String(s.company_id)) >= 0);
+  const openMine = mySearch.filter(isOpen).length;
+  const searchIds = mySearch.map(s => String(idOf(s)));
+  const inter = S.pipeline.filter(p => searchIds.indexOf(String(p.search_id)) >= 0 && stageIx(p) >= 2 && stageOf(p) !== 'Passed').length;
+  const placed = S.placements.filter(p => searchIds.indexOf(String(p.search_id)) >= 0);
+  const fees = placed.reduce((n, p) => n + num(F(p,'fee','fee_amount')), 0);
+  const cell = (v, l, y) => '<div class="stat' + (y ? ' y' : '') + '"><b>' + v + '</b><span>' + l + '</span></div>';
+  return '<div class="sec"><h2>My numbers.</h2><span class="muted small">last thirty days</span></div>' +
+    '<div class="stats">' +
+      cell(callsMade + visits, 'Calls and visits logged') +
+      cell(mail, 'Emails sent') +
+      cell(sent, 'Candidates sent', true) +
+      cell(inter, 'Interviews reached') +
+    '</div>' +
+    '<div class="stats">' +
+      cell(myCos.length, 'My companies') +
+      cell(openMine, 'My open searches') +
+      cell(placed.length, 'My placements') +
+      cell(money(fees), 'Fees on my placements') +
+    '</div>';
+}
+
 /* ---------- Today ---------- */
 function vToday(){
   const openS = S.searches.filter(isOpen);
@@ -390,6 +426,7 @@ function vToday(){
       '<div class="stat y"><b>' + openT.length + '</b><span>Open tasks, ' + dueToday.length + ' due today</span></div>' +
       '<div class="stat"><b>' + S.placements.filter(p => daysBetween(F(p,'start_date','created_at')) <= 90).length + '</b><span>Placements inside the guarantee</span></div>' +
     '</div>' +
+    myNumbers() +
     '<div class="sec"><h2>The queue.</h2><span class="muted small">' + openT.length + ' open</span></div>' +
     table(['Task','Who','Due','Done'],
       openT.slice(0,12).map(t => '<div class="r" style="grid-template-columns:2fr 1.2fr 120px 90px" data-task="' + idOf(t) + '">' +
@@ -528,6 +565,7 @@ function vPipeline(){
         '<div class="acts">' +
           (stageIx(p) < 4 ? '<button data-adv="' + idOf(p) + '">Advance</button>' : '') +
           '<button data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button>' +
+          '<button data-mail="pipe:' + idOf(p) + '">Present</button>' +
           '<button data-note="' + p.candidate_id + '|' + p.search_id + '">Interview note</button>' +
         '</div></div>').join('') + '</div>';
   }).join('');
@@ -1055,13 +1093,15 @@ function sheetCompany(){
       ['Industry', esc(F(c,'industry'))],
       ['Fee', esc(F(c,'fee','fee_pct') || '20% of first year base')],
       ['Guarantee', '90 days'],
+      ['Owner', esc(ownerName(F(c,'owner_id')))],
       ['Notes', esc(F(c,'notes','bio'))]
-    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button></div>';
+    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button></div>';
   if(T===1) body = contactsOf(idOf(c)).map(ct =>
       '<div class="toggle"><div><b>' + esc(F(ct,'name')) + '</b><small>' + esc(F(ct,'title')) + ' · ' + esc(F(ct,'email')) + (F(ct,'phone') ? ' · <a href="tel:' + esc(String(F(ct,'phone')).replace(/[^0-9+]/g,'')) + '">' + esc(F(ct,'phone')) + '</a>' : '') + '</small></div>' +
       '<div style="display:flex;gap:16px;align-items:center">' +
         '<span class="muted small">Room</span><button class="sw ' + (ct[MAP.contact.room]===true?'on':'') + '" data-room="' + idOf(ct) + '" aria-label="Client room access"></button>' +
         '<span class="muted small">Billing</span><button class="sw ' + (ct[MAP.contact.billing]===true?'on':'') + '" data-bill="' + idOf(ct) + '" aria-label="Billing contact"></button>' +
+        (F(ct,'email') ? '<button class="btn sm ghost" data-mail="ct:' + idOf(ct) + '">Email</button>' : '') +
       '</div></div>').join('') +
       '<p class="muted small">Room lets them sign in at the client room with a code. Billing sends invoices and payment reminders to them. One billing contact per company.</p>' +
       '<button class="btn" data-new="contact" data-co="' + idOf(c) + '">Add a contact</button>';
@@ -1129,6 +1169,7 @@ function sheetCandidate(){
         (F(c,'phone') ? '<a class="btn" href="tel:' + esc(String(F(c,'phone')).replace(/[^0-9+]/g,'')) + '">Call</a>' : '') +
         '<button class="btn ghost" data-logcall="' + idOf(c) + '|">Log a call</button>' +
         '<button class="btn ghost" data-note="' + idOf(c) + '|">Interview note</button>' +
+        (F(c,'email') ? '<button class="btn ghost" data-mail="cand:' + idOf(c) + '">Email</button>' : '') +
         '<button class="btn ghost" data-new="pipeline" data-cand="' + idOf(c) + '">Submit to a search</button></div>';
   if(T===1) body = (notes.length ? notes.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).map(n =>
       '<div style="border:1px solid var(--line);padding:16px;border-radius:var(--r)">' +
@@ -1164,6 +1205,65 @@ function sheetPool(){
     '<div class="field"><label for="poolAdd">Add a candidate</label><select id="poolAdd"><option value="">Pick someone</option>' +
       S.candidates.map(c => '<option value="' + idOf(c) + '">' + esc(F(c,'name','full_name')) + '</option>').join('') + '</select></div>' +
     '<button class="btn" data-pooladd="' + idOf(p) + '">Add to the pool</button>');
+}
+
+/* ---------- Mail: written by a recruiter, sent as that recruiter ---------- */
+const firstName = n => String(n || '').trim().split(/\s+/)[0] || 'there';
+function mailPdf(ctx){ const c = ctx && ctx.cand ? cand(ctx.cand) : null; return c && F(c,'branded_resume_path') ? c : null; }
+function mailAdv(ctx){
+  if(!ctx || !ctx.pipe) return null;
+  const p = byId(S.pipeline, ctx.pipe);
+  return p && ['Sourced','Screened'].indexOf(stageOf(p)) >= 0 ? p : null;
+}
+function mailPeople(ctx){
+  const out = [];
+  const co = ctx && ctx.co;
+  const list = co ? contactsOf(co) : S.contacts;
+  list.forEach(ct => { const em = F(ct,'email'); if(em)
+    out.push('<option data-kind="contact" value="' + esc(em + '|' + (F(ct,'name') || '')) + '">' + esc(F(ct,'name')) + ' · ' + esc(cname(ct.company_id)) + '</option>'); });
+  if(ctx && ctx.cand){ const c = cand(ctx.cand); const em = c && F(c,'email');
+    if(em) out.unshift('<option data-kind="cand" value="' + esc(em + '|' + (F(c,'name') || '')) + '">' + esc(F(c,'name')) + ' · candidate</option>'); }
+  return '<option value="">Pick someone</option>' + out.join('');
+}
+/* drafts. plain, short, and always editable before it goes. */
+function mailDraft(tpl, ctx){
+  const c = ctx && ctx.cand ? cand(ctx.cand) : null;
+  const s = ctx && ctx.se ? search(ctx.se) : null;
+  const role = s ? F(s,'title','role') : 'the role';
+  const co = s ? cname(s.company_id) : (ctx && ctx.co ? cname(ctx.co) : 'the client');
+  const who = c ? F(c,'name') : 'the candidate';
+  const title = c ? F(c,'title') : '';
+  const sel = $('#f_who');
+  const toName = sel && sel.value ? sel.value.split('|')[1] : '';
+  if(tpl === 'presentation') return { subject: who + ' for ' + role,
+    body: firstName(toName) + ',\n\nI am sending you ' + who + ' for the ' + role + ' search.' +
+      (title ? ' They are currently ' + title + '.' : '') + '\n\nWhat stands out:\n\nTheir profile is attached. If you want time with them, send me two windows that work and I will set it up.' };
+  if(tpl === 'reachout' && !s) return { subject: 'A role worth a look',
+    body: firstName(who) + ',\n\nI am working a search that looks close to your background' + (title ? ' as ' + title : '') + '.' +
+      '\n\nAre you open to a short call this week? If the timing is wrong, tell me what you are looking for and I will keep it in mind.' };
+  if(tpl === 'reachout') return { subject: role + ' search',
+    body: firstName(who) + ',\n\nI am running a ' + role + ' search for a client' + (co && co !== 'the client' ? ' in ' + (F(company(s ? s.company_id : ctx.co) || {}, 'city') || 'the area') : '') +
+      '.' + (title ? ' With your background as ' + title + ', it looks worth a conversation.' : '') +
+      '\n\nAre you open to a short call this week? If the timing is wrong, tell me what you are looking for and I will keep it in mind.' };
+  if(tpl === 'followup') return { subject: 'Following up on ' + who,
+    body: firstName(toName) + ',\n\nThanks for seeing ' + who + '. What did you think?' +
+      '\n\nIf you want to move forward I will get the next step on the calendar. If it is a no, tell me what missed and I will adjust the search.' };
+  return { subject: '', body: '' };
+}
+function wireMailForm(ctx){
+  const tpl = $('#f_tpl'), who = $('#f_who'), subj = $('#f_subj'), body = $('#f_body');
+  if(ctx && ctx.tpl && tpl) tpl.value = ctx.tpl;
+  /* a presentation goes to the client, a reach out goes to the candidate */
+  const pick = () => {
+    const want = tpl.value === 'reachout' ? 'cand' : 'contact';
+    for(let i = 1; i < who.options.length; i++){ if(who.options[i].dataset.kind === want){ who.selectedIndex = i; return; } }
+    if(who.options.length > 1) who.selectedIndex = 1;
+  };
+  pick();
+  const fill = () => { const d = mailDraft(tpl.value, ctx); subj.value = d.subject; body.value = d.body; };
+  fill();
+  tpl.onchange = () => { pick(); fill(); };
+  who.onchange = () => { if(!body.value.trim() || confirm('Rewrite the draft for this person?')) fill(); };
 }
 
 /* ============================ forms ============================ */
@@ -1255,15 +1355,28 @@ function form(kind, ctx){
       '<div class="two"><div class="field"><label for="f_amt">Amount</label><input id="f_amt" inputmode="numeric"></div>' +
       '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date" value="' + plusDays(30) + '"></div></div>' +
       '<div class="field"><label for="f_po">PO number, if their AP requires one</label><input id="f_po"></div>'],
+    mail: ['Write an email.', 'It goes out as you, copies you, and lands on the record.',
+      '<div class="field"><label for="f_tpl">Template</label><select id="f_tpl">' +
+        '<option value="presentation">Present a candidate to a client</option>' +
+        '<option value="reachout">Reach out to a candidate</option>' +
+        '<option value="followup">Follow up after an interview</option>' +
+        '<option value="note">Blank</option></select></div>' +
+      '<div class="two"><div class="field"><label for="f_who">To</label><select id="f_who">' + mailPeople(ctx) + '</select></div>' +
+      '<div class="field"><label for="f_toe">Or type an address</label><input id="f_toe" type="email" placeholder="someone@company.com"></div></div>' +
+      '<div class="field"><label for="f_subj">Subject</label><input id="f_subj"></div>' +
+      '<div class="field"><label for="f_body">Message</label><textarea id="f_body" style="min-height:220px"></textarea></div>' +
+      (mailPdf(ctx) ? '<div class="field"><label><input type="checkbox" id="f_att" checked style="height:auto;width:auto;margin-right:8px">Attach the branded profile, client copy with no contact details</label></div>' : '') +
+      (mailAdv(ctx) ? '<div class="field"><label><input type="checkbox" id="f_advance" checked style="height:auto;width:auto;margin-right:8px">Move this candidate to Submitted when it sends</label></div>' : '')],
     premier: ['Premier.', 'A human call, so it needs a reason.',
       '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
   }[kind];
   SHEET = { kind:'form', id:kind, tab:0, ctx };
-  shell(F_[0], F_[1], '<div class="form">' + F_[2] + '<button class="btn" id="fsave">Save</button></div>');
+  shell(F_[0], F_[1], '<div class="form">' + F_[2] + '<button class="btn" id="fsave">' + (kind === 'mail' ? 'Send' : 'Save') + '</button></div>');
   const first = $('#sheet').querySelector('input,select,textarea'); if(first) first.focus();
   $('#fsave').onclick = () => save(kind, ctx);
   if(kind === 'invoice') wireInvoiceForm(ctx);
   if(kind === 'candidate') wireResumeDrop();
+  if(kind === 'mail') wireMailForm(ctx);
 }
 /* resume drop: upload the original with the staff token, let the backend read it, fill the form */
 let RESUME = null;
@@ -1335,13 +1448,14 @@ const today = () => new Date().toISOString().slice(0,10);
 const plusDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); };
 const val = id => { const e = document.getElementById(id); return e ? (e.type === 'checkbox' ? e.checked : e.value.trim()) : ''; };
 const meId = () => ME ? idOf(ME) : null;
+const ownerName = id => { if(!id) return 'Unassigned'; const s = byId(S.staff, id); return s ? F(s,'name','email') : 'Unassigned'; };
 
 async function save(kind, ctx){
   const M = MAP; let r = null;
   if(kind === 'company'){
     if(!val('f_name')) return toast('A company needs a name.', true);
     r = await tryWrite(() => insert('companies', clean({ [M.company.name]: val('f_name'), [M.company.city]: val('f_city'),
-      [M.company.industry]: val('f_ind'), [M.company.kind]: val('f_kind'), [M.company.status]: val('f_status'), [M.company.notes]: val('f_notes') })), 'Company added.');
+      [M.company.industry]: val('f_ind'), [M.company.kind]: val('f_kind'), [M.company.status]: val('f_status'), [M.company.notes]: val('f_notes'), [M.company.owner]: meId() })), 'Company added.');
   }
   if(kind === 'contact'){
     r = await tryWrite(() => insert('contacts', clean({ [M.contact.company]: val('f_co'), [M.contact.name]: val('f_name'),
@@ -1433,6 +1547,32 @@ async function save(kind, ctx){
       [M.invoice.issued]: today(), [M.invoice.due]: val('f_due') || plusDays(30),
       [M.invoice.description]: val('f_desc') || 'Placement fee', [M.invoice.po]: val('f_po') })), 'Invoice drafted.');
   }
+  if(kind === 'mail'){
+    const sel = val('f_who'), typed = val('f_toe').trim();
+    const to = typed || (sel ? sel.split('|')[0] : '');
+    const toName = typed ? '' : (sel ? sel.split('|')[1] : '');
+    if(!to) return toast('Who is it going to?', true);
+    if(!val('f_subj')) return toast('It needs a subject.', true);
+    if(!val('f_body').trim()) return toast('It needs a message.', true);
+    const c = ctx.cand ? cand(ctx.cand) : null;
+    const att = $('#f_att') && $('#f_att').checked ? mailPdf(ctx) : null;
+    const b = $('#fsave'); if(b){ b.disabled = true; b.textContent = 'Sending'; }
+    try{
+      const j = await fnCall('mail-send', clean({
+        to_email: to, to_name: toName, subject: val('f_subj'), body: val('f_body'),
+        template: val('f_tpl') || 'note',
+        candidate_id: ctx.cand || undefined, company_id: ctx.co || undefined,
+        search_id: ctx.se || undefined, pipeline_id: ctx.pipe || undefined,
+        advance: $('#f_advance') ? $('#f_advance').checked : false,
+        attach_path: att ? F(att,'branded_resume_path') : undefined,
+        attach_name: att ? String(F(att,'name')).replace(/[^A-Za-z0-9]+/g,'-').toLowerCase() + '-livework.pdf' : undefined
+      }));
+      toast('Sent, and copied to you.' + (j.moved ? ' Moved to Submitted.' : ''));
+      closeSheet(); await loadAll(); drawNav(); draw();
+    }catch(e){ toast('Did not send. ' + e.message, true); if(b){ b.disabled = false; b.textContent = 'Save'; } }
+    return;
+  }
+
   if(kind === 'premier'){
     if(!val('f_why')) return toast('Premier needs a reason.', true);
     r = await tryWrite(() => patch('candidates', ctx.cand, clean({ [MAP.candidate.premier]: true, [MAP.candidate.premier_reason]: val('f_why'), [MAP.candidate.premier_by]: meId() })), 'Premier on.');
@@ -1497,6 +1637,15 @@ function common(root){
   root.querySelectorAll('[data-pool]').forEach(b => b.onclick = e => { e.stopPropagation(); openSheet('pool', b.dataset.pool); });
   root.querySelectorAll('[data-new]').forEach(b => b.onclick = e => { e.stopPropagation();
     form(b.dataset.new, { co: b.dataset.co, se: b.dataset.se, cand: b.dataset.cand }); });
+  root.querySelectorAll('[data-mail]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const [what, id] = b.dataset.mail.split(':');
+    if(what === 'cand') return form('mail', { cand: id, tpl: 'reachout' });
+    if(what === 'co') return form('mail', { co: id, tpl: 'note' });
+    if(what === 'ct'){ const ct = byId(S.contacts, id); return form('mail', { co: ct ? ct.company_id : '', tpl: 'note' }); }
+    if(what === 'pipe'){ const p = byId(S.pipeline, id); const s = p ? search(p.search_id) : null;
+      return form('mail', { pipe: id, cand: p ? p.candidate_id : '', se: p ? p.search_id : '',
+        co: s ? s.company_id : '', tpl: 'presentation' }); }
+  });
   root.querySelectorAll('[data-logcall]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [c, co] = b.dataset.logcall.split('|'); form('call', { cand: c, co: co }); });
   root.querySelectorAll('[data-note]').forEach(b => b.onclick = e => { e.stopPropagation();
