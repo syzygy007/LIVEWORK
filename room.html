@@ -8,6 +8,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="lw.css">
+<script src="lw-config.js"></script>
 <style>
 .wrap{width:min(1040px,100% - 96px);margin:0 auto}
 @media (max-width:720px){.wrap{width:calc(100% - 40px)}}
@@ -23,6 +24,8 @@
 .door p{color:var(--stone)}
 .door .btn{width:100%}
 .code{letter-spacing:.4em;font-size:24px;font-weight:800;text-align:center}
+.err{color:var(--warn);font-size:14px;font-weight:600}
+.btn[disabled]{opacity:.5;cursor:wait}
 /* room */
 .room{padding:56px 0 96px}
 .room h1{font-size:clamp(40px,6vw,72px);max-width:12em}
@@ -69,9 +72,19 @@
 
 <script>
 /* demo: what Maria at Northwind sees. The live layer swaps this for the signed in contact's company. */
-const ME = {name:'Maria Delgado', company:'Northwind Logistics', email:'maria@northwind.example', kind:'Retained', fee:'28% of first year base', billing:'One third at engagement, one third at shortlist, one third at start', guarantee:'12 months', recruiter:'Derek Germann'};
+const LIVE = !!(window.LW && LW.anon && !/PASTE/.test(LW.anon));
+const DEMO_ME = {name:'Maria Delgado', company:'Northwind Logistics', email:'maria@northwind.example', kind:'Retained', fee:'28% of first year base', billing:'One third at engagement, one third at shortlist, one third at start', guarantee:'12 months', recruiter:'Derek Germann'};
+let ME = LIVE ? {name:'', company:'', email:'', recruiter:'Derek Germann'} : DEMO_ME;
+async function fn(name, body){
+  const r = await fetch(`${LW.url}/functions/v1/${name}`, {method:'POST', headers:{'content-type':'application/json', apikey:LW.anon, Authorization:'Bearer '+LW.anon}, body:JSON.stringify(body)});
+  return r.json().catch(()=>({ok:false}));
+}
+const SESSION_KEY='lw_room_session';
+function saveSession(s){try{localStorage.setItem(SESSION_KEY, JSON.stringify(s))}catch(e){}}
+function loadSession(){try{const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); if(s && new Date(s.expires_at)>new Date()) return s}catch(e){} return null}
+function clearSession(){try{localStorage.removeItem(SESSION_KEY)}catch(e){}}
 const STAGES=['Released','Interview','Offer','Placed'];
-const SEARCHES=[
+let SEARCHES=[
   {title:'Director of Fleet Operations', location:'Irvine, CA', comp:'$165k to $185k', opened:'Aug 14, 2026', status:'Open', cands:[
     {name:'Elena Vasquez', title:'Regional Operations Manager', location:'Orange County, CA', stage:1, why:'Ran a 60 truck fleet across three sites with full P&L. She is looking for a director seat and named Irvine as her preferred location. Available in 30 days.', fit:['Fleet operations, 9 years','Multi site leadership','P&L ownership','Available in 30 days'], feedback:'You advanced Elena on Aug 26. Interview set for Sep 9, 10:00 AM.', resume:'vasquez-resume.pdf'},
   ]},
@@ -83,28 +96,49 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400)}
 
-let step=0;
+let step=0, pendingEmail='', err='';
 function door(){
   $('#who').textContent='';
   $('#main').innerHTML=`<section class="door"><div class="box">
     ${step===0?`<div class="hl"><span class="bar"></span><h1>Your room.</h1></div>
       <p>Sign in with the work email LIVEWORK invited. We send a six digit code, no password.</p>
-      <div class="field"><label for="em">Work email</label><input id="em" type="email" placeholder="you@company.com" value="${ME.email}"></div>
+      <div class="field"><label for="em">Work email</label><input id="em" type="email" placeholder="you@company.com" value="${esc(pendingEmail||(LIVE?'':ME.email))}"></div>
+      ${err?`<p class="err">${esc(err)}</p>`:''}
       <button class="btn" id="go">Send my code</button>`
     :`<div class="hl"><span class="bar"></span><h1>Check your email.</h1></div>
-      <p>Enter the six digit code we sent to ${esc(ME.email)}.</p>
-      <div class="field"><label for="cd">Code</label><input id="cd" class="code" inputmode="numeric" maxlength="6" placeholder="000000"></div>
+      <p>Enter the six digit code we sent to ${esc(pendingEmail)}.</p>
+      <div class="field"><label for="cd">Code</label><input id="cd" class="code" inputmode="numeric" maxlength="7" placeholder="000000"></div>
+      ${err?`<p class="err">${esc(err)}</p>`:''}
       <button class="btn" id="go">Open my room</button>
       <p class="small"><a href="#" id="back">Use a different email</a></p>`}
   </div></section>`;
-  $('#go').onclick=()=>{if(step===0){step=1;door();$('#cd').focus()}else room()};
-  const b=$('#back');if(b)b.onclick=e=>{e.preventDefault();step=0;door()};
+  const go=$('#go');
+  go.onclick=async()=>{
+    err='';
+    if(step===0){
+      pendingEmail=($('#em').value||'').trim().toLowerCase();
+      if(!pendingEmail.includes('@')){err='Enter your work email.';return door()}
+      if(LIVE){go.disabled=true;go.textContent='Sending';await fn('room-code',{email:pendingEmail})}
+      step=1;door();$('#cd').focus();
+    }else{
+      const code=($('#cd').value||'').replace(/\D/g,'');
+      if(code.length!==6){err='The code is six digits.';return door()}
+      if(!LIVE){return room()}
+      go.disabled=true;go.textContent='Opening';
+      const r=await fn('room-verify',{email:pendingEmail,code});
+      if(!r.ok){err={wrong:'That code did not match. Try again.',expired:'That code expired. Ask for a new one.',locked:'Too many tries. Ask for a new code.'}[r.reason]||'We could not sign you in. Check the email and try again.';return door()}
+      saveSession(r);ME={...ME,...r.contact};SEARCHES=[];room();
+    }
+  };
+  const em=$('#em');if(em)em.onkeydown=e=>{if(e.key==='Enter')go.click()};
+  const cd=$('#cd');if(cd)cd.onkeydown=e=>{if(e.key==='Enter')go.click()};
+  const b=$('#back');if(b)b.onclick=e=>{e.preventDefault();step=0;err='';door()};
 }
 function room(){
   $('#who').innerHTML=`<b>${esc(ME.name)}</b> · ${esc(ME.company)} &nbsp; <a href="#" id="out">Sign out</a>`;
-  $('#out').onclick=e=>{e.preventDefault();step=0;door()};
+  $('#out').onclick=e=>{e.preventDefault();clearSession();step=0;err='';door()};
   $('#main').innerHTML=`<section class="room"><div class="wrap">
-    <div class="hl"><span class="bar"></span><h1>${esc(ME.company)}. Two searches, two people to look at.</h1></div>
+    <div class="hl"><span class="bar"></span><h1>${esc(ME.company)}. ${SEARCHES.length?`${SEARCHES.length===1?'One search':SEARCHES.length+' searches'}, ${SEARCHES.reduce((n,s)=>n+s.cands.length,0)} to look at.`:'Your searches will appear here.'}</h1></div>
     <p class="lede">Everyone here has been screened by ${esc(ME.recruiter)} and released to you. Open a profile, then advance, pass, or ask for a time. You get an email as each search moves.</p>
     ${SEARCHES.map((s,si)=>`<section class="srch">
       <header><div><h2>${esc(s.title)}</h2><p class="meta">${esc(s.location)} · ${esc(s.comp)} · opened ${s.opened}</p></div>
@@ -120,14 +154,14 @@ function room(){
         ${c.feedback?`<div class="fb"><b>Your feedback.</b> ${esc(c.feedback)}</div>`:''}
       </article>`).join(''):`<div class="empty">Nothing released yet. You will get an email the moment there is someone to see.</div>`}</div>
     </section>`).join('')}
-    <div class="terms"><h3>Your engagement with LIVEWORK.</h3><div class="spec">
+    ${ME.kind?`<div class="terms"><h3>Your engagement with LIVEWORK.</h3><div class="spec">
       <div class="row"><b>Engagement</b><span>${ME.kind} search</span></div>
       <div class="row"><b>Fee</b><span>${ME.fee}</span></div>
       <div class="row"><b>Billing</b><span>${ME.billing}</span></div>
       <div class="row"><b>Guarantee</b><span>${ME.guarantee} replacement on every placement</span></div>
       <div class="row"><b>Agreement</b><span><a href="#" data-noop>Retained search agreement, signed Aug 12, 2026</a></span></div>
       <div class="row"><b>Your recruiter</b><span>${ME.recruiter} · <a href="mailto:hello@livework.inc">hello@livework.inc</a></span></div>
-    </div></div>
+    </div></div>`:`<div class="terms"><h3>Your engagement with LIVEWORK.</h3><div class="spec"><div class="row"><b>Your recruiter</b><span>${ME.recruiter} · <a href="mailto:hello@livework.inc">hello@livework.inc</a></span></div></div></div>`}
   </div></section>`;
   document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const d=$('#d'+b.dataset.view);d.classList.toggle('on');b.textContent=d.classList.contains('on')?'Close':'Profile'});
   const get=k=>{const [si,ci]=k.split('-');return SEARCHES[si].cands[ci]};
@@ -137,7 +171,8 @@ function room(){
   document.querySelectorAll('[data-noop]').forEach(a=>a.onclick=e=>{e.preventDefault();toast('Files open with the live layer')});
   window.scrollTo(0,0);
 }
-door();
+const S0=LIVE?loadSession():null;
+if(S0){ME={...ME,...S0.contact};SEARCHES=[];room()}else door();
 </script>
 </body>
 </html>
