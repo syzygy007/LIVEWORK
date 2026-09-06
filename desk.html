@@ -214,6 +214,17 @@ async function patch(t, id, row){
   const out = await rest(t + '?id=eq.' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify(row), prefer:'return=representation' });
   return Array.isArray(out) ? out[0] : out;
 }
+async function fnCall(name, body){
+  const r = await fetch(LW.url + '/functions/v1/' + name, { method:'POST',
+    headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/json' },
+    body: JSON.stringify(body || {}) });
+  const t = await r.text();
+  let j = null; try{ j = t ? JSON.parse(t) : null; }catch(e){ j = null; }
+  if(!r.ok || !j || j.ok === false) throw new Error((j && j.error) || t || ('HTTP ' + r.status));
+  return j;
+}
+function openUrl(u){ const a=document.createElement('a'); a.href=u; a.target='_blank'; a.rel='noopener';
+  document.body.appendChild(a); a.click(); a.remove(); }
 function clean(o){ const x = {}; for(const k in o){ if(o[k] !== undefined && o[k] !== '') x[k] = o[k]; } return x; }
 async function tryWrite(fn, okMsg){
   try{ const r = await fn(); if(okMsg) toast(okMsg); return r; }
@@ -1075,8 +1086,15 @@ function wire(){
     if(e.target.closest('button')) return;
     const i = byId(S.invoices, r.dataset.inv); if(i) openSheet('company', i.company_id);
   });
-  m.querySelectorAll('[data-pdf]').forEach(b => b.onclick = e => { e.stopPropagation();
-    toast('The invoice PDF is generated on the backend. That edge function is the next drop.'); });
+  m.querySelectorAll('[data-pdf]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const lbl = b.textContent; b.disabled = true; b.textContent = 'Building';
+    try{
+      const j = await fnCall('invoice-pdf', { invoice_id: b.dataset.pdf });
+      if(j.url) openUrl(j.url);
+      toast('Invoice ' + j.number + ' ready.');
+      await loadAll(); draw();
+    }catch(err){ toast('No PDF. ' + err.message, true); console.error(err); }
+    b.disabled = false; b.textContent = lbl; });
   m.querySelectorAll('[data-stab]').forEach(b => b.onclick = () => { Q.searchTab = b.dataset.stab; draw(); });
   m.querySelectorAll('[data-tag]').forEach(b => b.onclick = () => { Q.tag = b.dataset.tag; draw(); });
   m.querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
