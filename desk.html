@@ -8,29 +8,29 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="lw.css">
+<script src="lw-config.js?v=3"></script>
+<script src="lw-auth.js?v=3"></script>
 <style>
 body{background:var(--paper)}
 .app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
-/* rail */
-.rail{background:var(--ink);color:var(--white);padding:28px 20px;display:flex;flex-direction:column;gap:32px;position:sticky;top:0;height:100vh}
+.rail{background:var(--ink);color:var(--white);padding:28px 20px;display:flex;flex-direction:column;gap:28px;position:sticky;top:0;height:100vh;overflow:auto}
 .rail img{height:20px;margin-left:4px}
 .rail nav{display:grid;gap:2px}
-.rail nav button{display:flex;align-items:center;justify-content:space-between;width:100%;height:44px;padding:0 12px;border:0;border-radius:var(--r);background:transparent;color:#BDB9B1;font-weight:600;font-size:15px;text-align:left;cursor:pointer}
+.rail nav button{display:flex;align-items:center;justify-content:space-between;width:100%;height:40px;padding:0 12px;border:0;border-radius:var(--r);background:transparent;color:#BDB9B1;font-weight:600;font-size:15px;text-align:left;cursor:pointer}
 .rail nav button:hover{color:var(--white);background:#161616}
 .rail nav button.on{color:var(--ink);background:var(--yellow)}
 .rail nav button .n{font-size:12px;font-weight:600;opacity:.7}
 .rail nav button.on .n{opacity:1}
-.rail .me{margin-top:auto;font-size:13px;color:#BDB9B1;line-height:1.4}
+.rail .me{margin-top:auto;font-size:13px;color:#BDB9B1;line-height:1.4;padding-top:20px}
 .rail .me b{display:block;color:var(--white)}
-/* main */
+.rail .me a{color:#BDB9B1;font-size:12px;font-weight:600}
 .main{padding:32px 40px 96px;min-width:0}
-.top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:28px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:26px}
 .top h1{font-size:44px}
 .top .acts{display:flex;gap:10px;flex-wrap:wrap}
 .search{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border:1px solid var(--line);background:var(--white);border-radius:var(--r);width:min(420px,100%)}
 .search input{border:0;background:transparent;width:100%;height:100%;outline:0}
 .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
-/* tables */
 .tbl{background:var(--white);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .tbl .r{display:grid;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--line);cursor:pointer}
 .tbl .r:last-child{border-bottom:0}
@@ -47,14 +47,14 @@ body{background:var(--paper)}
 .st.offer::before{background:var(--ink)}
 .st.passed::before,.st.overdue::before{background:var(--warn)}
 .empty{padding:40px 20px;color:var(--stone)}
-/* stats */
+.sec{margin:34px 0 14px;display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+.sec h2{font-size:24px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:32px}
 .stat{background:var(--white);padding:24px}
 .stat b{display:block;font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1}
 .stat span{font-size:13px;color:var(--stone)}
 .stat.y{background:var(--yellow)}
 .stat.y span{color:var(--ink)}
-/* kanban */
 .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:12px;overflow-x:auto;padding-bottom:12px}
 .col{background:var(--wall);border-radius:var(--r);padding:12px;min-height:320px}
 .col h4{font-size:13px;font-weight:600;color:var(--stone);margin:4px 4px 12px;display:flex;justify-content:space-between}
@@ -65,10 +65,9 @@ body{background:var(--paper)}
 .card .acts button{height:28px;padding:0 10px;border:1px solid var(--line);background:var(--white);border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer}
 .card .acts button:hover{background:var(--ink);color:var(--white);border-color:var(--ink)}
 .card.rel{border-left:4px solid var(--yellow)}
-/* sheet */
 .veil{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:20}
 .veil.on{display:block}
-.sheet{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--white);z-index:21;transform:translateX(100%);transition:transform .2s;overflow:auto;padding:32px 36px 48px;display:grid;gap:24px;align-content:start}
+.sheet{position:fixed;top:0;right:0;bottom:0;width:min(620px,100%);background:var(--white);z-index:21;transform:translateX(100%);transition:transform .2s;overflow:auto;padding:32px 36px 64px;display:grid;gap:22px;align-content:start}
 .sheet.on{transform:none}
 .sheet .x{position:absolute;top:20px;right:20px;width:40px;height:40px;border:1px solid var(--line);background:var(--white);border-radius:var(--r);cursor:pointer;font-size:18px}
 .sheet h2{font-size:34px;padding-right:48px}
@@ -76,8 +75,11 @@ body{background:var(--paper)}
 .sheet h3{font-size:13px;font-weight:600;color:var(--stone);margin-bottom:10px}
 .sheet .spec .row{padding:12px 0}
 .sheet .tags{display:flex;gap:6px;flex-wrap:wrap}
-.log{display:grid;gap:8px;font-size:14px}
-.log div{display:grid;grid-template-columns:96px 1fr;gap:12px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{height:38px;padding:0 14px;border:0;background:transparent;font-weight:600;font-size:14px;color:var(--stone);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--yellow)}
+.log{display:grid;gap:10px;font-size:14px}
+.log div.e{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:start}
 .log span{color:var(--stone);font-size:13px}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r)}
 .toggle b{font-weight:600;display:block}
@@ -86,301 +88,1026 @@ body{background:var(--paper)}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--white)}
 .sw.on{background:var(--ink)}
 .sw.on::after{left:23px;background:var(--yellow)}
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 18px;border-radius:var(--r);font-weight:600;font-size:14px;display:none;z-index:30}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 18px;border-radius:var(--r);font-weight:600;font-size:14px;display:none;z-index:30;max-width:min(680px,90vw);text-align:center}
 .toast.on{display:block}
-/* docs */
+.toast.bad{background:var(--warn)}
 .docs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.doc{background:var(--white);border:1px solid var(--line);padding:24px;display:grid;gap:12px;align-content:start;min-height:220px}
-.doc h3{font-size:22px}
+.doc{background:var(--white);border:1px solid var(--line);padding:24px;display:grid;gap:12px;align-content:start;min-height:200px}
+.doc h3{font-size:22px;color:var(--ink)}
 .doc p{font-size:14px;color:var(--stone)}
 .doc .btn{justify-self:start;margin-top:auto}
-.doc.y{background:var(--yellow)}
-.doc.y p{color:var(--ink)}
-/* mail */
 .auto{display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
 .auto .toggle{background:var(--white);border:0;border-radius:0;padding:18px 20px}
-@media (max-width:900px){.app{grid-template-columns:1fr}.rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:16px}.rail nav{display:flex;flex-wrap:wrap}.rail .me{display:none}.main{padding:24px 20px 80px}.stats{grid-template-columns:1fr 1fr}.docs{grid-template-columns:1fr}.top h1{font-size:34px}}
+.form{display:grid;gap:14px}
+.form .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bars{display:grid;gap:10px}
+.barrow{display:grid;grid-template-columns:160px 1fr 52px;gap:12px;align-items:center;font-size:14px}
+.barrow .t{height:14px;background:var(--wall);border-radius:var(--r);overflow:hidden}
+.barrow .t i{display:block;height:100%;background:var(--ink)}
+.barrow .t i.y{background:var(--yellow)}
+.gbar{height:10px;background:var(--wall);border-radius:var(--r);overflow:hidden;margin-top:8px}
+.gbar i{display:block;height:100%;background:var(--yellow)}
+.sig{display:inline-flex;align-items:center;gap:8px;font-weight:800}
+.sig i{display:block;width:34px;height:6px;background:var(--wall);border-radius:2px;position:relative;overflow:hidden}
+.sig i b{position:absolute;left:0;top:0;bottom:0;background:var(--ink)}
+.lwdoor{min-height:100vh;display:grid;place-items:center;padding:40px 20px;background:var(--paper)}
+.lwdoor-in{width:min(460px,100%);background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:40px}
+.lwdoor h1{font-size:48px}
+.lwerr{color:var(--warn);font-weight:600;font-size:14px;margin-bottom:14px}
+.load{padding:80px 0;color:var(--stone)}
+@media (max-width:900px){.app{grid-template-columns:1fr}.rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:16px}.rail nav{display:flex;flex-wrap:wrap}.rail .me{display:none}.main{padding:24px 20px 80px}.stats{grid-template-columns:1fr 1fr}.docs{grid-template-columns:1fr}.top h1{font-size:34px}.form .two{grid-template-columns:1fr}.barrow{grid-template-columns:110px 1fr 44px}}
 </style>
 </head>
 <body>
-<div class="app">
+<div id="gate"></div>
+<div class="app" id="app" style="display:none">
   <aside class="rail">
     <img src="livework-primary-all-yellow.png" alt="LIVE | WORK">
     <nav id="nav"></nav>
-    <div class="me"><b>Derek Germann</b>The Desk · LIVEWORK</div>
+    <div class="me"><b id="meName">Loading</b><span id="meRole"></span><br><a href="#" id="signout">Sign out</a></div>
   </aside>
-  <main class="main" id="main"></main>
+  <main class="main" id="main"><div class="load">Loading the desk.</div></main>
 </div>
 <div class="veil" id="veil"></div>
 <aside class="sheet" id="sheet"></aside>
 <div class="toast" id="toast"></div>
 
 <script>
-/* ===== DEMO DATA (replaced by the live layer) ===== */
-const DB = {
-  companies: [
-    {id:'c1', name:'Northwind Logistics', city:'Irvine, CA', kind:'retained', fee:'28% of first year base', billing:'One third at engagement, one third at shortlist, one third at start', guarantee:'12 months', contacts:[{name:'Maria Delgado', title:'VP Operations', email:'maria@northwind.example'}], contracts:[{name:'Retained search agreement', signed:'Aug 12, 2026', status:'signed'},{name:'Mutual NDA', signed:'Aug 12, 2026', status:'signed'}]},
-    {id:'c2', name:'Bellhaven Health', city:'Newport Beach, CA', kind:'contingent', fee:'22% of first year base', billing:'Net 30 from start date', guarantee:'90 days', contacts:[{name:'James Okafor', title:'Director of Talent', email:'james@bellhaven.example'}], contracts:[{name:'Contingent search agreement', signed:'Aug 28, 2026', status:'signed'}]},
-    {id:'c3', name:'Ardent Solar', city:'San Diego, CA', kind:'retained', fee:'30% of first year base', billing:'Half at engagement, half at start', guarantee:'12 months', contacts:[{name:'Priya Nair', title:'COO', email:'priya@ardent.example'}], contracts:[{name:'Retained search agreement', signed:'', status:'sent'}]},
-  ],
-  searches: [
-    {id:'s1', companyId:'c1', title:'Director of Fleet Operations', location:'Irvine, CA', comp:'$165k to $185k', status:'open', tags:['operations','fleet','logistics','leadership'], opened:'Aug 14, 2026'},
-    {id:'s2', companyId:'c1', title:'Warehouse Manager, Night Shift', location:'Santa Fe Springs, CA', comp:'$95k to $110k', status:'open', tags:['warehouse','operations','manager'], opened:'Aug 20, 2026'},
-    {id:'s3', companyId:'c2', title:'Clinical Recruiter', location:'Hybrid, Newport Beach', comp:'$85k plus bonus', status:'shortlist', tags:['recruiting','healthcare','hybrid'], opened:'Aug 29, 2026'},
-    {id:'s4', companyId:'c3', title:'VP of Engineering', location:'Remote, US', comp:'$240k plus equity', status:'open', tags:['engineering','leadership','remote','solar'], opened:'Sep 2, 2026'},
-    {id:'s5', companyId:'c2', title:'Controller', location:'Newport Beach, CA', comp:'$150k', status:'placed', tags:['finance','accounting','leadership'], opened:'Jul 8, 2026'},
-  ],
-  candidates: [
-    {id:'p1', name:'Elena Vasquez', title:'Regional Operations Manager', location:'Orange County, CA', email:'elena@example.com', tags:['operations','fleet','logistics','leadership'], premier:true, source:'Referral', added:'Aug 15, 2026', notes:'Ran 60 trucks across 3 sites. Wants a director seat. Available in 30 days.', resume:'vasquez-resume.pdf'},
-    {id:'p2', name:'Marcus Reed', title:'Fleet Supervisor', location:'Long Beach, CA', email:'marcus@example.com', tags:['fleet','operations'], premier:false, source:'LinkedIn', added:'Aug 16, 2026', notes:'Strong on routing software. Lighter on P&L.', resume:'reed-resume.pdf'},
-    {id:'p3', name:'Dana Whitfield', title:'Warehouse Manager', location:'Norwalk, CA', email:'dana@example.com', tags:['warehouse','operations','manager'], premier:true, source:'Inbound', added:'Aug 21, 2026', notes:'Currently on nights. Open to a lateral move for a better culture.', resume:'whitfield-resume.pdf'},
-    {id:'p4', name:'Samuel Park', title:'Shift Lead', location:'Anaheim, CA', email:'sam@example.com', tags:['warehouse','operations'], premier:false, source:'Job board', added:'Aug 22, 2026', notes:'', resume:'park-resume.pdf'},
-    {id:'p5', name:'Aisha Bello', title:'Senior Healthcare Recruiter', location:'Costa Mesa, CA', email:'aisha@example.com', tags:['recruiting','healthcare','hybrid'], premier:true, source:'Referral', added:'Aug 30, 2026', notes:'Placed 40 nurses last year. Wants hybrid.', resume:'bello-resume.pdf'},
-    {id:'p6', name:'Tom Lindqvist', title:'Recruiter', location:'Irvine, CA', email:'tom@example.com', tags:['recruiting'], premier:false, source:'LinkedIn', added:'Aug 31, 2026', notes:'', resume:'lindqvist-resume.pdf'},
-    {id:'p7', name:'Grace Chen', title:'VP Engineering', location:'Austin, TX', email:'grace@example.com', tags:['engineering','leadership','remote'], premier:true, source:'Network', added:'Sep 3, 2026', notes:'Scaled a 12 to 70 person org. Passive, needs a real mission. Solar is a pull.', resume:'chen-resume.pdf'},
-    {id:'p8', name:'Rafael Ortiz', title:'Engineering Manager', location:'Denver, CO', email:'rafael@example.com', tags:['engineering','remote','solar'], premier:false, source:'Inbound', added:'Sep 3, 2026', notes:'Came from a solar EPC. Manager level today.', resume:'ortiz-resume.pdf'},
-    {id:'p9', name:'Linda Moore', title:'Controller', location:'Newport Beach, CA', email:'linda@example.com', tags:['finance','accounting','leadership'], premier:false, source:'Referral', added:'Jul 10, 2026', notes:'Placed at Bellhaven. Started Aug 18.', resume:'moore-resume.pdf'},
-    {id:'p10', name:'Kevin Adeyemi', title:'Logistics Analyst', location:'Riverside, CA', email:'kevin@example.com', tags:['logistics','analytics'], premier:false, source:'Job board', added:'Sep 4, 2026', notes:'Good bench for future fleet roles.', resume:'adeyemi-resume.pdf'},
-  ],
-  pipeline: [
-    {id:'x1', candidateId:'p1', searchId:'s1', stage:'interview', released:true, log:[['Aug 15','Added to search'],['Aug 18','Screened by DG'],['Aug 19','Released to Northwind'],['Aug 26','Maria: advance'],['Aug 28','Interview set Sep 9']]},
-    {id:'x2', candidateId:'p2', searchId:'s1', stage:'screened', released:false, log:[['Aug 16','Added to search'],['Aug 20','Screened by DG']]},
-    {id:'x3', candidateId:'p10', searchId:'s1', stage:'sourced', released:false, log:[['Sep 4','Added to search']]},
-    {id:'x4', candidateId:'p3', searchId:'s2', stage:'released', released:true, log:[['Aug 21','Added to search'],['Aug 23','Screened by DG'],['Aug 25','Released to Northwind']]},
-    {id:'x5', candidateId:'p4', searchId:'s2', stage:'sourced', released:false, log:[['Aug 22','Added to search']]},
-    {id:'x6', candidateId:'p5', searchId:'s3', stage:'offer', released:true, log:[['Aug 30','Added to search'],['Sep 1','Released to Bellhaven'],['Sep 3','James: advance'],['Sep 5','Offer out, $88k']]},
-    {id:'x7', candidateId:'p6', searchId:'s3', stage:'passed', released:true, log:[['Aug 31','Added'],['Sep 2','Released'],['Sep 3','James: pass, wants more healthcare depth']]},
-    {id:'x8', candidateId:'p7', searchId:'s4', stage:'screened', released:false, log:[['Sep 3','Added to search'],['Sep 4','Screened by DG, premier']]},
-    {id:'x9', candidateId:'p8', searchId:'s4', stage:'sourced', released:false, log:[['Sep 3','Added to search']]},
-    {id:'x10', candidateId:'p9', searchId:'s5', stage:'placed', released:true, log:[['Jul 10','Added'],['Jul 14','Released'],['Jul 29','Offer accepted'],['Aug 18','Started']]},
-  ],
-  placements: [
-    {pipelineId:'x10', start:'Aug 18, 2026', base:'$150,000', fee:'$33,000', invoices:[{no:'LW-1001', due:'Sep 17, 2026', amount:'$33,000', status:'sent'}], guaranteeEnds:'Nov 16, 2026'},
-  ],
-  automations: [
-    {id:'a1', name:'Candidate released', trigger:'When a candidate is released to a search, the client contacts get a profile summary with a link to the room.', on:true},
-    {id:'a2', name:'Feedback requested', trigger:'Three days after a release with no client feedback, one reminder to the client.', on:true},
-    {id:'a3', name:'Stage changed', trigger:'Interview set, offer out, offer accepted, start confirmed. One line each, to the client.', on:true},
-    {id:'a4', name:'Weekly search summary', trigger:'Every Monday 7:00 AM Pacific, one email per open search: released, in interview, next step.', on:true},
-    {id:'a5', name:'Candidate outreach', trigger:'When you add a candidate to a search, a short note from you to the candidate with the role and a reply link.', on:false},
-    {id:'a6', name:'Invoice due', trigger:'Placement invoice sent on the start date and a reminder at due date plus 7.', on:true},
-    {id:'a7', name:'Guarantee ending', trigger:'Fourteen days before a guarantee period ends, a check in to the client.', on:true},
-  ],
-  queue: [
-    {to:'james@bellhaven.example', subject:'Offer out: Aisha Bello, Clinical Recruiter', when:'Today 9:12 AM', status:'sent'},
-    {to:'maria@northwind.example', subject:'Your searches this week', when:'Mon 7:00 AM', status:'sent'},
-    {to:'maria@northwind.example', subject:'Feedback on Dana Whitfield?', when:'Aug 28', status:'sent'},
-    {to:'priya@ardent.example', subject:'Your retained search agreement is ready to sign', when:'Sep 2', status:'sent'},
-    {to:'maria@northwind.example', subject:'Interview set: Elena Vasquez, Sep 9', when:'Aug 28', status:'sent'},
-  ]
+/* ============================================================
+   LIVEWORK desk, live layer.
+   Reads and writes go straight to PostgREST with the signed in
+   staff member's token. RLS staff_all via is_staff() is the guard.
+   Every write column name lives in MAP so a schema rename is a
+   one line fix here, not a hunt through the file.
+   ============================================================ */
+/* locked to schema v2 (column dump Sep 2026) */
+const MAP = {
+  company:   { name:'name', status:'status', kind:'engagement_type', city:'city', industry:'industry', notes:'notes' },
+  contact:   { company:'company_id', name:'name', email:'email', title:'title', phone:'phone', room:'room_access' },
+  search:    { company:'company_id', title:'title', location:'location', kind:'engagement_type', status:'status',
+               comp_min:'comp_low', comp_max:'comp_high', opened:'opened_at', notes:'notes', owner:'owner_id' },
+  candidate: { name:'name', email:'email', phone:'phone', title:'title', location:'location',
+               premier:'premier', premier_reason:'premier_reason', premier_by:'premier_by', notes:'summary' },
+  pipeline:  { search:'search_id', candidate:'candidate_id', stage:'stage', released:'released', released_at:'released_at', added_by:'added_by' },
+  activity:  { kind:'type', title:'title', body:'body', outcome:'outcome', company:'company_id', contact:'contact_id',
+               candidate:'candidate_id', search:'search_id', staff:'staff_id' },
+  task:      { title:'title', due:'due_on', done:'done', company:'company_id', candidate:'candidate_id', search:'search_id',
+               staff:'owner_id', created_by:'created_by' },
+  note:      { candidate:'candidate_id', search:'search_id', kind:'kind', strong:'strong_at', concerns:'concerns',
+               comp:'compensation', availability:'availability', next:'next_step', staff:'staff_id' },
+  pool:      { name:'name', note:'description', owner:'owner_id' },
+  poolmem:   { pool:'pool_id', candidate:'candidate_id' },
+  placement: { pipeline:'pipeline_id', start:'start_date', salary:'base_salary', fee:'fee_amount', fee_pct:'fee_pct',
+               guarantee_ends:'guarantee_ends', status:'status' },
+  invoice:   { company:'company_id', placement:'placement_id', amount:'amount', status:'status',
+               issued:'issued_at', due:'due_at', description:'description' },
+  automation:{ name:'name', trigger:'trigger', enabled:'enabled' }
 };
-const STAGES = ['sourced','screened','released','interview','offer','placed'];
-const STAGE_LABEL = {sourced:'Sourced',screened:'Screened',released:'Released',interview:'Interview',offer:'Offer',placed:'Placed',passed:'Passed'};
-const KIND = {retained:'Retained', contingent:'Contingent'};
+const STAGES = ['Sourced','Submitted','Interview','Offer','Placed','Passed'];
+const AUTOS = [
+  ['candidate_released','Candidate released','The client room gets an email the moment you release someone.'],
+  ['interview_set','Interview set','Candidate and client both get the time and the address.'],
+  ['weekly_digest','Weekly client digest','Monday morning, one email per open search.'],
+  ['stale_search','Stale search nudge','Tells you when a search has gone seven days without movement.'],
+  ['candidate_checkin','Candidate check in','Keeps a submitted candidate warm while the client decides.'],
+  ['placement_day_one','Day one note','Goes out to the placed candidate on their start date.'],
+  ['guarantee_close','Guarantee closed','Tells the client when the ninety days are clear.']
+];
 
-/* ===== helpers ===== */
 const $ = s => document.querySelector(s);
-const co = id => DB.companies.find(c=>c.id===id);
-const se = id => DB.searches.find(s=>s.id===id);
-const ca = id => DB.candidates.find(p=>p.id===id);
-const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const tags = a => `<div class="tags">${a.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`;
-const st = s => `<span class="st ${s}">${STAGE_LABEL[s]||s[0].toUpperCase()+s.slice(1)}</span>`;
-let toastT; function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
-function today(){return new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const F = (o,...keys) => { for(const k of keys){ if(o && o[k]!=null && o[k]!=='') return o[k]; } return ''; };
+const num = v => { const n = Number(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; };
+const money = n => n ? '$' + Math.round(num(n)).toLocaleString('en-US') : '';
+const day = d => d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+const short = d => d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+const ago = d => { if(!d) return ''; const n = Math.floor((Date.now()-new Date(d))/86400000);
+  return n<=0?'today':n===1?'yesterday':n+' days ago'; };
+const daysBetween = (a,b) => Math.max(0, Math.round((new Date(b||Date.now()) - new Date(a))/86400000));
+const idOf = x => x && (x.id != null ? x.id : x.uuid);
+let toastT; function toast(m, bad){ const t=$('#toast'); t.textContent=m; t.className='toast on'+(bad?' bad':'');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.className='toast', bad?6000:2400); }
 
-/* ===== views ===== */
-const VIEWS = {
-  overview:{label:'Overview'},
-  companies:{label:'Companies', n:()=>DB.companies.length},
-  searches:{label:'Searches', n:()=>DB.searches.filter(s=>s.status!=='closed'&&s.status!=='placed').length},
-  candidates:{label:'Candidates', n:()=>DB.candidates.length},
-  pipeline:{label:'Pipeline'},
-  placements:{label:'Placements', n:()=>DB.placements.length},
-  documents:{label:'Documents'},
-  mail:{label:'Mail'},
-};
-let view='overview', state={q:'', tag:null, premier:false, search:null};
-
-function nav(){
-  $('#nav').innerHTML = Object.entries(VIEWS).map(([k,v])=>`<button class="${k===view?'on':''}" data-v="${k}"><span>${v.label}</span>${v.n?`<span class="n">${v.n()}</span>`:''}</button>`).join('');
-  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{view=b.dataset.v;render()});
-}
-function render(){ nav(); $('#main').innerHTML = R[view](); bind(); }
-function head(title, acts=''){ return `<div class="top"><h1>${title}</h1><div class="acts">${acts}</div></div>`; }
-
-const R = {
-  overview(){
-    const open = DB.searches.filter(s=>['open','shortlist'].includes(s.status));
-    const released = DB.pipeline.filter(x=>x.released && !['placed','passed'].includes(x.stage));
-    const waiting = DB.pipeline.filter(x=>x.stage==='released');
-    const premier = DB.candidates.filter(p=>p.premier);
-    return head('Today.') + `
-      <div class="stats">
-        <div class="stat"><b>${open.length}</b><span>open searches</span></div>
-        <div class="stat"><b>${released.length}</b><span>candidates with clients</span></div>
-        <div class="stat y"><b>${waiting.length}</b><span>waiting on client feedback</span></div>
-        <div class="stat"><b>${premier.length}</b><span>premier candidates in the pool</span></div>
-      </div>
-      <div class="tools"><b>Needs a move</b></div>
-      <div class="tbl">
-        <div class="r h" style="grid-template-columns:2fr 2fr 1fr 1.4fr"><span>Candidate</span><span>Search</span><span>Stage</span><span>Last</span></div>
-        ${DB.pipeline.filter(x=>!['placed','passed'].includes(x.stage)).map(x=>`<div class="r" style="grid-template-columns:2fr 2fr 1fr 1.4fr" data-open="pipe:${x.id}"><b>${ca(x.candidateId).premier?'<span class="premier">':''}${esc(ca(x.candidateId).name)}${ca(x.candidateId).premier?'</span>':''}</b><span>${esc(se(x.searchId).title)}<br><span class="small muted">${esc(co(se(x.searchId).companyId).name)}</span></span>${st(x.stage)}<span class="small muted">${x.log.at(-1)[0]} · ${esc(x.log.at(-1)[1])}</span></div>`).join('')}
-      </div>`;
-  },
-  companies(){
-    return head('Companies.', `<button class="btn sm" data-new="company">Add a company</button>`) + `
-      <div class="tbl">
-        <div class="r h" style="grid-template-columns:2fr 1.2fr 1fr 1.4fr 1fr"><span>Company</span><span>City</span><span>Engagement</span><span>Fee</span><span>Open searches</span></div>
-        ${DB.companies.map(c=>`<div class="r" style="grid-template-columns:2fr 1.2fr 1fr 1.4fr 1fr" data-open="co:${c.id}"><b>${esc(c.name)}</b><span>${esc(c.city)}</span><span class="chip ${c.kind==='retained'?'y':''}">${KIND[c.kind]}</span><span>${esc(c.fee)}</span><span>${DB.searches.filter(s=>s.companyId===c.id&&['open','shortlist'].includes(s.status)).length}</span></div>`).join('')}
-      </div>`;
-  },
-  searches(){
-    return head('Searches.', `<button class="btn sm" data-new="search">Open a search</button>`) + `
-      <div class="tbl">
-        <div class="r h" style="grid-template-columns:2.2fr 1.6fr 1fr 1fr 2fr"><span>Role</span><span>Company</span><span>Status</span><span>In play</span><span>Tags</span></div>
-        ${DB.searches.map(s=>`<div class="r" style="grid-template-columns:2.2fr 1.6fr 1fr 1fr 2fr" data-open="se:${s.id}"><b>${esc(s.title)}<br><span class="small muted" style="font-weight:400">${esc(s.location)} · ${esc(s.comp)}</span></b><span>${esc(co(s.companyId).name)}</span>${st(s.status)}<span>${DB.pipeline.filter(x=>x.searchId===s.id&&!['placed','passed'].includes(x.stage)).length}</span>${tags(s.tags)}</div>`).join('')}
-      </div>`;
-  },
-  candidates(){
-    const all = [...new Set(DB.candidates.flatMap(p=>p.tags))].sort();
-    let list = DB.candidates.filter(p=>{
-      if(state.premier && !p.premier) return false;
-      if(state.tag && !p.tags.includes(state.tag)) return false;
-      if(state.q){const q=state.q.toLowerCase(); if(!(p.name+' '+p.title+' '+p.location+' '+p.tags.join(' ')+' '+p.notes).toLowerCase().includes(q)) return false;}
-      return true;
-    });
-    list.sort((a,b)=>(b.premier-a.premier)||a.name.localeCompare(b.name));
-    return head('Candidates.', `<button class="btn ghost sm" data-new="upload">Upload a batch</button><a class="btn sm" href="resume.html">Drop a resume</a>`) + `
-      <div class="tools">
-        <label class="search"><span class="muted">Search</span><input id="q" value="${esc(state.q)}" placeholder="name, title, note, tag"></label>
-        <button class="chip ${state.premier?'on':''}" data-prem>Premier only</button>
-        ${all.map(t=>`<button class="chip ${state.tag===t?'on':''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}
-      </div>
-      <div class="tbl">
-        <div class="r h" style="grid-template-columns:2fr 1.8fr 1.2fr 2fr 1fr"><span>Name</span><span>Title</span><span>Location</span><span>Tags</span><span>In searches</span></div>
-        ${list.length? list.map(p=>`<div class="r" style="grid-template-columns:2fr 1.8fr 1.2fr 2fr 1fr" data-open="ca:${p.id}"><b>${p.premier?`<span class="premier">${esc(p.name)}</span>`:esc(p.name)}</b><span>${esc(p.title)}</span><span>${esc(p.location)}</span>${tags(p.tags)}<span>${DB.pipeline.filter(x=>x.candidateId===p.id).length}</span></div>`).join('') : `<div class="empty">No one matches. Clear a filter or add a candidate.</div>`}
-      </div>`;
-  },
-  pipeline(){
-    const open = DB.searches.filter(s=>s.status!=='closed');
-    if(!state.search) state.search = open[0].id;
-    const s = se(state.search);
-    const rows = DB.pipeline.filter(x=>x.searchId===s.id);
-    return head('Pipeline.') + `
-      <div class="tools">
-        <label class="field" style="min-width:320px"><select id="pickSearch">${open.map(o=>`<option value="${o.id}" ${o.id===s.id?'selected':''}>${esc(o.title)} · ${esc(co(o.companyId).name)}</option>`).join('')}</select></label>
-        <span class="muted small">${KIND[co(s.companyId).kind]} · ${esc(co(s.companyId).fee)}</span>
-      </div>
-      <div class="board">
-        ${STAGES.map(stg=>{const cards=rows.filter(x=>x.stage===stg);return `<div class="col"><h4><span>${STAGE_LABEL[stg]}</span><span>${cards.length}</span></h4>${cards.map(x=>{const p=ca(x.candidateId);const i=STAGES.indexOf(stg);return `<div class="card ${x.released?'rel':''}" data-open="pipe:${x.id}"><b>${p.premier?`<span class="premier">${esc(p.name)}</span>`:esc(p.name)}</b><span class="m">${esc(p.title)}</span><span class="m">${x.released?'In the client room':'Not yet released'}</span><div class="acts">${i>0?`<button data-move="${x.id}:${STAGES[i-1]}">Back</button>`:''}${i<STAGES.length-1?`<button data-move="${x.id}:${STAGES[i+1]}">${STAGE_LABEL[STAGES[i+1]]}</button>`:''}<button data-move="${x.id}:passed">Pass</button></div></div>`}).join('')}</div>`}).join('')}
-      </div>
-      ${rows.some(x=>x.stage==='passed')?`<p class="small muted" style="margin-top:12px">Passed: ${rows.filter(x=>x.stage==='passed').map(x=>esc(ca(x.candidateId).name)).join(', ')}</p>`:''}`;
-  },
-  placements(){
-    return head('Placements.') + `
-      <div class="tbl">
-        <div class="r h" style="grid-template-columns:2fr 1.6fr 1fr 1fr 1.2fr 1.2fr"><span>Placed</span><span>Company</span><span>Start</span><span>Fee</span><span>Invoice</span><span>Guarantee ends</span></div>
-        ${DB.placements.map(pl=>{const x=DB.pipeline.find(x=>x.id===pl.pipelineId);const p=ca(x.candidateId);const s=se(x.searchId);const inv=pl.invoices[0];return `<div class="r" style="grid-template-columns:2fr 1.6fr 1fr 1fr 1.2fr 1.2fr" data-open="pipe:${x.id}"><b>${esc(p.name)}<br><span class="small muted" style="font-weight:400">${esc(s.title)}</span></b><span>${esc(co(s.companyId).name)}</span><span>${pl.start}</span><span>${pl.fee}</span><span>${st(inv.status)} <span class="small muted">${inv.no}</span></span><span>${pl.guaranteeEnds}</span></div>`}).join('')}
-      </div>`;
-  },
-  documents(){
-    return head('Documents.') + `
-      <p class="lede" style="margin-bottom:28px">Templates fill from the company record: fee, billing schedule, guarantee, contacts. Generated documents file under the company.</p>
-      <div class="docs">
-        <div class="doc y"><h3>Retained search agreement</h3><p>Exclusive engagement. Fee, three part billing schedule, timeline, replacement guarantee, off limits terms.</p><button class="btn ink sm" data-gen="retained">Generate</button></div>
-        <div class="doc"><h3>Contingent search agreement</h3><p>Pay on placement. Fee, invoice on start date, guarantee period, candidate ownership window.</p><button class="btn sm" data-gen="contingent">Generate</button></div>
-        <div class="doc"><h3>Placement confirmation</h3><p>Sent when an offer is accepted. Names the candidate, role, start date, base, fee and the invoice it triggers.</p><button class="btn sm" data-gen="placement">Generate</button></div>
-        <div class="doc"><h3>Candidate release</h3><p>The candidate's consent to present their profile to a named client.</p><button class="btn sm" data-gen="release">Generate</button></div>
-        <div class="doc"><h3>Mutual NDA</h3><p>Standard two way confidentiality for a search.</p><button class="btn sm" data-gen="nda">Generate</button></div>
-        <div class="doc"><h3>Invoice</h3><p>Fee invoice from a placement, numbered LW-1000 up, with the billing terms from the agreement.</p><button class="btn sm" data-gen="invoice">Generate</button></div>
-      </div>`;
-  },
-  mail(){
-    return head('Mail.') + `
-      <div class="tools"><b>Automations</b><span class="muted small">Sent from hello@livework.inc. Every email links back into the client room.</span></div>
-      <div class="auto" style="margin-bottom:32px">
-        ${DB.automations.map(a=>`<div class="toggle"><div><b>${esc(a.name)}</b><small>${esc(a.trigger)}</small></div><button class="sw ${a.on?'on':''}" data-auto="${a.id}" aria-label="Toggle ${esc(a.name)}"></button></div>`).join('')}
-      </div>
-      <div class="tools"><b>Recent</b></div>
-      <div class="tbl">
-        <div class="r h" style="grid-template-columns:1.6fr 2.4fr 1fr .8fr"><span>To</span><span>Subject</span><span>When</span><span>Status</span></div>
-        ${DB.queue.map(m=>`<div class="r" style="grid-template-columns:1.6fr 2.4fr 1fr .8fr;cursor:default"><span>${esc(m.to)}</span><b>${esc(m.subject)}</b><span class="small muted">${m.when}</span>${st(m.status)}</div>`).join('')}
-      </div>`;
+/* ---------- data layer ---------- */
+async function rest(path, opts){
+  opts = opts || {};
+  const h = { apikey: LW.anon, Authorization: 'Bearer ' + LWAuth.token(), 'content-type':'application/json' };
+  if(opts.prefer) h.Prefer = opts.prefer;
+  const r = await fetch(LW.url + '/rest/v1/' + path, { method: opts.method || 'GET', headers: h, body: opts.body });
+  const text = await r.text();
+  let j = null; try{ j = text ? JSON.parse(text) : null; }catch(e){ j = null; }
+  if(!r.ok){
+    const msg = (j && (j.message || j.hint || j.details)) || text || ('HTTP ' + r.status);
+    throw new Error(msg);
   }
-};
-
-/* ===== sheets ===== */
-function open(kind,id){
-  const el=$('#sheet'); el.innerHTML = `<button class="x" aria-label="Close">×</button>` + S[kind](id); el.classList.add('on'); $('#veil').classList.add('on');
-  el.querySelector('.x').onclick=close; bindSheet();
+  return j;
 }
-function close(){$('#sheet').classList.remove('on');$('#veil').classList.remove('on')}
-$('#veil').onclick=close;
-
-const S = {
-  co(id){const c=co(id);const ss=DB.searches.filter(s=>s.companyId===id);return `
-    <div><h2>${esc(c.name)}</h2><p class="sub">${esc(c.city)} · ${KIND[c.kind]} client</p></div>
-    <div><h3>Engagement terms</h3><div class="spec">
-      <div class="row"><b>Engagement</b><span>${KIND[c.kind]} search</span></div>
-      <div class="row"><b>Fee</b><span>${esc(c.fee)}</span></div>
-      <div class="row"><b>Billing</b><span>${esc(c.billing)}</span></div>
-      <div class="row"><b>Guarantee</b><span>${esc(c.guarantee)} replacement</span></div>
-    </div></div>
-    <div><h3>Contracts on file</h3><div class="spec">${c.contracts.map(k=>`<div class="row"><b>${esc(k.name)}</b><span>${st(k.status)} ${k.signed?`<span class="small muted">${k.signed}</span>`:''}</span></div>`).join('')}</div>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn ghost sm" data-gen="${c.kind}">Generate agreement</button><button class="btn ghost sm" data-up>Upload a signed copy</button></div></div>
-    <div><h3>People with room access</h3><div class="spec">${c.contacts.map(k=>`<div class="row"><b>${esc(k.name)}</b><span>${esc(k.title)}<br><span class="small muted">${esc(k.email)}</span></span></div>`).join('')}</div>
-      <button class="btn ghost sm" style="margin-top:12px" data-invite="${c.id}">Invite a contact</button></div>
-    <div><h3>Searches</h3><div class="spec">${ss.map(s=>`<div class="row" style="cursor:pointer" data-open="se:${s.id}"><b>${esc(s.title)}</b><span>${st(s.status)}</span></div>`).join('')||'<p class="muted small">No searches yet.</p>'}</div></div>`},
-  se(id){const s=se(id);const c=co(s.companyId);const rows=DB.pipeline.filter(x=>x.searchId===id);return `
-    <div><h2>${esc(s.title)}</h2><p class="sub">${esc(c.name)} · ${esc(s.location)} · ${esc(s.comp)}</p></div>
-    <div><h3>Status</h3><div style="display:flex;gap:8px;flex-wrap:wrap">${['open','shortlist','offer','placed','closed'].map(k=>`<button class="chip ${s.status===k?'on':''}" data-status="${s.id}:${k}">${k[0].toUpperCase()+k.slice(1)}</button>`).join('')}</div></div>
-    <div><h3>Tags on this search</h3>${tags(s.tags)}<p class="small muted" style="margin-top:8px">Candidates carrying these tags surface first when you add to this search.</p></div>
-    <div><h3>Terms</h3><div class="spec"><div class="row"><b>Engagement</b><span>${KIND[c.kind]}</span></div><div class="row"><b>Fee</b><span>${esc(c.fee)}</span></div><div class="row"><b>Opened</b><span>${s.opened}</span></div></div></div>
-    <div><h3>Candidates</h3><div class="spec">${rows.map(x=>{const p=ca(x.candidateId);return `<div class="row" style="cursor:pointer" data-open="pipe:${x.id}"><b>${p.premier?`<span class="premier">${esc(p.name)}</span>`:esc(p.name)}</b><span>${st(x.stage)} ${x.released?'<span class="small muted">· in room</span>':''}</span></div>`}).join('')||'<p class="muted small">Nobody in this search yet.</p>'}</div>
-      <button class="btn sm" style="margin-top:12px" data-addto="${s.id}">Add candidates from the pool</button></div>`},
-  ca(id){const p=ca(id);const rows=DB.pipeline.filter(x=>x.candidateId===id);return `
-    <div><h2>${esc(p.name)}</h2><p class="sub">${esc(p.title)} · ${esc(p.location)}</p></div>
-    <div class="toggle"><div><b>Premier candidate</b><small>Floats to the top of every search and is held for priority placement.</small></div><button class="sw ${p.premier?'on':''}" data-premier="${p.id}" aria-label="Toggle premier"></button></div>
-    <div><h3>Tags</h3>${tags(p.tags)}<div style="display:flex;gap:8px;margin-top:10px"><input class="chip" style="height:32px" placeholder="add a tag" data-addtag="${p.id}"></div></div>
-    <div><h3>Resume</h3><div class="spec"><div class="row"><b>${esc(p.resume)}</b><span><a href="#" data-noop>Open</a> · <a href="#" data-noop>Replace</a></span></div><div class="row"><b>Email</b><span>${esc(p.email)}</span></div><div class="row"><b>Source</b><span>${esc(p.source)} · added ${p.added}</span></div></div></div>
-    <div><h3>Notes</h3><div class="field"><textarea data-notes="${p.id}">${esc(p.notes)}</textarea></div></div>
-    <div><h3>Searches</h3><div class="spec">${rows.map(x=>{const s=se(x.searchId);return `<div class="row" style="cursor:pointer" data-open="pipe:${x.id}"><b>${esc(s.title)}<br><span class="small muted" style="font-weight:400">${esc(co(s.companyId).name)}</span></b><span>${st(x.stage)}</span></div>`}).join('')||'<p class="muted small">Not in a search yet.</p>'}</div>
-      <button class="btn sm" style="margin-top:12px" data-addcand="${p.id}">Add to a search</button></div>`},
-  pipe(id){const x=DB.pipeline.find(x=>x.id===id);const p=ca(x.candidateId);const s=se(x.searchId);const c=co(s.companyId);const pl=DB.placements.find(pl=>pl.pipelineId===id);return `
-    <div><h2>${esc(p.name)}</h2><p class="sub">${esc(s.title)} at ${esc(c.name)}</p></div>
-    <div class="toggle"><div><b>Released to ${esc(c.name)}</b><small>${x.released?'Their contacts can see this profile in the client room.':'Only you can see this profile. Flip to release.'}</small></div><button class="sw ${x.released?'on':''}" data-release="${x.id}" aria-label="Toggle release"></button></div>
-    <div><h3>Stage</h3><div style="display:flex;gap:8px;flex-wrap:wrap">${[...STAGES,'passed'].map(k=>`<button class="chip ${x.stage===k?'on':''}" data-move="${x.id}:${k}">${STAGE_LABEL[k]}</button>`).join('')}</div></div>
-    ${pl?`<div><h3>Placement</h3><div class="spec"><div class="row"><b>Start</b><span>${pl.start}</span></div><div class="row"><b>Base</b><span>${pl.base}</span></div><div class="row"><b>Fee</b><span>${pl.fee} (${esc(c.fee)})</span></div>${pl.invoices.map(i=>`<div class="row"><b>${i.no}</b><span>${i.amount} · due ${i.due} · ${st(i.status)}</span></div>`).join('')}<div class="row"><b>Guarantee</b><span>ends ${pl.guaranteeEnds}</span></div></div></div>`:''}
-    <div><h3>Paper trail</h3><div class="log">${x.log.map(l=>`<div><span>${esc(l[0])}</span><span style="color:var(--ink)">${esc(l[1])}</span></div>`).join('')}</div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" data-open="ca:${p.id}">Candidate record</button><button class="btn ghost sm" data-open="se:${s.id}">Search</button><button class="btn ghost sm" data-open="co:${c.id}">Company</button></div>`}
-};
-
-/* ===== actions ===== */
-function move(id,stage){const x=DB.pipeline.find(x=>x.id===id);x.stage=stage;x.log.push([today(),`Moved to ${STAGE_LABEL[stage]}`]);if(['released','interview','offer','placed'].includes(stage)&&!x.released){x.released=true;x.log.push([today(),`Released to ${co(se(x.searchId).companyId).name}`]);}toast(`${ca(x.candidateId).name}: ${STAGE_LABEL[stage]}`);render();if($('#sheet').classList.contains('on'))open('pipe',id)}
-function bind(){
-  document.querySelectorAll('[data-open]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [k,id]=el.dataset.open.split(':');open(k,id)});
-  document.querySelectorAll('[data-move]').forEach(b=>b.onclick=e=>{e.stopPropagation();const [id,s]=b.dataset.move.split(':');move(id,s)});
-  const q=$('#q'); if(q){q.oninput=()=>{state.q=q.value;const pos=q.selectionStart;render();$('#q').focus();$('#q').setSelectionRange(pos,pos)}}
-  document.querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{state.tag=state.tag===b.dataset.tag?null:b.dataset.tag;render()});
-  const pr=$('[data-prem]'); if(pr)pr.onclick=()=>{state.premier=!state.premier;render()};
-  const ps=$('#pickSearch'); if(ps)ps.onchange=()=>{state.search=ps.value;render()};
-  document.querySelectorAll('[data-auto]').forEach(b=>b.onclick=()=>{const a=DB.automations.find(a=>a.id===b.dataset.auto);a.on=!a.on;toast(`${a.name}: ${a.on?'on':'off'}`);render()});
-  document.querySelectorAll('[data-gen]').forEach(b=>b.onclick=()=>toast('Document generation wires up with the live layer'));
-  document.querySelectorAll('[data-new]').forEach(b=>b.onclick=()=>toast('Forms arrive with the live layer'));
+const readAll = t => rest(t + '?select=*&limit=2000').catch(e => { console.warn(t, e.message); return []; });
+async function insert(t, row){
+  const out = await rest(t, { method:'POST', body: JSON.stringify(row), prefer:'return=representation' });
+  return Array.isArray(out) ? out[0] : out;
 }
-function bindSheet(){
-  const sh=$('#sheet');
-  sh.querySelectorAll('[data-open]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [k,id]=el.dataset.open.split(':');open(k,id)});
-  sh.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>{const [id,s]=b.dataset.move.split(':');move(id,s)});
-  sh.querySelectorAll('[data-release]').forEach(b=>b.onclick=()=>{const x=DB.pipeline.find(x=>x.id===b.dataset.release);x.released=!x.released;x.log.push([today(),x.released?`Released to ${co(se(x.searchId).companyId).name}`:'Pulled from the client room']);toast(x.released?'Released. Client contacts get an email.':'Pulled from the room.');render();open('pipe',x.id)});
-  sh.querySelectorAll('[data-premier]').forEach(b=>b.onclick=()=>{const p=ca(b.dataset.premier);p.premier=!p.premier;toast(p.premier?'Marked premier':'Premier removed');render();open('ca',p.id)});
-  sh.querySelectorAll('[data-status]').forEach(b=>b.onclick=()=>{const [id,s]=b.dataset.status.split(':');se(id).status=s;render();open('se',id)});
-  sh.querySelectorAll('[data-addtag]').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter'&&i.value.trim()){const p=ca(i.dataset.addtag);p.tags.push(i.value.trim().toLowerCase());render();open('ca',p.id)}});
-  sh.querySelectorAll('[data-notes]').forEach(t=>t.onchange=()=>{ca(t.dataset.notes).notes=t.value;toast('Notes saved')});
-  sh.querySelectorAll('[data-gen],[data-up],[data-invite],[data-addto],[data-addcand],[data-noop]').forEach(b=>b.onclick=e=>{e.preventDefault();toast('Wires up with the live layer')});
+async function patch(t, id, row){
+  const out = await rest(t + '?id=eq.' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify(row), prefer:'return=representation' });
+  return Array.isArray(out) ? out[0] : out;
 }
-render();
+function clean(o){ const x = {}; for(const k in o){ if(o[k] !== undefined && o[k] !== '') x[k] = o[k]; } return x; }
+async function tryWrite(fn, okMsg){
+  try{ const r = await fn(); if(okMsg) toast(okMsg); return r; }
+  catch(e){ toast('Did not save. ' + e.message, true); console.error(e); return null; }
+}
+
+/* ---------- store ---------- */
+const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_tags:[], candidates:[],
+  candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
+  automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[],
+  pools:[], pool_members:[] };
+let ME = null;
+
+async function loadAll(){
+  const keys = Object.keys(S);
+  const rows = await Promise.all(keys.map(readAll));
+  keys.forEach((k,i) => S[k] = rows[i] || []);
+  enrich();
+}
+/* read side aliases so every screen sees one vocabulary */
+function enrich(){
+  S.placements.forEach(p => { const pp = byId(S.pipeline, p.pipeline_id) || {};
+    p.candidate_id = pp.candidate_id; p.search_id = pp.search_id; p.staff_id = pp.added_by;
+    p.company_id = (search(pp.search_id) || {}).company_id;
+    if(p.salary == null) p.salary = p.base_salary; if(p.fee == null) p.fee = p.fee_amount; });
+  S.activity.forEach(a => { if(a.kind == null) a.kind = a.type; if(!a.created_at) a.created_at = a.occurred_at; });
+  S.tasks.forEach(t => { if(t.due_at == null) t.due_at = t.due_on; if(t.staff_id == null) t.staff_id = t.owner_id; });
+  S.outbound.forEach(o => { if(!o.created_at) o.created_at = o.sent_at || o.queued_at; });
+  S.import_sources.forEach(x => { x.name = x.label || x.provider; x.status = x.enabled ? 'On' : (x.api_key ? 'Key set, off' : 'Key not set'); });
+  S.automations.forEach(a => { a.key = a.trigger || a.name; });
+  S.searches.forEach(x => { if(x.comp_min == null) x.comp_min = x.comp_low; if(x.comp_max == null) x.comp_max = x.comp_high;
+    if(x.kind == null) x.kind = x.engagement_type; });
+  S.companies.forEach(c => { if(c.kind == null) c.kind = c.engagement_type; if(c.fee == null && c.fee_pct != null) c.fee = c.fee_pct + '% of first year base'; });
+  S.pools.forEach(p => { if(p.note == null) p.note = p.description; });
+  S.interview_notes.forEach(n => { if(n.comp == null) n.comp = n.compensation; });
+  S.candidates.forEach(c => { if(c.notes == null) c.notes = c.summary; });
+}
+
+/* ---------- lookups ---------- */
+const byId = (arr,id) => arr.filter(x => String(idOf(x)) === String(id))[0] || null;
+const company = id => byId(S.companies, id);
+const cand = id => byId(S.candidates, id);
+const search = id => byId(S.searches, id);
+const cname = id => F(company(id) || {}, 'name','company_name','title') || 'No company';
+const sname = id => F(search(id) || {}, 'title','role','job_title','name') || 'Search';
+const pname = id => F(cand(id) || {}, 'name','full_name') || 'Candidate';
+const stageOf = p => { const s = F(p,'stage','status'); const i = STAGES.map(x=>x.toLowerCase()).indexOf(String(s).toLowerCase());
+  return i >= 0 ? STAGES[i] : (s || 'Sourced'); };
+const stageIx = p => Math.max(0, STAGES.indexOf(stageOf(p)));
+const isReleased = p => p[MAP.pipeline.released] === true || p.release === true || p.released_at != null;
+const isOpen = s => String(F(s,'status') || 'open').toLowerCase() !== 'closed';
+const tagNames = cid => S.candidate_tags.filter(t => String(t.candidate_id) === String(cid))
+  .map(t => { const tag = byId(S.tags, t.tag_id); return tag ? F(tag,'name','label') : ''; }).filter(Boolean);
+const rowsFor = cid => S.pipeline.filter(p => String(p.candidate_id) === String(cid));
+const contactsOf = coid => S.contacts.filter(c => String(c.company_id) === String(coid));
+
+/* outcome only. submit to interview, interview to offer, placement history, recency. never sentiment. */
+function signal(c){
+  const rows = rowsFor(idOf(c));
+  const sub = rows.filter(p => stageIx(p) >= 1).length;
+  if(!sub) return null;
+  const int = rows.filter(p => stageIx(p) >= 2 && stageOf(p) !== 'Passed').length;
+  const off = rows.filter(p => stageIx(p) >= 3 && stageOf(p) !== 'Passed').length;
+  const plc = S.placements.filter(p => String(p.candidate_id) === String(idOf(c))).length;
+  const s2i = int / sub;
+  const i2o = int ? off / int : 0;
+  const last = [...S.activity.filter(a => String(a.candidate_id) === String(idOf(c))).map(a => a.created_at),
+                F(c,'last_touch_at','created_at')].filter(Boolean).sort().pop();
+  const d = last ? daysBetween(last) : 400;
+  const rec = d <= 14 ? 1 : d <= 45 ? .7 : d <= 120 ? .4 : .1;
+  return Math.round(40*s2i + 25*i2o + 20*Math.min(plc,2)/2 + 15*rec);
+}
+const sigBar = v => v == null ? '<span class="muted small">Not submitted yet</span>'
+  : '<span class="sig"><i><b style="width:' + v + '%"></b></i>' + v + '</span>';
+</script>
+
+<script>
+/* ============================ views ============================ */
+const NAV = [
+  ['today','Today'],['companies','Companies'],['searches','Searches'],['candidates','Candidates'],
+  ['pools','Pools'],['pipeline','Pipeline'],['activity','Activity'],['placements','Placements'],
+  ['invoices','Invoices'],['mail','Mail'],['reports','Reports'],['settings','Settings']
+];
+let VIEW = 'today';
+let Q = { cand:'', co:'', tag:'', searchTab:'open' };
+
+function counts(k){
+  if(k==='today') return S.tasks.filter(t => !t.done).length;
+  if(k==='companies') return S.companies.length;
+  if(k==='searches') return S.searches.filter(isOpen).length;
+  if(k==='candidates') return S.candidates.length;
+  if(k==='pools') return S.pools.length;
+  if(k==='pipeline') return S.pipeline.filter(p => stageOf(p)!=='Placed' && stageOf(p)!=='Passed').length;
+  if(k==='placements') return S.placements.length;
+  if(k==='invoices') return S.invoices.filter(i => String(F(i,'status')).toLowerCase()!=='paid').length;
+  if(k==='pools') return S.pools.length;
+  return '';
+}
+function drawNav(){
+  $('#nav').innerHTML = NAV.map(([k,l]) =>
+    '<button data-v="' + k + '" class="' + (VIEW===k?'on':'') + '">' + l +
+    '<span class="n">' + (counts(k)||'') + '</span></button>').join('');
+  document.querySelectorAll('#nav button').forEach(b => b.onclick = () => go(b.dataset.v));
+}
+function go(v){ VIEW = v; closeSheet(); drawNav(); draw(); window.scrollTo(0,0); }
+function head(title, acts){
+  return '<div class="top"><h1>' + title + '</h1><div class="acts">' + (acts||'') + '</div></div>';
+}
+function table(cols, rows, grid){
+  return '<div class="tbl"><div class="r h" style="grid-template-columns:' + grid + '">' +
+    cols.map(c => '<span>' + c + '</span>').join('') + '</div>' +
+    (rows.length ? rows.join('') : '<div class="empty">Nothing here yet.</div>') + '</div>';
+}
+function draw(){
+  const m = $('#main');
+  m.innerHTML = ({
+    today: vToday, companies: vCompanies, searches: vSearches, candidates: vCandidates,
+    pools: vPools, pipeline: vPipeline, activity: vActivity, placements: vPlacements,
+    invoices: vInvoices, mail: vMail, reports: vReports, settings: vSettings
+  }[VIEW])();
+  wire();
+}
+
+/* ---------- Today ---------- */
+function vToday(){
+  const openS = S.searches.filter(isOpen);
+  const live = S.pipeline.filter(p => stageOf(p)!=='Placed' && stageOf(p)!=='Passed');
+  const openT = S.tasks.filter(t => !t.done);
+  const dueToday = openT.filter(t => F(t,'due_at') && new Date(F(t,'due_at')) <= new Date(new Date().setHours(23,59,59)));
+  const calls = openT.filter(t => /call/i.test(F(t,'title','body')));
+  const stale = openS.filter(s => {
+    const last = S.activity.filter(a => String(a.search_id)===String(idOf(s))).map(a=>a.created_at).sort().pop();
+    return daysBetween(last || F(s,'opened_at','created_at')) >= 7;
+  });
+  const held = S.pipeline.filter(p => stageIx(p) >= 1 && !isReleased(p) && stageOf(p)!=='Passed' && stageOf(p)!=='Placed');
+  const overdue = S.invoices.filter(i => F(i,'due_at') && new Date(F(i,'due_at')) < new Date() && String(F(i,'status')).toLowerCase()!=='paid');
+  const premier = S.candidates.filter(c => c[MAP.candidate.premier] === true);
+
+  const callRow = t => {
+    const c = t.candidate_id ? cand(t.candidate_id) : null;
+    const co = t.company_id ? company(t.company_id) : null;
+    const who = c ? F(c,'name','full_name') : co ? F(co,'name') : 'Someone';
+    const phone = c ? F(c,'phone') : (co ? (F(contactsOf(idOf(co))[0]||{},'phone')) : '');
+    return '<div class="r" style="grid-template-columns:1.4fr 1.6fr 150px 120px" data-task="' + idOf(t) + '">' +
+      '<b>' + esc(who) + '</b><span class="muted">' + esc(F(t,'title','body')) + '</span>' +
+      '<span>' + (phone ? '<a class="btn sm ghost" href="tel:' + esc(String(phone).replace(/[^0-9+]/g,'')) + '">Call ' + esc(phone) + '</a>' : '<span class="muted small">No number</span>') + '</span>' +
+      '<span><button class="btn sm ghost" data-logcall="' + (c?idOf(c):'') + '|' + (co?idOf(co):'') + '">Log it</button></span></div>';
+  };
+
+  return head('Today.',
+      '<button class="btn ghost" data-new="task">Add a task</button>' +
+      '<button class="btn ghost" data-new="visit">Visit note</button>' +
+      '<button class="btn" data-new="call">Log a call</button>') +
+    '<div class="stats">' +
+      '<div class="stat"><b>' + openS.length + '</b><span>Open searches</span></div>' +
+      '<div class="stat"><b>' + live.length + '</b><span>Candidates in play</span></div>' +
+      '<div class="stat y"><b>' + openT.length + '</b><span>Open tasks, ' + dueToday.length + ' due today</span></div>' +
+      '<div class="stat"><b>' + S.placements.filter(p => daysBetween(F(p,'start_date','created_at')) <= 90).length + '</b><span>Placements inside the guarantee</span></div>' +
+    '</div>' +
+    '<div class="sec"><h2>The queue.</h2><span class="muted small">' + openT.length + ' open</span></div>' +
+    table(['Task','Who','Due','Done'],
+      openT.slice(0,12).map(t => '<div class="r" style="grid-template-columns:2fr 1.2fr 120px 90px" data-task="' + idOf(t) + '">' +
+        '<b>' + esc(F(t,'title','body')) + '</b>' +
+        '<span class="muted">' + esc(t.candidate_id ? pname(t.candidate_id) : t.company_id ? cname(t.company_id) : '') + '</span>' +
+        '<span class="' + (F(t,'due_at') && new Date(F(t,'due_at')) < new Date() ? 'st overdue' : 'muted') + '">' + (short(F(t,'due_at')) || 'No date') + '</span>' +
+        '<span><button class="btn sm ghost" data-done="' + idOf(t) + '">Done</button></span></div>'),
+      '2fr 1.2fr 120px 90px') +
+    '<div class="sec"><h2>Calls to make.</h2></div>' +
+    table(['Who','Why','Number','Log'], calls.slice(0,10).map(callRow), '1.4fr 1.6fr 150px 120px') +
+    '<div class="sec"><h2>Alerts.</h2></div>' +
+    '<div class="docs">' +
+      '<div class="doc"><h3>' + stale.length + ' quiet searches.</h3><p>Seven days or more with no logged activity. They go cold fast.</p><button class="btn ghost" data-v="searches">Open searches</button></div>' +
+      '<div class="doc"><h3>' + held.length + ' held back.</h3><p>Submitted internally but not released to the client room yet.</p><button class="btn ghost" data-v="pipeline">Open the pipeline</button></div>' +
+      '<div class="doc"><h3>' + overdue.length + ' invoices past due.</h3><p>Terms are net thirty from the start date.</p><button class="btn ghost" data-v="invoices">Open invoices</button></div>' +
+    '</div>' +
+    '<div class="sec"><h2>Premier bench.</h2><span class="muted small">Human flag, always with a reason</span></div>' +
+    table(['Candidate','Title','Why premier','Signal'],
+      premier.slice(0,10).map(c => '<div class="r" style="grid-template-columns:1.2fr 1.2fr 2fr 120px" data-cand="' + idOf(c) + '">' +
+        '<b class="premier">' + esc(F(c,'name','full_name')) + '</b>' +
+        '<span class="muted">' + esc(F(c,'title','headline')) + '</span>' +
+        '<span class="muted">' + esc(F(c,'premier_reason','premier_note') || 'No reason recorded') + '</span>' +
+        '<span>' + sigBar(signal(c)) + '</span></div>'),
+      '1.2fr 1.2fr 2fr 120px');
+}
+
+/* ---------- Companies ---------- */
+function vCompanies(){
+  const q = Q.co.toLowerCase();
+  const list = S.companies.filter(c => !q || F(c,'name').toLowerCase().includes(q));
+  return head('Companies.', '<button class="btn" data-new="company">Add a company</button>') +
+    '<div class="tools"><div class="search"><input id="qco" placeholder="Search companies" value="' + esc(Q.co) + '"></div></div>' +
+    table(['Company','Open searches','In play','Placements','Last touch'],
+      list.map(c => {
+        const ss = S.searches.filter(s => String(s.company_id)===String(idOf(c)));
+        const ids = ss.map(s => String(idOf(s)));
+        const play = S.pipeline.filter(p => ids.includes(String(p.search_id)) && stageOf(p)!=='Placed' && stageOf(p)!=='Passed').length;
+        const last = S.activity.filter(a => String(a.company_id)===String(idOf(c))).map(a=>a.created_at).sort().pop();
+        return '<div class="r" style="grid-template-columns:2fr 130px 100px 110px 140px" data-co="' + idOf(c) + '">' +
+          '<div><b>' + esc(F(c,'name')) + '</b><br><span class="muted small">' + esc(F(c,'city','location','industry')) + '</span></div>' +
+          '<span>' + ss.filter(isOpen).length + '</span><span>' + play + '</span>' +
+          '<span>' + S.placements.filter(p => String(p.company_id)===String(idOf(c))).length + '</span>' +
+          '<span class="muted small">' + (last ? ago(last) : 'No activity') + '</span></div>';
+      }), '2fr 130px 100px 110px 140px');
+}
+
+/* ---------- Searches ---------- */
+function vSearches(){
+  const open = S.searches.filter(isOpen), closed = S.searches.filter(s => !isOpen(s));
+  const list = Q.searchTab === 'open' ? open : closed;
+  const fill = s => {
+    const pl = S.placements.filter(p => String(p.search_id)===String(idOf(s)))[0];
+    const start = F(s,'opened_at','created_at');
+    if(pl) return daysBetween(start, F(pl,'start_date','created_at')) + ' days to fill';
+    return daysBetween(start) + ' days open';
+  };
+  return head('Searches.', '<button class="btn" data-new="search">Open a search</button>') +
+    '<div class="tools"><button class="chip ' + (Q.searchTab==='open'?'on':'') + '" data-stab="open">Open ' + open.length + '</button>' +
+    '<button class="chip ' + (Q.searchTab==='closed'?'on':'') + '" data-stab="closed">Closed ' + closed.length + '</button></div>' +
+    table(['Search','Company','Stage spread','Days','Status'],
+      list.map(s => {
+        const rows = S.pipeline.filter(p => String(p.search_id)===String(idOf(s)));
+        const spread = STAGES.slice(0,5).map(st => rows.filter(p => stageOf(p)===st).length).join(' / ');
+        return '<div class="r" style="grid-template-columns:2fr 1.2fr 160px 130px 110px" data-se="' + idOf(s) + '">' +
+          '<div><b>' + esc(F(s,'title','role','job_title')) + '</b><br><span class="muted small">' + esc(F(s,'location')) + '</span></div>' +
+          '<span class="muted">' + esc(cname(s.company_id)) + '</span>' +
+          '<span class="muted small">' + spread + '</span>' +
+          '<span class="muted small">' + fill(s) + '</span>' +
+          '<span class="st ' + (isOpen(s)?'open':'placed') + '">' + (isOpen(s)?'Open':'Closed') + '</span></div>';
+      }), '2fr 1.2fr 160px 130px 110px');
+}
+
+/* ---------- Candidates ---------- */
+function vCandidates(){
+  const q = Q.cand.toLowerCase();
+  const all = S.candidates.filter(c => {
+    const hay = (F(c,'name','full_name') + ' ' + F(c,'title','headline') + ' ' + F(c,'location')).toLowerCase();
+    if(q && !hay.includes(q)) return false;
+    if(Q.tag && !tagNames(idOf(c)).includes(Q.tag)) return false;
+    return true;
+  });
+  const tags = S.tags.map(t => F(t,'name','label')).filter(Boolean);
+  return head('Candidates.',
+      '<a class="btn ghost" href="resume.html">Drop a resume</a>' +
+      '<button class="btn" data-new="candidate">Add a candidate</button>') +
+    '<div class="tools"><div class="search"><input id="qcand" placeholder="Name, title, location" value="' + esc(Q.cand) + '"></div>' +
+      '<button class="chip ' + (Q.tag?'':'on') + '" data-tag="">All</button>' +
+      tags.map(t => '<button class="chip ' + (Q.tag===t?'on':'') + '" data-tag="' + esc(t) + '">' + esc(t) + '</button>').join('') +
+    '</div>' +
+    table(['Candidate','Tags','Submitted','Interviewed','Signal'],
+      all.map(c => {
+        const rows = rowsFor(idOf(c));
+        return '<div class="r" style="grid-template-columns:1.6fr 1.6fr 110px 120px 130px" data-cand="' + idOf(c) + '">' +
+          '<div><b class="' + (c[MAP.candidate.premier]===true?'premier':'') + '">' + esc(F(c,'name','full_name')) + '</b><br><span class="muted small">' + esc(F(c,'title','headline')) + ' ' + esc(F(c,'location')?'· '+F(c,'location'):'') + '</span></div>' +
+          '<span class="tags">' + tagNames(idOf(c)).slice(0,4).map(t => '<span class="chip">' + esc(t) + '</span>').join('') + '</span>' +
+          '<span>' + rows.filter(p => stageIx(p)>=1).length + '</span>' +
+          '<span>' + rows.filter(p => stageIx(p)>=2 && stageOf(p)!=='Passed').length + '</span>' +
+          '<span>' + sigBar(signal(c)) + '</span></div>';
+      }), '1.6fr 1.6fr 110px 120px 130px');
+}
+
+/* ---------- Pools ---------- */
+function vPools(){
+  return head('Pools.', '<button class="btn" data-new="pool">Name a pool</button>') +
+    '<p class="lede" style="margin-bottom:24px">A pool is a standing shortlist. Build it once, pull from it every time a search like it opens.</p>' +
+    (S.pools.length ? '<div class="docs">' + S.pools.map(p => {
+      const mem = S.pool_members.filter(m => String(m.pool_id)===String(idOf(p)));
+      const prem = mem.filter(m => { const c = cand(m.candidate_id); return c && c[MAP.candidate.premier]===true; }).length;
+      return '<div class="doc"><h3>' + esc(F(p,'name')) + '</h3>' +
+        '<p>' + esc(F(p,'note','description') || 'No note on this pool yet.') + '</p>' +
+        '<p class="muted small">' + mem.length + ' candidates, ' + prem + ' premier</p>' +
+        '<button class="btn ghost" data-pool="' + idOf(p) + '">Open the pool</button></div>';
+    }).join('') + '</div>' : '<div class="tbl"><div class="empty">No pools yet. Name one and start dropping candidates in.</div></div>');
+}
+
+/* ---------- Pipeline ---------- */
+function vPipeline(){
+  const cols = STAGES.map(st => {
+    const rows = S.pipeline.filter(p => stageOf(p) === st);
+    return '<div class="col"><h4><span>' + st + '</span><span>' + rows.length + '</span></h4>' +
+      rows.map(p => '<div class="card ' + (isReleased(p)?'rel':'') + '" data-pipe="' + idOf(p) + '">' +
+        '<b>' + esc(pname(p.candidate_id)) + '</b>' +
+        '<span class="m">' + esc(sname(p.search_id)) + '</span>' +
+        '<span class="m">' + esc(cname((search(p.search_id)||{}).company_id)) + '</span>' +
+        '<span class="m" style="margin-top:6px">' + (isReleased(p) ? 'Released to the client' : 'Held') + '</span>' +
+        '<div class="acts">' +
+          (stageIx(p) < 4 ? '<button data-adv="' + idOf(p) + '">Advance</button>' : '') +
+          '<button data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button>' +
+          '<button data-note="' + p.candidate_id + '|' + p.search_id + '">Interview note</button>' +
+        '</div></div>').join('') + '</div>';
+  }).join('');
+  return head('Pipeline.', '<button class="btn ghost" data-new="pipeline">Submit a candidate</button>') +
+    '<p class="lede" style="margin-bottom:20px">A yellow edge means released. Released is exactly what the client sees in their room, nothing else.</p>' +
+    '<div class="board">' + cols + '</div>';
+}
+
+/* ---------- Activity ---------- */
+function vActivity(){
+  const rows = [...S.activity].sort((a,b) => String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,200);
+  return head('Activity.',
+      '<button class="btn ghost" data-new="visit">Visit note</button><button class="btn" data-new="call">Log a call</button>') +
+    table(['When','Kind','Who','What'],
+      rows.map(a => '<div class="r" style="grid-template-columns:150px 110px 1.2fr 2.4fr">' +
+        '<span class="muted small">' + short(a.created_at) + ' · ' + ago(a.created_at) + '</span>' +
+        '<span class="st ' + esc(String(F(a,'kind')).toLowerCase()) + '">' + esc(F(a,'kind') || 'note') + '</span>' +
+        '<span class="muted">' + esc(a.candidate_id ? pname(a.candidate_id) : a.company_id ? cname(a.company_id) : a.search_id ? sname(a.search_id) : '') + '</span>' +
+        '<span>' + esc(F(a,'body','note','detail')) + '</span></div>'),
+      '150px 110px 1.2fr 2.4fr');
+}
+
+/* ---------- Placements ---------- */
+function vPlacements(){
+  return head('Placements.', '<button class="btn" data-new="placement">Record a placement</button>') +
+    '<div class="stats">' +
+      '<div class="stat"><b>' + S.placements.length + '</b><span>All time</span></div>' +
+      '<div class="stat"><b>' + money(S.placements.reduce((n,p) => n + num(F(p,'fee')), 0)) + '</b><span>Fees earned</span></div>' +
+      '<div class="stat y"><b>' + S.placements.filter(p => daysBetween(F(p,'start_date','created_at')) <= 90).length + '</b><span>Inside the ninety day guarantee</span></div>' +
+      '<div class="stat"><b>' + money(S.placements.length ? S.placements.reduce((n,p) => n + num(F(p,'salary')), 0) / S.placements.length : 0) + '</b><span>Average salary placed</span></div>' +
+    '</div>' +
+    table(['Candidate','Company','Started','Salary','Fee','Guarantee'],
+      S.placements.map(p => {
+        const d = daysBetween(F(p,'start_date','created_at'));
+        const pct = Math.min(100, Math.round(d / 90 * 100));
+        return '<div class="r" style="grid-template-columns:1.3fr 1.3fr 130px 120px 120px 1fr" data-place="' + idOf(p) + '">' +
+          '<b>' + esc(pname(p.candidate_id)) + '</b>' +
+          '<span class="muted">' + esc(cname(p.company_id || (search(p.search_id)||{}).company_id)) + '</span>' +
+          '<span class="muted small">' + day(F(p,'start_date','created_at')) + '</span>' +
+          '<span>' + money(F(p,'salary')) + '</span><span>' + money(F(p,'fee')) + '</span>' +
+          '<div><span class="muted small">' + (d >= 90 ? 'Cleared' : (90 - d) + ' days left') + '</span><div class="gbar"><i style="width:' + pct + '%"></i></div></div></div>';
+      }), '1.3fr 1.3fr 130px 120px 120px 1fr');
+}
+
+/* ---------- Invoices ---------- */
+function vInvoices(){
+  const age = i => {
+    if(String(F(i,'status')).toLowerCase() === 'paid') return 'Paid';
+    const d = F(i,'due_at') ? daysBetween(F(i,'due_at')) : 0;
+    if(!F(i,'due_at')) return 'No due date';
+    return new Date(F(i,'due_at')) < new Date() ? d + ' days past due' : 'Due in ' + daysBetween(new Date(), F(i,'due_at')) + ' days';
+  };
+  const out = S.invoices.filter(i => String(F(i,'status')).toLowerCase() !== 'paid');
+  return head('Invoices.', '<button class="btn" data-new="invoice">Raise an invoice</button>') +
+    '<div class="stats">' +
+      '<div class="stat"><b>' + money(out.reduce((n,i) => n + num(F(i,'amount')), 0)) + '</b><span>Outstanding</span></div>' +
+      '<div class="stat y"><b>' + money(S.invoices.filter(i => String(F(i,'status')).toLowerCase()==='paid').reduce((n,i) => n + num(F(i,'amount')), 0)) + '</b><span>Collected</span></div>' +
+      '<div class="stat"><b>' + out.filter(i => F(i,'due_at') && new Date(F(i,'due_at')) < new Date()).length + '</b><span>Past due</span></div>' +
+      '<div class="stat"><b>20%</b><span>Placement fee, net thirty</span></div>' +
+    '</div>' +
+    table(['Invoice','Company','Amount','Aging','Status','PDF'],
+      S.invoices.map(i => '<div class="r" style="grid-template-columns:130px 1.4fr 130px 1fr 120px 140px" data-inv="' + idOf(i) + '">' +
+        '<b>' + esc(F(i,'invoice_no','number') || 'Draft') + '</b>' +
+        '<span class="muted">' + esc(cname(i.company_id)) + '</span>' +
+        '<span>' + money(F(i,'amount')) + '</span>' +
+        '<span class="muted small">' + age(i) + '</span>' +
+        '<span class="st ' + esc(String(F(i,'status')||'').toLowerCase()) + '">' + esc(F(i,'status') || 'Draft') + '</span>' +
+        '<span><button class="btn sm ghost" data-pdf="' + idOf(i) + '">Download PDF</button></span></div>'),
+      '130px 1.4fr 130px 1fr 120px 140px') +
+    '<p class="muted small" style="margin-top:16px">Invoices are issued by GERMANN INC dba LIVEWORK. Numbering runs from 1001.</p>';
+}
+
+/* ---------- Mail ---------- */
+function vMail(){
+  const on = k => { const a = S.automations.filter(x => x.trigger === k || x.name === k)[0]; return a && a[MAP.automation.enabled] === true; };
+  return head('Mail.', '') +
+    '<div class="sec"><h2>Automations.</h2><span class="muted small">Every send is logged below</span></div>' +
+    '<div class="auto">' + AUTOS.map(([k,l,d]) =>
+      '<div class="toggle"><div><b>' + l + '</b><small>' + d + '</small></div>' +
+      '<button class="sw ' + (on(k)?'on':'') + '" data-auto="' + k + '" aria-label="' + l + '"></button></div>').join('') + '</div>' +
+    '<div class="sec"><h2>Outbound.</h2></div>' +
+    table(['Sent','To','Subject','Source','Status'],
+      [...S.outbound].sort((a,b) => String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,80)
+      .map(o => '<div class="r" style="grid-template-columns:140px 1.4fr 2fr 140px 110px">' +
+        '<span class="muted small">' + short(o.created_at) + '</span>' +
+        '<span>' + esc(F(o,'to_name') ? F(o,'to_name') + ' · ' + F(o,'to_email') : F(o,'to_email')) + '</span>' +
+        '<span class="muted">' + esc(F(o,'subject')) + '</span>' +
+        '<span class="muted small">' + esc(F(o,'sent_by','source')) + '</span>' +
+        '<span class="st ' + esc(String(F(o,'status')||'').toLowerCase()) + '">' + esc(F(o,'status') || 'queued') + '</span></div>'),
+      '140px 1.4fr 2fr 140px 110px');
+}
+
+/* ---------- Reports ---------- */
+function vReports(){
+  const total = S.pipeline.length || 1;
+  const funnel = STAGES.slice(0,5).map(st => {
+    const n = S.pipeline.filter(p => stageIx(p) >= STAGES.indexOf(st) && stageOf(p) !== 'Passed').length;
+    return '<div class="barrow"><span>' + st + '</span><span class="t"><i class="' + (st==='Placed'?'y':'') + '" style="width:' + Math.round(n/total*100) + '%"></i></span><span>' + n + '</span></div>';
+  }).join('');
+  const perCo = S.companies.map(c => {
+    const ss = S.searches.filter(s => String(s.company_id)===String(idOf(c)));
+    const filled = ss.filter(s => !isOpen(s)).length;
+    return { name: F(c,'name'), n: ss.length, filled, pct: ss.length ? Math.round(filled/ss.length*100) : 0 };
+  }).filter(x => x.n).sort((a,b) => b.pct - a.pct);
+  const team = S.staff.map(st => {
+    const acts = S.activity.filter(a => String(a.staff_id)===String(idOf(st)));
+    return { name: F(st,'name','email'), calls: acts.filter(a => /call/i.test(F(a,'kind'))).length,
+      visits: acts.filter(a => /visit/i.test(F(a,'kind'))).length,
+      notes: S.interview_notes.filter(n => String(n.staff_id)===String(idOf(st))).length,
+      placed: S.placements.filter(p => String(F(p,'staff_id','owner_id'))===String(idOf(st))).length };
+  });
+  return head('Reports.', '') +
+    '<div class="sec"><h2>Funnel.</h2></div><div class="bars">' + funnel + '</div>' +
+    '<div class="sec"><h2>Fill rate by client.</h2></div>' +
+    table(['Company','Searches','Filled','Rate'],
+      perCo.map(x => '<div class="r" style="grid-template-columns:2fr 120px 120px 1fr">' +
+        '<b>' + esc(x.name) + '</b><span>' + x.n + '</span><span>' + x.filled + '</span>' +
+        '<div><span class="muted small">' + x.pct + '%</span><div class="gbar"><i style="width:' + x.pct + '%"></i></div></div></div>'),
+      '2fr 120px 120px 1fr') +
+    '<div class="sec"><h2>Team scorecard.</h2></div>' +
+    table(['Person','Calls','Visits','Interview notes','Placements'],
+      team.map(t => '<div class="r" style="grid-template-columns:2fr 100px 100px 150px 120px">' +
+        '<b>' + esc(t.name) + '</b><span>' + t.calls + '</span><span>' + t.visits + '</span><span>' + t.notes + '</span><span>' + t.placed + '</span></div>'),
+      '2fr 100px 100px 150px 120px');
+}
+
+/* ---------- Settings ---------- */
+function vSettings(){
+  const srcs = S.import_sources.length ? S.import_sources :
+    [{name:'Indeed', status:'Key not set'},{name:'LinkedIn', status:'Key not set'}];
+  return head('Settings.', '') +
+    '<div class="sec"><h2>Roles.</h2></div>' +
+    table(['Person','Email','Role'],
+      S.staff.map(s => '<div class="r" style="grid-template-columns:1.4fr 1.8fr 140px">' +
+        '<b>' + esc(F(s,'name','email')) + '</b><span class="muted">' + esc(F(s,'email')) + '</span>' +
+        '<span class="chip">' + esc(F(s,'role') || 'staff') + '</span></div>'),
+      '1.4fr 1.8fr 140px') +
+    '<div class="sec"><h2>Import sources.</h2><span class="muted small">Keys land here when the accounts are open</span></div>' +
+    table(['Source','Status'],
+      srcs.map(s => '<div class="r" style="grid-template-columns:1fr 2fr">' +
+        '<b>' + esc(F(s,'name')) + '</b><span class="muted">' + esc(F(s,'status') || 'Key not set') + '</span></div>'),
+      '1fr 2fr') +
+    '<div class="sec"><h2>Promised terms.</h2></div>' +
+    '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
+      '<div class="row"><b>Placement fee</b><span>20% of first year base salary, contingent</span></div>' +
+      '<div class="row"><b>Retained search</b><span>$10,000 deposit up front, credited against the fee</span></div>' +
+      '<div class="row"><b>Guarantee</b><span>90 day replacement search on every placement</span></div>' +
+      '<div class="row"><b>Billing entity</b><span>GERMANN INC dba LIVEWORK, on invoices only</span></div>' +
+      '<div class="row"><b>Terms</b><span><a href="engagement.html">Client engagement agreement</a></span></div>' +
+    '</div>';
+}
+</script>
+
+<script>
+/* ============================ sheets ============================ */
+let SHEET = { kind:null, id:null, tab:0 };
+function closeSheet(){ $('#sheet').classList.remove('on'); $('#veil').classList.remove('on'); SHEET = { kind:null, id:null, tab:0 }; }
+function openSheet(kind, id, tab){ SHEET = { kind, id, tab: tab || 0 }; paintSheet(); }
+function shell(title, sub, body){
+  $('#sheet').innerHTML = '<button class="x" id="sx">Close</button>' +
+    '<div><h2>' + title + '</h2>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + '</div>' + body;
+  $('#sheet').classList.add('on'); $('#veil').classList.add('on');
+  $('#sx').onclick = closeSheet;
+  wireSheet();
+}
+function tabs(names){
+  return '<div class="tabs">' + names.map((n,i) => '<button data-tab="' + i + '" class="' + (SHEET.tab===i?'on':'') + '">' + n + '</button>').join('') + '</div>';
+}
+function spec(rows){
+  return '<div class="spec">' + rows.filter(Boolean).map(([k,v]) => '<div class="row"><b>' + k + '</b><span>' + (v==null||v===''?'<span class="muted">Not set</span>':v) + '</span></div>').join('') + '</div>';
+}
+function logList(items){
+  return items.length ? '<div class="log">' + items.map(([w,t]) => '<div class="e"><span>' + w + '</span><span>' + t + '</span></div>').join('') + '</div>'
+    : '<p class="muted small">Nothing logged yet.</p>';
+}
+function paintSheet(){
+  const k = SHEET.kind;
+  if(k === 'company') return sheetCompany();
+  if(k === 'search') return sheetSearch();
+  if(k === 'candidate') return sheetCandidate();
+  if(k === 'pool') return sheetPool();
+  if(k === 'form') return;
+}
+function sheetCompany(){
+  const c = company(SHEET.id); if(!c) return closeSheet();
+  const ss = S.searches.filter(s => String(s.company_id)===String(idOf(c)));
+  const ids = ss.map(s => String(idOf(s)));
+  const acts = S.activity.filter(a => String(a.company_id)===String(idOf(c)) || ids.includes(String(a.search_id)));
+  const inv = S.invoices.filter(i => String(i.company_id)===String(idOf(c)));
+  const pl = S.placements.filter(p => String(p.company_id)===String(idOf(c)));
+  const docs = S.documents.filter(d => String(d.company_id)===String(idOf(c)));
+  const T = SHEET.tab;
+  let body = '';
+  if(T===0) body = spec([
+      ['Status', esc(F(c,'status') || 'Active')],
+      ['Engagement', esc(F(c,'kind','engagement') || 'Contingent')],
+      ['Location', esc(F(c,'city','location'))],
+      ['Industry', esc(F(c,'industry'))],
+      ['Fee', esc(F(c,'fee','fee_pct') || '20% of first year base')],
+      ['Guarantee', '90 days'],
+      ['Notes', esc(F(c,'notes','bio'))]
+    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button></div>';
+  if(T===1) body = contactsOf(idOf(c)).map(ct =>
+      '<div class="toggle"><div><b>' + esc(F(ct,'name')) + '</b><small>' + esc(F(ct,'title')) + ' · ' + esc(F(ct,'email')) + (F(ct,'phone') ? ' · <a href="tel:' + esc(String(F(ct,'phone')).replace(/[^0-9+]/g,'')) + '">' + esc(F(ct,'phone')) + '</a>' : '') + '</small></div>' +
+      '<button class="sw ' + (ct[MAP.contact.room]===true?'on':'') + '" data-room="' + idOf(ct) + '" aria-label="Client room access"></button></div>').join('') +
+      '<p class="muted small">The switch is client room access. On means they can sign in at the room with a code.</p>' +
+      '<button class="btn" data-new="contact" data-co="' + idOf(c) + '">Add a contact</button>';
+  if(T===2) body = (ss.length ? ss.map(s => '<div class="toggle"><div><b>' + esc(F(s,'title','role')) + '</b><small>' + esc(F(s,'location')) + ' · ' + (isOpen(s)?'Open':'Closed') + '</small></div><button class="btn sm ghost" data-se="' + idOf(s) + '">Open</button></div>').join('') : '<p class="muted small">No searches yet.</p>') +
+      '<button class="btn" data-new="search" data-co="' + idOf(c) + '">Open a search</button>';
+  if(T===3) body = logList(acts.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,40)
+      .map(a => [short(a.created_at) + ' ' + esc(F(a,'kind')), esc(F(a,'body','note'))]));
+  if(T===4) body = spec([
+      ['Placements', pl.length],
+      ['Fees billed', money(inv.reduce((n,i) => n + num(F(i,'amount')), 0))],
+      ['Outstanding', money(inv.filter(i => String(F(i,'status')).toLowerCase()!=='paid').reduce((n,i) => n + num(F(i,'amount')), 0))]
+    ]) + (inv.length ? logList(inv.map(i => [esc(F(i,'invoice_no','number') || 'Draft'), money(F(i,'amount')) + ' · ' + esc(F(i,'status') || 'draft')])) : '') +
+    '<button class="btn ghost" data-new="invoice" data-co="' + idOf(c) + '">Raise an invoice</button>';
+  if(T===5) body = (docs.length ? logList(docs.map(d => [short(d.created_at), esc(F(d,'name','title','kind'))]))
+      : '<p class="muted small">No documents on file. Signed agreements and search orders land here.</p>');
+  shell(esc(F(c,'name')) + '.', esc(F(c,'city','location','industry')),
+    tabs(['Profile','Contacts','Searches','Activity','Money','Documents']) + body);
+}
+function sheetSearch(){
+  const s = search(SHEET.id); if(!s) return closeSheet();
+  const rows = S.pipeline.filter(p => String(p.search_id)===String(idOf(s)));
+  const acts = S.activity.filter(a => String(a.search_id)===String(idOf(s)));
+  const T = SHEET.tab;
+  let body = '';
+  if(T===0) body = spec([
+      ['Company', esc(cname(s.company_id))],
+      ['Status', isOpen(s) ? 'Open' : 'Closed'],
+      ['Engagement', esc(F(s,'kind','engagement') || 'Contingent')],
+      ['Location', esc(F(s,'location'))],
+      ['Compensation', [money(F(s,'comp_min')), money(F(s,'comp_max'))].filter(Boolean).join(' to ') || esc(F(s,'comp'))],
+      ['Opened', day(F(s,'opened_at','created_at'))],
+      ['Days open', daysBetween(F(s,'opened_at','created_at'))],
+      ['Fee', esc(F(s,'fee') || '20% of first year base')],
+      ['The brief', esc(F(s,'notes','brief','description'))]
+    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>' +
+      '<button class="btn ghost" data-close="' + idOf(s) + '">' + (isOpen(s)?'Close the search':'Reopen') + '</button></div>';
+  if(T===1) body = (rows.length ? rows.map(p => '<div class="toggle"><div><b>' + esc(pname(p.candidate_id)) + '</b><small>' + stageOf(p) + ' · ' + (isReleased(p)?'released':'held') + '</small></div>' +
+      '<div style="display:flex;gap:6px"><button class="btn sm ghost" data-adv="' + idOf(p) + '">Advance</button><button class="btn sm ghost" data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button></div></div>').join('')
+      : '<p class="muted small">Nobody submitted yet.</p>') + '<button class="btn" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>';
+  if(T===2) body = logList(acts.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,40)
+      .map(a => [short(a.created_at) + ' ' + esc(F(a,'kind')), esc(F(a,'body','note'))]));
+  shell(esc(F(s,'title','role')) + '.', esc(cname(s.company_id)) + ' · ' + esc(F(s,'location')),
+    tabs(['Job order','Pipeline','Activity']) + body);
+}
+function sheetCandidate(){
+  const c = cand(SHEET.id); if(!c) return closeSheet();
+  const rows = rowsFor(idOf(c));
+  const notes = S.interview_notes.filter(n => String(n.candidate_id)===String(idOf(c)));
+  const acts = S.activity.filter(a => String(a.candidate_id)===String(idOf(c)));
+  const docs = S.documents.filter(d => String(d.candidate_id)===String(idOf(c)));
+  const prem = c[MAP.candidate.premier] === true;
+  const T = SHEET.tab;
+  let body = '';
+  if(T===0) body = spec([
+      ['Title', esc(F(c,'title','headline'))],
+      ['Location', esc(F(c,'location'))],
+      ['Email', F(c,'email') ? '<a href="mailto:' + esc(F(c,'email')) + '">' + esc(F(c,'email')) + '</a>' : ''],
+      ['Phone', F(c,'phone') ? '<a href="tel:' + esc(String(F(c,'phone')).replace(/[^0-9+]/g,'')) + '">' + esc(F(c,'phone')) + '</a>' : ''],
+      ['Tags', tagNames(idOf(c)).map(t => '<span class="chip">' + esc(t) + '</span>').join(' ')],
+      ['Signal', sigBar(signal(c)) + ' <span class="muted small">outcomes only, never sentiment</span>'],
+      ['Premier', prem ? '<span class="premier">Yes</span> · ' + esc(F(c,'premier_reason') || 'no reason recorded') : 'No']
+    ]) + '<div class="toggle"><div><b>Premier</b><small>A human call. Turning it on asks you why.</small></div>' +
+      '<button class="sw ' + (prem?'on':'') + '" data-prem="' + idOf(c) + '" aria-label="Premier"></button></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+        (F(c,'phone') ? '<a class="btn" href="tel:' + esc(String(F(c,'phone')).replace(/[^0-9+]/g,'')) + '">Call</a>' : '') +
+        '<button class="btn ghost" data-logcall="' + idOf(c) + '|">Log a call</button>' +
+        '<button class="btn ghost" data-note="' + idOf(c) + '|">Interview note</button>' +
+        '<button class="btn ghost" data-new="pipeline" data-cand="' + idOf(c) + '">Submit to a search</button></div>';
+  if(T===1) body = (notes.length ? notes.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).map(n =>
+      '<div style="border:1px solid var(--line);padding:16px;border-radius:var(--r)">' +
+      '<b>' + esc(F(n,'kind') || 'Interview') + '</b> <span class="muted small">' + day(n.created_at) + (n.search_id ? ' · ' + esc(sname(n.search_id)) : '') + '</span>' +
+      spec([['Strong at', esc(F(n,'strong_at','strong'))],['Concerns', esc(F(n,'concerns'))],['Comp', esc(F(n,'comp'))],['Availability', esc(F(n,'availability'))],['Next step', esc(F(n,'next_step','next'))]]) + '</div>').join('')
+      : '<p class="muted small">No interview notes yet. Notes live on the candidate, not on one submission, so the whole file travels with them.</p>') +
+      '<button class="btn" data-note="' + idOf(c) + '|">Add an interview note</button>';
+  if(T===2) body = spec([
+      ['Submitted', rows.filter(p => stageIx(p)>=1).length],
+      ['Interviewed', rows.filter(p => stageIx(p)>=2 && stageOf(p)!=='Passed').length],
+      ['Offers', rows.filter(p => stageIx(p)>=3 && stageOf(p)!=='Passed').length],
+      ['Placements', S.placements.filter(p => String(p.candidate_id)===String(idOf(c))).length]
+    ]) + (rows.length ? logList(rows.map(p => [esc(sname(p.search_id)), stageOf(p) + ' · ' + esc(cname((search(p.search_id)||{}).company_id))])) : '');
+  if(T===3) body = logList(acts.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,40)
+      .map(a => [short(a.created_at) + ' ' + esc(F(a,'kind')), esc(F(a,'body','note'))]));
+  if(T===4) body = (docs.length ? logList(docs.map(d => [short(d.created_at), esc(F(d,'name','title','kind'))]))
+      : '<p class="muted small">No files yet. Drop a resume and the branded PDF lands here.</p>') +
+      '<a class="btn ghost" href="resume.html">Drop a resume</a>';
+  shell(esc(F(c,'name','full_name')) + '.', esc(F(c,'title','headline')) + (F(c,'location') ? ' · ' + esc(F(c,'location')) : ''),
+    tabs(['Profile','Notes','History','Activity','Documents']) + body);
+}
+function sheetPool(){
+  const p = byId(S.pools, SHEET.id); if(!p) return closeSheet();
+  const mem = S.pool_members.filter(m => String(m.pool_id)===String(idOf(p)));
+  shell(esc(F(p,'name')) + '.', mem.length + ' candidates',
+    (mem.length ? mem.map(m => { const c = cand(m.candidate_id); if(!c) return '';
+      return '<div class="toggle"><div><b>' + esc(F(c,'name','full_name')) + '</b><small>' + esc(F(c,'title','headline')) + '</small></div>' +
+        '<button class="btn sm ghost" data-cand="' + idOf(c) + '">Open</button></div>'; }).join('')
+      : '<p class="muted small">Empty pool. Add candidates from their profile.</p>') +
+    '<div class="field"><label for="poolAdd">Add a candidate</label><select id="poolAdd"><option value="">Pick someone</option>' +
+      S.candidates.map(c => '<option value="' + idOf(c) + '">' + esc(F(c,'name','full_name')) + '</option>').join('') + '</select></div>' +
+    '<button class="btn" data-pooladd="' + idOf(p) + '">Add to the pool</button>');
+}
+
+/* ============================ forms ============================ */
+function opts(list, label, sel){
+  return '<option value="">Pick one</option>' + list.map(x => '<option value="' + idOf(x) + '"' + (String(sel)===String(idOf(x))?' selected':'') + '>' + esc(label(x)) + '</option>').join('');
+}
+function form(kind, ctx){
+  ctx = ctx || {};
+  const F_ = {
+    company: ['Add a company.', 'A client, or one you are working on.',
+      '<div class="field"><label for="f_name">Company</label><input id="f_name" placeholder="Northwind Logistics"></div>' +
+      '<div class="two"><div class="field"><label for="f_city">City</label><input id="f_city"></div>' +
+      '<div class="field"><label for="f_ind">Industry</label><input id="f_ind"></div></div>' +
+      '<div class="two"><div class="field"><label for="f_kind">Engagement</label><select id="f_kind"><option>Contingent</option><option>Retained</option><option>Prospect</option></select></div>' +
+      '<div class="field"><label for="f_status">Status</label><select id="f_status"><option>Active</option><option>Prospect</option><option>Dormant</option></select></div></div>' +
+      '<div class="field"><label for="f_notes">Notes</label><textarea id="f_notes"></textarea></div>'],
+    contact: ['Add a contact.', 'Turn on room access and they can sign in to the client room.',
+      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="two"><div class="field"><label for="f_name">Name</label><input id="f_name"></div>' +
+      '<div class="field"><label for="f_title">Title</label><input id="f_title"></div></div>' +
+      '<div class="two"><div class="field"><label for="f_email">Work email</label><input id="f_email" type="email"></div>' +
+      '<div class="field"><label for="f_phone">Phone</label><input id="f_phone"></div></div>' +
+      '<div class="field"><label><input type="checkbox" id="f_room" style="height:auto;width:auto;margin-right:8px">Client room access</label></div>'],
+    search: ['Open a search.', 'The job order the client agreed to.',
+      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="field"><label for="f_title">Title</label><input id="f_title" placeholder="Director of Fleet Operations"></div>' +
+      '<div class="two"><div class="field"><label for="f_loc">Location</label><input id="f_loc"></div>' +
+      '<div class="field"><label for="f_kind">Engagement</label><select id="f_kind"><option>Contingent</option><option>Retained</option></select></div></div>' +
+      '<div class="two"><div class="field"><label for="f_min">Comp low</label><input id="f_min" inputmode="numeric"></div>' +
+      '<div class="field"><label for="f_max">Comp high</label><input id="f_max" inputmode="numeric"></div></div>' +
+      '<div class="field"><label for="f_notes">The brief</label><textarea id="f_notes" placeholder="What good looks like, who they report to, why the seat is open."></textarea></div>'],
+    candidate: ['Add a candidate.', 'Or drop a resume and let the tool fill this in.',
+      '<div class="two"><div class="field"><label for="f_name">Name</label><input id="f_name"></div>' +
+      '<div class="field"><label for="f_title">Current title</label><input id="f_title"></div></div>' +
+      '<div class="two"><div class="field"><label for="f_email">Email</label><input id="f_email" type="email"></div>' +
+      '<div class="field"><label for="f_phone">Phone</label><input id="f_phone"></div></div>' +
+      '<div class="field"><label for="f_loc">Location</label><input id="f_loc"></div>' +
+      '<div class="field"><label for="f_notes">Notes</label><textarea id="f_notes"></textarea></div>'],
+    pipeline: ['Submit a candidate.', 'Submitting is internal. Releasing is what the client sees.',
+      '<div class="field"><label for="f_se">Search</label><select id="f_se">' + opts(S.searches.filter(isOpen), s => F(s,'title','role') + ' · ' + cname(s.company_id), ctx.se) + '</select></div>' +
+      '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
+      '<div class="field"><label for="f_stage">Stage</label><select id="f_stage">' + STAGES.slice(0,5).map(s => '<option' + (s==='Submitted'?' selected':'') + '>' + s + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label><input type="checkbox" id="f_rel" style="height:auto;width:auto;margin-right:8px">Release to the client room now</label></div>'],
+    call: ['Log a call.', 'Outcome first. A task keeps it from dying here.',
+      '<div class="two"><div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
+      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div></div>' +
+      '<div class="field"><label for="f_out">Outcome</label><select id="f_out"><option>Reached, good conversation</option><option>Reached, not interested</option><option>Left a message</option><option>No answer</option><option>Scheduled something</option></select></div>' +
+      '<div class="field"><label for="f_body">What was said</label><textarea id="f_body"></textarea></div>' +
+      '<div class="two"><div class="field"><label for="f_task">Next task</label><input id="f_task" placeholder="Call back Tuesday"></div>' +
+      '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date"></div></div>'],
+    visit: ['Visit note.', 'In person calls are the ones worth writing down.',
+      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="field"><label for="f_who">Who you saw</label><input id="f_who" placeholder="Name and title"></div>' +
+      '<div class="field"><label for="f_body">The note</label><textarea id="f_body" placeholder="What they are hiring for, what is stuck, who else is in the building."></textarea></div>' +
+      '<div class="two"><div class="field"><label for="f_task">Next step</label><input id="f_task"></div>' +
+      '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date"></div></div>' +
+      '<div class="field"><label><input type="checkbox" id="f_recap" style="height:auto;width:auto;margin-right:8px">Queue a recap email to them</label></div>'],
+    note: ['Interview note.', 'Stored on the candidate, not on one submission.',
+      '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
+      '<div class="two"><div class="field"><label for="f_se">Search, if any</label><select id="f_se">' + opts(S.searches, s => F(s,'title','role') + ' · ' + cname(s.company_id), ctx.se) + '</select></div>' +
+      '<div class="field"><label for="f_kind">Kind</label><select id="f_kind"><option>Screen</option><option>Phone</option><option>Video</option><option>In person</option><option>Client debrief</option></select></div></div>' +
+      '<div class="field"><label for="f_strong">Strong at</label><textarea id="f_strong"></textarea></div>' +
+      '<div class="field"><label for="f_conc">Concerns</label><textarea id="f_conc"></textarea></div>' +
+      '<div class="two"><div class="field"><label for="f_comp">Comp</label><input id="f_comp"></div>' +
+      '<div class="field"><label for="f_avail">Availability</label><input id="f_avail"></div></div>' +
+      '<div class="field"><label for="f_next">Next step</label><input id="f_next"></div>'],
+    task: ['Add a task.', '',
+      '<div class="field"><label for="f_task">Task</label><input id="f_task"></div>' +
+      '<div class="two"><div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
+      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div></div>' +
+      '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date"></div>'],
+    pool: ['Name a pool.', 'A standing shortlist you pull from.',
+      '<div class="field"><label for="f_name">Pool</label><input id="f_name" placeholder="Warehouse leadership, SoCal"></div>' +
+      '<div class="field"><label for="f_notes">What it is for</label><textarea id="f_notes"></textarea></div>'],
+    placement: ['Record a placement.', 'This starts the ninety day guarantee clock.',
+      '<div class="field"><label for="f_se">Search</label><select id="f_se">' + opts(S.searches, s => F(s,'title','role') + ' · ' + cname(s.company_id), ctx.se) + '</select></div>' +
+      '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
+      '<div class="two"><div class="field"><label for="f_start">Start date</label><input id="f_start" type="date"></div>' +
+      '<div class="field"><label for="f_sal">Base salary</label><input id="f_sal" inputmode="numeric"></div></div>' +
+      '<div class="field"><label for="f_fee">Fee</label><input id="f_fee" inputmode="numeric" placeholder="20% of base"></div>'],
+    invoice: ['Raise an invoice.', 'GERMANN INC dba LIVEWORK. The PDF comes from the backend later.',
+      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="field"><label for="f_place">Placement, if any</label><select id="f_place">' + opts(S.placements, p => pname(p.candidate_id) + ' · ' + cname(p.company_id), ctx.place) + '</select></div>' +
+      '<div class="two"><div class="field"><label for="f_amt">Amount</label><input id="f_amt" inputmode="numeric"></div>' +
+      '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date"></div></div>'],
+    premier: ['Premier.', 'A human call, so it needs a reason.',
+      '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
+  }[kind];
+  SHEET = { kind:'form', id:kind, tab:0, ctx };
+  shell(F_[0], F_[1], '<div class="form">' + F_[2] + '<button class="btn" id="fsave">Save</button></div>');
+  const first = $('#sheet').querySelector('input,select,textarea'); if(first) first.focus();
+  $('#fsave').onclick = () => save(kind, ctx);
+}
+const today = () => new Date().toISOString().slice(0,10);
+const val = id => { const e = document.getElementById(id); return e ? (e.type === 'checkbox' ? e.checked : e.value.trim()) : ''; };
+const meId = () => ME ? idOf(ME) : null;
+
+async function save(kind, ctx){
+  const M = MAP; let r = null;
+  if(kind === 'company'){
+    if(!val('f_name')) return toast('A company needs a name.', true);
+    r = await tryWrite(() => insert('companies', clean({ [M.company.name]: val('f_name'), [M.company.city]: val('f_city'),
+      [M.company.industry]: val('f_ind'), [M.company.kind]: val('f_kind'), [M.company.status]: val('f_status'), [M.company.notes]: val('f_notes') })), 'Company added.');
+  }
+  if(kind === 'contact'){
+    r = await tryWrite(() => insert('contacts', clean({ [M.contact.company]: val('f_co'), [M.contact.name]: val('f_name'),
+      [M.contact.title]: val('f_title'), [M.contact.email]: val('f_email').toLowerCase(), [M.contact.phone]: val('f_phone'),
+      [M.contact.room]: val('f_room') })), 'Contact added.');
+  }
+  if(kind === 'search'){
+    if(!val('f_co')) return toast('Pick the company.', true);
+    r = await tryWrite(() => insert('searches', clean({ [M.search.company]: val('f_co'), [M.search.title]: val('f_title'),
+      [M.search.location]: val('f_loc'), [M.search.kind]: val('f_kind'), [M.search.status]: 'open',
+      [M.search.comp_min]: val('f_min') ? num(val('f_min')) : '', [M.search.comp_max]: val('f_max') ? num(val('f_max')) : '',
+      [M.search.opened]: today(), [M.search.notes]: val('f_notes'), [M.search.owner]: meId() })), 'Search opened.');
+  }
+  if(kind === 'candidate'){
+    if(!val('f_name')) return toast('A candidate needs a name.', true);
+    r = await tryWrite(() => insert('candidates', clean({ [M.candidate.name]: val('f_name'), [M.candidate.title]: val('f_title'),
+      [M.candidate.email]: val('f_email').toLowerCase(), [M.candidate.phone]: val('f_phone'), [M.candidate.location]: val('f_loc'),
+      [M.candidate.notes]: val('f_notes') })), 'Candidate added.');
+  }
+  if(kind === 'pipeline'){
+    if(!val('f_se') || !val('f_cand')) return toast('Pick a search and a candidate.', true);
+    r = await tryWrite(() => insert('pipeline', clean({ [M.pipeline.search]: val('f_se'), [M.pipeline.candidate]: val('f_cand'),
+      [M.pipeline.stage]: val('f_stage'), [M.pipeline.released]: val('f_rel'),
+      [M.pipeline.released_at]: val('f_rel') ? new Date().toISOString() : '', [M.pipeline.added_by]: meId() })), 'Submitted.');
+  }
+  if(kind === 'call'){
+    const body = val('f_body') || val('f_out');
+    r = await tryWrite(() => insert('activity', clean({ [M.activity.kind]: 'call', [M.activity.title]: 'Call', [M.activity.outcome]: val('f_out'), [M.activity.body]: body,
+      [M.activity.candidate]: val('f_cand'), [M.activity.company]: val('f_co'), [M.activity.staff]: meId() })), 'Call logged.');
+    if(r && val('f_task')) await tryWrite(() => insert('tasks', clean({ [M.task.title]: val('f_task'), [M.task.due]: val('f_due'),
+      [M.task.candidate]: val('f_cand'), [M.task.company]: val('f_co'), [M.task.staff]: meId(), [M.task.created_by]: meId(), [M.task.done]: false })));
+  }
+  if(kind === 'visit'){
+    const body = (val('f_who') ? 'Saw ' + val('f_who') + '. ' : '') + val('f_body');
+    r = await tryWrite(() => insert('activity', clean({ [M.activity.kind]: 'visit', [M.activity.title]: 'Visit' + (val('f_who') ? ', ' + val('f_who') : ''), [M.activity.body]: body,
+      [M.activity.company]: val('f_co'), [M.activity.staff]: meId() })), 'Visit noted.');
+    if(r && val('f_task')) await tryWrite(() => insert('tasks', clean({ [M.task.title]: val('f_task'), [M.task.due]: val('f_due'),
+      [M.task.company]: val('f_co'), [M.task.staff]: meId(), [M.task.created_by]: meId(), [M.task.done]: false })));
+    if(r && val('f_recap')){
+      const ct = contactsOf(val('f_co'))[0];
+      if(ct) await tryWrite(() => insert('outbound', clean({ to_email: F(ct,'email'), to_name: F(ct,'name'),
+        subject: 'Good seeing you', html: '<p>' + esc(body) + '</p>', company_id: val('f_co'), sent_by: 'desk-visit-recap', staff_id: meId(), status: 'queued' })));
+    }
+  }
+  if(kind === 'note'){
+    if(!val('f_cand')) return toast('Pick the candidate.', true);
+    r = await tryWrite(() => insert('interview_notes', clean({ [M.note.candidate]: val('f_cand'), [M.note.search]: val('f_se'),
+      [M.note.kind]: val('f_kind'), [M.note.strong]: val('f_strong'), [M.note.concerns]: val('f_conc'),
+      [M.note.comp]: val('f_comp'), [M.note.availability]: val('f_avail'), [M.note.next]: val('f_next'), [M.note.staff]: meId() })), 'Note saved to the candidate.');
+    if(r) await tryWrite(() => insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: 'Interview note', [M.activity.body]: val('f_kind') + ' interview note added',
+      [M.activity.candidate]: val('f_cand'), [M.activity.search]: val('f_se'), [M.activity.staff]: meId() })));
+  }
+  if(kind === 'task'){
+    if(!val('f_task')) return toast('Say what the task is.', true);
+    r = await tryWrite(() => insert('tasks', clean({ [M.task.title]: val('f_task'), [M.task.due]: val('f_due'),
+      [M.task.candidate]: val('f_cand'), [M.task.company]: val('f_co'), [M.task.staff]: meId(), [M.task.created_by]: meId(), [M.task.done]: false })), 'Task added.');
+  }
+  if(kind === 'pool'){
+    if(!val('f_name')) return toast('Name the pool.', true);
+    r = await tryWrite(() => insert('pools', clean({ [M.pool.name]: val('f_name'), [M.pool.note]: val('f_notes'), [M.pool.owner]: meId() })), 'Pool created.');
+  }
+  if(kind === 'placement'){
+    if(!val('f_cand') || !val('f_se')) return toast('Pick the search and the candidate.', true);
+    if(!val('f_start')) return toast('A placement needs a start date.', true);
+    let pp = S.pipeline.filter(p => String(p.search_id)===val('f_se') && String(p.candidate_id)===val('f_cand'))[0];
+    if(!pp) pp = await tryWrite(() => insert('pipeline', clean({ [M.pipeline.search]: val('f_se'), [M.pipeline.candidate]: val('f_cand'),
+      [M.pipeline.stage]: 'Placed', [M.pipeline.released]: true, [M.pipeline.released_at]: new Date().toISOString(), [M.pipeline.added_by]: meId() })));
+    else if(stageOf(pp) !== 'Placed') await tryWrite(() => patch('pipeline', idOf(pp), { [M.pipeline.stage]: 'Placed' }));
+    if(!pp) return;
+    const sal = num(val('f_sal')), fee = val('f_fee') ? num(val('f_fee')) : Math.round(sal * 0.2);
+    const ends = new Date(val('f_start')); ends.setDate(ends.getDate() + 90);
+    r = await tryWrite(() => insert('placements', clean({ [M.placement.pipeline]: idOf(pp), [M.placement.start]: val('f_start'),
+      [M.placement.salary]: sal || '', [M.placement.fee]: fee || '', [M.placement.fee_pct]: 20,
+      [M.placement.guarantee_ends]: ends.toISOString().slice(0,10), [M.placement.status]: 'active' })), 'Placement recorded. Guarantee clock started.');
+  }
+  if(kind === 'invoice'){
+    if(!val('f_co')) return toast('Pick the company.', true);
+    r = await tryWrite(() => insert('invoices', clean({ [M.invoice.company]: val('f_co'), [M.invoice.placement]: val('f_place'),
+      [M.invoice.amount]: Math.round(num(val('f_amt'))), [M.invoice.status]: 'sent',
+      [M.invoice.issued]: today(), [M.invoice.due]: val('f_due'), [M.invoice.description]: 'Placement fee' })), 'Invoice raised.');
+  }
+  if(kind === 'premier'){
+    if(!val('f_why')) return toast('Premier needs a reason.', true);
+    r = await tryWrite(() => patch('candidates', ctx.cand, clean({ [MAP.candidate.premier]: true, [MAP.candidate.premier_reason]: val('f_why'), [MAP.candidate.premier_by]: meId() })), 'Premier on.');
+  }
+  if(r){ closeSheet(); await loadAll(); drawNav(); draw(); }
+}
+
+/* ============================ wiring ============================ */
+function wireSheet(){
+  const sh = $('#sheet');
+  sh.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { SHEET.tab = +b.dataset.tab; paintSheet(); });
+  sh.querySelectorAll('[data-room]').forEach(b => b.onclick = async () => {
+    const ct = byId(S.contacts, b.dataset.room);
+    const r = await tryWrite(() => patch('contacts', b.dataset.room, { [MAP.contact.room]: !(ct[MAP.contact.room] === true) }),
+      ct[MAP.contact.room] === true ? 'Room access off.' : 'Room access on.');
+    if(r){ await loadAll(); paintSheet(); }
+  });
+  sh.querySelectorAll('[data-prem]').forEach(b => b.onclick = async () => {
+    const c = cand(b.dataset.prem);
+    if(c[MAP.candidate.premier] === true){
+      const r = await tryWrite(() => patch('candidates', idOf(c), { [MAP.candidate.premier]: false, [MAP.candidate.premier_reason]: null, [MAP.candidate.premier_by]: null }), 'Premier off.');
+      if(r){ await loadAll(); paintSheet(); }
+    } else form('premier', { cand: idOf(c) });
+  });
+  sh.querySelectorAll('[data-close]').forEach(b => b.onclick = async () => {
+    const s = search(b.dataset.close);
+    const r = await tryWrite(() => patch('searches', idOf(s), { [MAP.search.status]: isOpen(s) ? 'closed' : 'open' }), 'Status changed.');
+    if(r){ await loadAll(); drawNav(); paintSheet(); draw(); }
+  });
+  sh.querySelectorAll('[data-pooladd]').forEach(b => b.onclick = async () => {
+    const c = val('poolAdd'); if(!c) return toast('Pick someone first.', true);
+    const r = await tryWrite(() => insert('pool_members', { [MAP.poolmem.pool]: b.dataset.pooladd, [MAP.poolmem.candidate]: c }), 'Added to the pool.');
+    if(r){ await loadAll(); paintSheet(); }
+  });
+  common(sh);
+}
+function common(root){
+  root.querySelectorAll('[data-co]').forEach(b => { if(b.dataset.new) return;
+    b.onclick = e => { e.stopPropagation(); openSheet('company', b.dataset.co); }; });
+  root.querySelectorAll('[data-se]').forEach(b => { if(b.dataset.new) return;
+    b.onclick = e => { e.stopPropagation(); openSheet('search', b.dataset.se); }; });
+  root.querySelectorAll('[data-cand]').forEach(b => { if(b.dataset.new) return;
+    b.onclick = e => { e.stopPropagation(); openSheet('candidate', b.dataset.cand); }; });
+  root.querySelectorAll('[data-pool]').forEach(b => b.onclick = e => { e.stopPropagation(); openSheet('pool', b.dataset.pool); });
+  root.querySelectorAll('[data-new]').forEach(b => b.onclick = e => { e.stopPropagation();
+    form(b.dataset.new, { co: b.dataset.co, se: b.dataset.se, cand: b.dataset.cand }); });
+  root.querySelectorAll('[data-logcall]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const [c, co] = b.dataset.logcall.split('|'); form('call', { cand: c, co: co }); });
+  root.querySelectorAll('[data-note]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const [c, s] = b.dataset.note.split('|'); form('note', { cand: c, se: s }); });
+  root.querySelectorAll('[data-adv]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const p = byId(S.pipeline, b.dataset.adv);
+    const next = STAGES[Math.min(4, stageIx(p) + 1)];
+    const r = await tryWrite(() => patch('pipeline', idOf(p), { [MAP.pipeline.stage]: next }), 'Moved to ' + next + '.');
+    if(r){ await loadAll(); drawNav(); draw(); if(SHEET.kind && SHEET.kind !== 'form') paintSheet(); }
+  });
+  root.querySelectorAll('[data-rel]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const p = byId(S.pipeline, b.dataset.rel);
+    const now = !isReleased(p);
+    const r = await tryWrite(() => patch('pipeline', idOf(p), { [MAP.pipeline.released]: now, [MAP.pipeline.released_at]: now ? new Date().toISOString() : null }), now ? 'Released to the client room.' : 'Held back.');
+    if(r){ await loadAll(); draw(); if(SHEET.kind && SHEET.kind !== 'form') paintSheet(); }
+  });
+  root.querySelectorAll('[data-done]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const r = await tryWrite(() => patch('tasks', b.dataset.done, { [MAP.task.done]: true, done_at: new Date().toISOString() }), 'Done.');
+    if(r){ await loadAll(); drawNav(); draw(); }
+  });
+  root.querySelectorAll('[data-v]').forEach(b => { if(b.closest('#nav')) return; b.onclick = () => go(b.dataset.v); });
+}
+function wire(){
+  const m = $('#main');
+  common(m);
+  m.querySelectorAll('[data-pipe]').forEach(c => c.onclick = e => {
+    if(e.target.closest('button[data-adv],button[data-rel],button[data-note]')) return;
+    const p = byId(S.pipeline, c.dataset.pipe); if(p) openSheet('candidate', p.candidate_id);
+  });
+  m.querySelectorAll('[data-task]').forEach(r => r.onclick = e => {
+    if(e.target.closest('button')) return;
+    const t = byId(S.tasks, r.dataset.task);
+    if(t && t.candidate_id) openSheet('candidate', t.candidate_id);
+    else if(t && t.company_id) openSheet('company', t.company_id);
+  });
+  m.querySelectorAll('[data-place]').forEach(r => r.onclick = () => {
+    const p = byId(S.placements, r.dataset.place); if(p) openSheet('candidate', p.candidate_id);
+  });
+  m.querySelectorAll('[data-inv]').forEach(r => r.onclick = e => {
+    if(e.target.closest('button')) return;
+    const i = byId(S.invoices, r.dataset.inv); if(i) openSheet('company', i.company_id);
+  });
+  m.querySelectorAll('[data-pdf]').forEach(b => b.onclick = e => { e.stopPropagation();
+    toast('The invoice PDF is generated on the backend. That edge function is the next drop.'); });
+  m.querySelectorAll('[data-stab]').forEach(b => b.onclick = () => { Q.searchTab = b.dataset.stab; draw(); });
+  m.querySelectorAll('[data-tag]').forEach(b => b.onclick = () => { Q.tag = b.dataset.tag; draw(); });
+  m.querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
+    const k = b.dataset.auto;
+    const row = S.automations.filter(x => x.trigger === k || x.name === k)[0];
+    const now = !(row && row[MAP.automation.enabled] === true);
+    const label = (AUTOS.filter(a => a[0] === k)[0] || [k, k])[1];
+    const r = row
+      ? await tryWrite(() => patch('automations', idOf(row), { [MAP.automation.enabled]: now }), now ? 'On.' : 'Off.')
+      : await tryWrite(() => insert('automations', { [MAP.automation.name]: label, [MAP.automation.trigger]: k, [MAP.automation.enabled]: now }), now ? 'On.' : 'Off.');
+    if(r){ await loadAll(); draw(); }
+  });
+  const qc = document.getElementById('qcand');
+  if(qc) qc.oninput = () => { Q.cand = qc.value; const p = qc.selectionStart; draw();
+    const n = document.getElementById('qcand'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
+  const qo = document.getElementById('qco');
+  if(qo) qo.oninput = () => { Q.co = qo.value; const p = qo.selectionStart; draw();
+    const n = document.getElementById('qco'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
+}
+$('#veil').onclick = closeSheet;
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet(); });
+
+/* ============================ boot ============================ */
+LWAuth.gate(document.getElementById('gate'), async function(staff){
+  ME = staff;
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  document.getElementById('meName').textContent = F(staff,'name','email');
+  document.getElementById('meRole').textContent = 'The Desk · ' + (F(staff,'role') || 'staff');
+  document.getElementById('signout').onclick = e => { e.preventDefault(); LWAuth.signOut(); };
+  try{ await loadAll(); }catch(e){ toast('Could not load. ' + e.message, true); }
+  drawNav(); draw();
+});
 </script>
 </body>
 </html>

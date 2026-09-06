@@ -8,7 +8,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="lw.css">
-<script src="lw-config.js"></script>
+<script src="lw-config.js?v=3"></script>
 <style>
 .wrap{width:min(1040px,100% - 96px);margin:0 auto}
 @media (max-width:720px){.wrap{width:calc(100% - 40px)}}
@@ -79,6 +79,14 @@ async function fn(name, body){
   const r = await fetch(`${LW.url}/functions/v1/${name}`, {method:'POST', headers:{'content-type':'application/json', apikey:LW.anon, Authorization:'Bearer '+LW.anon}, body:JSON.stringify(body)});
   return r.json().catch(()=>({ok:false}));
 }
+async function pull(tok){
+  if(!LIVE||!tok) return false;
+  const d = await fn('room-data',{token:tok});
+  if(!d||!d.ok) return false;
+  ME = {...ME, ...(d.contact||{}), ...(d.terms||{})};
+  SEARCHES = (d.searches||[]).map(s=>({...s, cands:(s.cands||[]).map(c=>({...c, fit:c.fit||[]}))}));
+  return true;
+}
 const SESSION_KEY='lw_room_session';
 function saveSession(s){try{localStorage.setItem(SESSION_KEY, JSON.stringify(s))}catch(e){}}
 function loadSession(){try{const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); if(s && new Date(s.expires_at)>new Date()) return s}catch(e){} return null}
@@ -127,7 +135,7 @@ function door(){
       go.disabled=true;go.textContent='Opening';
       const r=await fn('room-verify',{email:pendingEmail,code});
       if(!r.ok){err={wrong:'That code did not match. Try again.',expired:'That code expired. Ask for a new one.',locked:'Too many tries. Ask for a new code.'}[r.reason]||'We could not sign you in. Check the email and try again.';return door()}
-      saveSession(r);ME={...ME,...r.contact};SEARCHES=[];room();
+      saveSession(r);ME={...ME,...r.contact};SEARCHES=[];room();await pull(r.token||r.session_token||r.access_token);room();
     }
   };
   const em=$('#em');if(em)em.onkeydown=e=>{if(e.key==='Enter')go.click()};
@@ -172,7 +180,7 @@ function room(){
   window.scrollTo(0,0);
 }
 const S0=LIVE?loadSession():null;
-if(S0){ME={...ME,...S0.contact};SEARCHES=[];room()}else door();
+if(S0){ME={...ME,...S0.contact};SEARCHES=[];room();pull(S0.token||S0.session_token||S0.access_token).then(ok=>{if(ok)room()})}else door();
 </script>
 </body>
 </html>
