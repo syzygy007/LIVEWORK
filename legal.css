@@ -1,0 +1,58 @@
+/* LIVEWORK legal pages, shared layer. Requires lw.css for tokens, Manrope and components. */
+
+.wrap{width:min(1200px,100% - 96px);margin:0 auto}
+@media (max-width:720px){.wrap{width:calc(100% - 48px)}}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
+.nav img{height:22px}
+.nav nav{display:flex;align-items:center;gap:28px;font-weight:600;font-size:15px}
+.nav nav a{text-decoration:none}
+.nav nav a:not(.btn):hover{text-decoration:underline;text-underline-offset:6px}
+@media (max-width:720px){.nav nav a:not(.btn){display:none}}
+
+/* masthead */
+.head{padding:104px 0 48px}
+.head h1{font-size:clamp(52px,8vw,124px);max-width:9em}
+.head .meta{margin:32px 0 0 28px;display:flex;gap:40px;flex-wrap:wrap;font-size:13px;color:var(--stone)}
+.head .meta b{display:block;color:var(--ink);font-weight:600;letter-spacing:.02em;font-size:12px;margin-bottom:2px}
+@media (max-width:720px){.head{padding:56px 0 32px}.head .meta{margin-left:0;gap:24px}}
+
+/* document */
+.doc{display:grid;grid-template-columns:250px 1fr;gap:72px;padding:32px 0 104px}
+@media (max-width:900px){.doc{grid-template-columns:1fr;gap:32px}}
+
+.toc{position:sticky;top:100px;align-self:start;display:grid;gap:11px;font-size:14px;max-height:calc(100vh - 130px);overflow:auto}
+.toc a{text-decoration:none;color:var(--stone);line-height:1.35}
+.toc a:hover{color:var(--ink)}
+.toc .tiny{margin:0 0 8px;color:var(--ink);letter-spacing:.12em;font-weight:700}
+@media (max-width:900px){.toc{position:static;max-height:none;padding-bottom:24px;border-bottom:1px solid var(--line)}}
+
+.body{max-width:44em}
+.body h2{font-size:clamp(28px,3.2vw,40px);margin:64px 0 18px;scroll-margin-top:100px;padding-left:20px;border-left:8px solid var(--yellow)}
+.body h2:first-child{margin-top:0}
+.body p{margin:0 0 15px;font-size:17px;line-height:1.62;overflow-wrap:anywhere}
+.body .spec{margin:8px 0 24px}
+.body .spec .row span{font-size:16px;line-height:1.55}
+.body .note{background:var(--wall);padding:20px 24px;border-radius:var(--r);font-size:15px;line-height:1.55;margin:24px 0}
+
+/* footer */
+footer{padding:48px 0;border-top:1px solid var(--line);font-size:13px;color:var(--stone);background:var(--paper)}
+footer .wrap{display:grid;gap:20px}
+footer img{height:16px}
+footer a{color:var(--stone)}
+.legal-links{display:flex;gap:20px;flex-wrap:wrap}
+
+/* print */
+@media print{
+  .nav,.toc,footer{display:none}
+  .doc{display:block;padding:0}
+  .wrap{width:100%}
+  .head{padding:0 0 20px}
+  .head h1{font-size:30pt}
+  .head .meta{margin-left:0}
+  .body{max-width:none}
+  .body h2{font-size:15pt;break-after:avoid;margin:22pt 0 8pt;border-left-width:5px;padding-left:10px}
+  .body p{font-size:10.5pt;line-height:1.45}
+}
