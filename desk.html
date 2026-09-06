@@ -483,8 +483,7 @@ function vCandidates(){
   });
   const tags = S.tags.map(t => F(t,'name','label')).filter(Boolean);
   return head('Candidates.',
-      '<a class="btn ghost" href="resume.html">Drop a resume</a>' +
-      '<button class="btn" data-new="candidate">Add a candidate</button>') +
+      '<button class="btn" data-new="candidate">Drop a resume or add a candidate</button>') +
     '<div class="tools"><div class="search"><input id="qcand" placeholder="Name, title, location" value="' + esc(Q.cand) + '"></div>' +
       '<button class="chip ' + (Q.tag?'':'on') + '" data-tag="">All</button>' +
       tags.map(t => '<button class="chip ' + (Q.tag===t?'on':'') + '" data-tag="' + esc(t) + '">' + esc(t) + '</button>').join('') +
@@ -854,8 +853,11 @@ function sheetCandidate(){
   if(T===3) body = logList(acts.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,40)
       .map(a => [short(a.created_at) + ' ' + esc(F(a,'kind')), esc(F(a,'body','note'))]));
   if(T===4) body = (docs.length ? logList(docs.map(d => [short(d.created_at), esc(F(d,'name','title','kind'))]))
-      : '<p class="muted small">No files yet. Drop a resume and the branded PDF lands here.</p>') +
-      '<a class="btn ghost" href="resume.html">Drop a resume</a>';
+      : '<p class="muted small">No files yet. Drop a resume on the add form and the branded profile lands here.</p>') +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+        '<button class="btn ghost" data-prof="' + idOf(c) + '">Branded profile PDF</button>' +
+        '<button class="btn ghost" data-prof="' + idOf(c) + '" data-redact="1">Client copy, no contact info</button>' +
+      '</div>';
   shell(esc(F(c,'name','full_name')) + '.', esc(F(c,'title','headline')) + (F(c,'location') ? ' · ' + esc(F(c,'location')) : ''),
     tabs(['Profile','Notes','History','Activity','Documents']) + body);
 }
@@ -902,7 +904,10 @@ function form(kind, ctx){
       '<div class="two"><div class="field"><label for="f_min">Comp low</label><input id="f_min" inputmode="numeric"></div>' +
       '<div class="field"><label for="f_max">Comp high</label><input id="f_max" inputmode="numeric"></div></div>' +
       '<div class="field"><label for="f_notes">The brief</label><textarea id="f_notes" placeholder="What good looks like, who they report to, why the seat is open."></textarea></div>'],
-    candidate: ['Add a candidate.', 'Or drop a resume and let the tool fill this in.',
+    candidate: ['Add a candidate.', 'Drop a resume PDF and the form fills itself. Check it, then save.',
+      '<div id="rdrop" style="border:2px dashed var(--line,#D3CEC4);padding:22px;text-align:center;cursor:pointer;background:var(--paper,#F4F2ED)">' +
+        '<b id="rdropt">Drop a resume PDF here, or click to pick one</b><br><span class="muted small" id="rdrops">Reads name, contact, title, sections and skills. PDF only for now.</span>' +
+        '<input id="rfile" type="file" accept="application/pdf" style="display:none"></div>' +
       '<div class="two"><div class="field"><label for="f_name">Name</label><input id="f_name"></div>' +
       '<div class="field"><label for="f_title">Current title</label><input id="f_title"></div></div>' +
       '<div class="two"><div class="field"><label for="f_email">Email</label><input id="f_email" type="email"></div>' +
@@ -966,6 +971,41 @@ function form(kind, ctx){
   const first = $('#sheet').querySelector('input,select,textarea'); if(first) first.focus();
   $('#fsave').onclick = () => save(kind, ctx);
   if(kind === 'invoice') wireInvoiceForm(ctx);
+  if(kind === 'candidate') wireResumeDrop();
+}
+/* resume drop: upload the original with the staff token, let the backend read it, fill the form */
+let RESUME = null;
+function wireResumeDrop(){
+  RESUME = null;
+  const z = document.getElementById('rdrop'), inp = document.getElementById('rfile');
+  if(!z || !inp) return;
+  const say = (t, s) => { document.getElementById('rdropt').textContent = t; if(s != null) document.getElementById('rdrops').textContent = s; };
+  const take = async file => {
+    if(!file) return;
+    if(!/pdf$/i.test(file.type) && !/\.pdf$/i.test(file.name)) return toast('PDF only for now. Word files are next.', true);
+    if(file.size > 8000000) return toast('That file is over 8MB.', true);
+    say('Reading ' + file.name, 'Uploading, then reading it on the server.');
+    try{
+      await alive();
+      const safe = file.name.replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60);
+      const path = 'originals/' + Date.now() + '-' + safe;
+      const up = await fetch(LW.url + '/storage/v1/object/resumes/' + path, { method:'POST',
+        headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/pdf', 'x-upsert':'true' }, body: file });
+      if(!up.ok){ const t = await up.text(); throw new Error('upload refused. ' + t.slice(0, 160)); }
+      const j = await fnCall('resume-read', { path });
+      const p = j.parsed || {};
+      const set = (id, v) => { const e = document.getElementById(id); if(e && v && !e.value) e.value = v; };
+      set('f_name', p.name); set('f_title', p.title); set('f_email', p.email); set('f_phone', p.phone); set('f_loc', p.location); set('f_notes', p.summary);
+      RESUME = { path, parsed: p };
+      say('Read ' + file.name + '.', (p.sections || []).length + ' sections, ' + (p.tags || []).length + ' skills. Check the fields, then save.');
+      if(!p.name) toast('Could not find a name in that file, type it in.', true);
+    }catch(err){ say('Could not read that one.', err.message); toast(err.message, true); console.error(err); }
+  };
+  z.onclick = () => inp.click();
+  inp.onchange = () => take(inp.files[0]);
+  z.ondragover = e => { e.preventDefault(); z.style.borderColor = 'var(--yellow,#E3BD3B)'; };
+  z.ondragleave = () => { z.style.borderColor = ''; };
+  z.ondrop = e => { e.preventDefault(); z.style.borderColor = ''; take(e.dataTransfer.files[0]); };
 }
 /* picking a placement fills the company, the amount and the description,
    so nobody types "Placement Feed" onto a client invoice again. */
@@ -1023,9 +1063,17 @@ async function save(kind, ctx){
   }
   if(kind === 'candidate'){
     if(!val('f_name')) return toast('A candidate needs a name.', true);
+    const extra = RESUME ? { resume_path: RESUME.path, resume_read_at: new Date().toISOString(),
+      linkedin: RESUME.parsed.linkedin || undefined,
+      profile_json: { tags: RESUME.parsed.tags || [], sections: RESUME.parsed.sections || [] } } : {};
     r = await tryWrite(() => insert('candidates', clean({ [M.candidate.name]: val('f_name'), [M.candidate.title]: val('f_title'),
       [M.candidate.email]: val('f_email').toLowerCase(), [M.candidate.phone]: val('f_phone'), [M.candidate.location]: val('f_loc'),
-      [M.candidate.notes]: val('f_notes') })), 'Candidate added.');
+      [M.candidate.notes]: val('f_notes'), ...extra })), 'Candidate added.');
+    if(r && RESUME){
+      try{ const pj = await fnCall('profile-pdf', { candidate_id: idOf(r) }); toast('Branded profile ready, ' + pj.ref + '.'); }
+      catch(err){ toast('Saved, but the branded PDF failed. ' + err.message, true); }
+      RESUME = null;
+    }
   }
   if(kind === 'pipeline'){
     if(!val('f_se') || !val('f_cand')) return toast('Pick a search and a candidate.', true);
@@ -1107,6 +1155,13 @@ function wireSheet(){
     const r = await tryWrite(() => patch('contacts', b.dataset.room, { [MAP.contact.room]: !(ct[MAP.contact.room] === true) }),
       ct[MAP.contact.room] === true ? 'Room access off.' : 'Room access on.');
     if(r){ await loadAll(); paintSheet(); }
+  });
+  sh.querySelectorAll('[data-prof]').forEach(b => b.onclick = async () => {
+    const lbl = b.textContent; b.disabled = true; b.textContent = 'Building';
+    try{ const j = await fnCall('profile-pdf', { candidate_id: b.dataset.prof, redact: b.dataset.redact === '1' });
+      if(j.url) openUrl(j.url); toast('Profile ' + j.ref + ' ready.'); }
+    catch(err){ toast('No PDF. ' + err.message, true); }
+    b.disabled = false; b.textContent = lbl;
   });
   sh.querySelectorAll('[data-bill]').forEach(b => b.onclick = async () => {
     const ct = byId(S.contacts, b.dataset.bill); if(!ct) return;
