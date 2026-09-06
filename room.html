@@ -119,12 +119,13 @@ function door(){
   $('#who').textContent='';
   $('#main').innerHTML=`<section class="door"><div class="box">
     ${step===0?`<div class="hl"><span class="bar"></span><h1>Your room.</h1></div>
-      <p>Sign in with the work email LIVEWORK invited. We send a six digit code, no password.</p>
+      <p>Sign in with the work email your recruiter invited. We send a six digit code, no password. Not a client yet? <a href="index.html#contact">Start a conversation</a>.</p>
       <div class="field"><label for="em">Work email</label><input id="em" type="email" placeholder="you@company.com" value="${esc(pendingEmail||(LIVE?'':ME.email))}"></div>
       ${err?`<p class="err">${esc(err)}</p>`:''}
       <button class="btn" id="go">Send my code</button>`
     :`<div class="hl"><span class="bar"></span><h1>Check your email.</h1></div>
-      <p>Enter the six digit code we sent to ${esc(pendingEmail)}.</p>
+      <p>If ${esc(pendingEmail)} was invited by your recruiter, a six digit code is on its way. Enter it here.</p>
+      <p class="small">No code in a minute? Client room access is set up by your recruiter. Write to <a href="mailto:hello@livework.inc">hello@livework.inc</a> and we will open your room.</p>
       <div class="field"><label for="cd">Code</label><input id="cd" class="code" inputmode="numeric" maxlength="7" placeholder="000000"></div>
       ${err?`<p class="err">${esc(err)}</p>`:''}
       <button class="btn" id="go">Open my room</button>
@@ -156,8 +157,8 @@ function room(){
   $('#who').innerHTML=`<b>${esc(ME.name)}</b> · ${esc(ME.company)} &nbsp; <a href="#" id="out">Sign out</a>`;
   $('#out').onclick=e=>{e.preventDefault();clearSession();step=0;err='';door()};
   $('#main').innerHTML=`<section class="room"><div class="wrap">
-    <div class="hl"><span class="bar"></span><h1>${esc(ME.company)}. ${SEARCHES.length?`${SEARCHES.length===1?'One search':SEARCHES.length+' searches'}, ${SEARCHES.reduce((n,s)=>n+s.cands.length,0)} to look at.`:'Your searches will appear here.'}</h1></div>
-    <p class="lede">Everyone here has been screened by ${esc(ME.recruiter)} and released to you. Open a profile, then advance, pass, or ask for a time. You get an email as each search moves.</p>
+    <div class="hl"><span class="bar"></span><h1>${esc(ME.company)}. ${SEARCHES.length?`${SEARCHES.length===1?'One search':SEARCHES.length+' searches'}, ${SEARCHES.reduce((n,s)=>n+s.cands.length,0)} to look at.`:'Nothing released yet.'}</h1></div>
+    <p class="lede">${SEARCHES.length?`Everyone here has been screened by ${esc(ME.recruiter)} and released to you. Open a profile, then advance, pass, or ask for a time. You get an email as each search moves.`:`This is where your searches live. When ${esc(ME.recruiter)} releases a candidate you get an email, and they appear here with a profile, the fit, and three buttons: advance, ask for a time, pass.`}</p>
     ${SEARCHES.map((s,si)=>`<section class="srch">
       <header><div><h2>${esc(s.title)}</h2><p class="meta">${esc(s.location)} · ${esc(s.comp)} · opened ${s.opened}</p></div>
       <div class="ladder">${STAGES.map((k,i)=>`<span class="${s.cands.some(c=>c.stage>=i)?'on':''}">${k}</span>`).join('')}</div></header>
