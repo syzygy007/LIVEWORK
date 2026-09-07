@@ -850,12 +850,16 @@ function keyContact(coId){
   const spoken = S.activity.filter(a => String(a.company_id) === String(coId) && a.contact_id)
     .sort((a,b) => String(F(a,'created_at','occurred_at') || '').localeCompare(String(F(b,'created_at','occurred_at') || '')))
     .map(a => a.contact_id).pop();
-  const found = spoken ? list.filter(x => String(idOf(x)) === String(spoken))[0] : null;
-  if(found) return found;
-  const room = list.filter(x => x[MAP.contact.room] === true)[0];
-  if(room) return room;
-  const notBilling = list.filter(x => x[MAP.contact.billing] !== true);
-  return notBilling[0] || list[0];
+  const order = [];
+  const add = x => { if(x && order.indexOf(x) < 0) order.push(x); };
+  if(spoken) add(list.filter(x => String(idOf(x)) === String(spoken))[0]);
+  add(list.filter(x => x[MAP.contact.room] === true)[0]);
+  list.filter(x => x[MAP.contact.billing] !== true).forEach(add);
+  list.forEach(add);
+  /* whoever is callable wins. a contact with no number cannot be tapped,
+     so the row falls to the next person who has one. */
+  const hasPhone = x => String(F(x,'phone') || '').replace(/[^0-9+]/g,'').length >= 7;
+  return order.filter(hasPhone)[0] || order.filter(x => F(x,'email'))[0] || order[0];
 }
 /* the last touch on a client, and the name it went to if we know it */
 function coTouch(coId){
