@@ -286,7 +286,11 @@ body{background:var(--paper)}
 .clist .ch .pill{font-size:12px;font-weight:600;background:var(--wall);color:var(--ink);
   padding:5px 12px;border-radius:999px;white-space:nowrap;flex:none}
 .clist .ch .pill.warn{background:var(--s-due);color:#fff}
-.agview{display:block;width:100%;height:min(52vh,520px);border:1px solid var(--line);background:var(--paper)}
+.agwrap{margin-bottom:14px}
+.agnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.agnav .btn{padding:4px 10px;font-size:12px;width:auto}
+.agnav .agbtns{display:flex;gap:6px;align-items:center}
+.agview{display:block;width:100%;height:min(72vh,860px);border:1px solid var(--line);background:var(--paper)}
 .agseen{display:grid;gap:3px;padding:12px 14px;border:1px solid var(--line);background:var(--white);font-size:14px}
 .agseen:empty{display:none}
 .agseen b{font-weight:600}
@@ -2236,6 +2240,23 @@ function wireAgreementForm(ctx){
 }
 
 /* the second and last press. the document is made, this is where it goes. */
+function needLib(src, glob){
+  return new Promise((res) => {
+    if(window[glob]) return res(window[glob]);
+    const el = document.createElement('script'); el.src = src;
+    el.onload = () => res(window[glob] || null);
+    el.onerror = () => res(null);
+    document.head.appendChild(el);
+  });
+}
+async function pdfPages(u){
+  try{
+    const L = await needLib('pdf-lib.min.js', 'PDFLib'); if(!L) return 0;
+    const r = await fetch(u); const b = await r.arrayBuffer();
+    const d = await L.PDFDocument.load(b, { ignoreEncryption: true });
+    return d.getPageCount();
+  }catch(e){ return 0; }
+}
 function approve(j, coid, kd, seid){
   const co = company(coid) || {};
   const who = contactsOf(coid).filter(c => F(c,'email'))[0];
@@ -2243,7 +2264,11 @@ function approve(j, coid, kd, seid){
   shell('Read it, then send it.',
     esc(dockLabel(kd)) + ' for ' + esc(F(co,'legal_name') || F(co,'name')) + (j.reference ? ' \u00b7 ' + esc(j.reference) : ''),
     '<div class="form">' +
-      '<iframe class="agview" src="' + esc(j.url || '') + '" title="The agreement"></iframe>' +
+      '<div class="agwrap"><div class="agnav"><span class="micro" id="agp">The agreement</span>' +
+        '<span class="agbtns"><button type="button" class="btn ghost" id="agprev">Previous</button>' +
+        '<button type="button" class="btn ghost" id="agnext">Next</button>' +
+        '<a class="btn ghost" href="' + esc(j.url || '') + '" target="_blank" rel="noopener">Open in a new tab</a></span></div>' +
+        '<iframe class="agview" id="agifr" src="' + esc(j.url || '') + '#page=1&view=FitH" title="The agreement"></iframe></div>' +
       '<div class="field"><label for="f_toe">Send it to</label><input id="f_toe" type="email" value="' + esc(F(who,'email')) + '" placeholder="dana@northwind.com"></div>' +
       '<div class="two"><div class="field"><label for="f_name">Who signs</label><input id="f_name" value="' + esc(F(who,'name')) + '"></div>' +
       '<div class="field"><label for="f_stitle">Their title</label><input id="f_stitle" value="' + esc(F(who,'title','role')) + '"></div></div>' +
@@ -2253,6 +2278,14 @@ function approve(j, coid, kd, seid){
       '<p class="muted small">Nothing has gone out yet. It is saved on the client either way.</p>' +
     '</div>');
   const doc = byId(S.documents, j.id) || { id: j.id, company_id: coid, title: dockLabel(kd) };
+  let AGP = 1, AGN = 0;
+  const agPaint = () => { const e = $('#agp'); if(e) e.textContent = AGN ? ('Page ' + AGP + ' of ' + AGN) : 'The agreement'; };
+  const agGo = (n) => { if(n < 1 || (AGN && n > AGN)) return; AGP = n;
+    const f = $('#agifr'); if(!f) return; const u = (j.url || '') + '#page=' + AGP + '&view=FitH';
+    f.src = 'about:blank'; setTimeout(() => { f.src = u; }, 40); agPaint(); };
+  $('#agprev').onclick = () => agGo(AGP - 1);
+  $('#agnext').onclick = () => agGo(AGP + 1);
+  pdfPages(j.url).then(n => { AGN = n; agPaint(); });
   $('#fsend').onclick = async () => {
     const to = val('f_toe').trim().toLowerCase();
     if(!to || to.indexOf('@') < 0) return toast('It needs an email to send to.', true);
@@ -2299,14 +2332,14 @@ async function sendSignature(d, o){
     await fnCall('mail-send', clean({ to_email: String(o.email).toLowerCase(), to_name: o.name,
       subject: F(d,'title') + ' for ' + (F(co,'legal_name') || F(co,'name')),
       body: (o.note || '') + '\n\nSign it here: ' + link + '\n\nThe link works until ' +
-        new Date(until).toLocaleDateString() + '. You will get a code by email when you sign, and your executed copy right after.',
+        new Date(until).toLocaleDateString() + '. Your executed copy comes by email the moment you sign.',
       template: 'note', company_id: d.company_id }));
     await insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: 'Sent ' + F(d,'title') + ' for signature',
       [M.activity.company]: d.company_id, [M.activity.staff]: meId() }));
     toast('Sent to ' + o.email + '.');
   }catch(err){
     console.error(err);
-    toast('Made the link but the email did not go. Copy it from the row.', true);
+    toast('Made the link. The email did not go: ' + ((err && err.message) || 'no reason given') + '. Copy it from the row.', true);
   }
   await loadAll(); drawNav(); draw(); paintSheet();
   return true;
