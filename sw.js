@@ -10,7 +10,7 @@
 
    Supabase calls are never touched.
    ============================================================ */
-const V = 'lw-1';
+const V = 'lw-2';   /* bumped for the design pass: the fonts and marks changed under the same names */
 const SHELL = 'lw-shell-' + V;
 const ASSETS = 'lw-assets-' + V;
 
@@ -20,8 +20,8 @@ const PRECACHE = [
   'Manrope-Regular.woff2',
   'Manrope-SemiBold.woff2',
   'Manrope-ExtraBold.woff2',
-  'livework-primary-all-yellow.png',
-  'livework-primary-all-black.png',
+  'livework-wordmark-heavy-yellow.svg',
+  'livework-wordmark-black.svg',
   'icon-192.png',
   'apple-touch-icon.png'
 ];

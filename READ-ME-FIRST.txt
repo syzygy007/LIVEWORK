@@ -1,0 +1,39 @@
+LIVEWORK design pass, September 6 2026
+======================================
+
+Drag everything in this folder into the root of the LIVEWORK repo and
+let it overwrite. Nothing here needs an SQL patch or a function deploy.
+
+WHAT CHANGED
+
+  The yellow          #E3BD3B is gone, #F2C632 everywhere
+  The wordmark        your light cut above 120px, a heavy cut below it
+  The app icon        black tile, yellow L|W, drawn as vector
+  Clients             the word Companies is gone from the whole interface
+  Light and dark      a sun and moon switch, top right on a phone, in the
+                      rail on a desktop. It remembers your choice; with no
+                      choice made your phone's own setting decides
+  Status              draft grey, sent blue, paid green, past due red,
+                      void as a ring so it does not read as another grey dot
+  Tab icons           roof, building, head, columns, rules. No two of them
+                      read the same at thumb size
+  The fonts           see below, this one matters
+
+THE FONTS
+
+  Every Manrope file in the repo was the wrong weight:
+
+    Manrope-ExtraBold   was actually SemiBold
+    Manrope-SemiBold    was actually Medium
+    Manrope-Regular     was actually Light
+
+  So the site, the desk and every PDF have been rendering a full weight
+  light since the first build. Correct files are in this folder under the
+  same names. Everything will look heavier the moment you drag them.
+
+STILL TO DO, NOT IN THIS DROP
+
+  The yellow also lives inside four edge functions, in the invoice PDF
+  bar, the candidate profile PDF, and the header bar on outbound mail.
+  Those are hand pastes, so they come one at a time when you are ready:
+  invoice-pdf, profile-pdf, mail-send, invoice-mail.
