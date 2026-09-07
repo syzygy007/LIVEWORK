@@ -286,6 +286,11 @@ body{background:var(--paper)}
 .clist .ch .pill{font-size:12px;font-weight:600;background:var(--wall);color:var(--ink);
   padding:5px 12px;border-radius:999px;white-space:nowrap;flex:none}
 .clist .ch .pill.warn{background:var(--s-due);color:#fff}
+.agseen{display:grid;gap:3px;padding:12px 14px;border:1px solid var(--line);background:var(--white);font-size:14px}
+.agseen:empty{display:none}
+.agseen b{font-weight:600}
+.agseen span{color:var(--stone);font-size:13px}
+.agseen a{margin-top:6px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline}
 .docgate{padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);
   margin-bottom:18px;font-size:14px;line-height:1.5;color:var(--stone)}
 .docgate.bad{border-color:var(--s-due);color:var(--s-due);font-weight:600}
@@ -785,7 +790,8 @@ function docRow(d){
             : 'Added ' + short(F(d,'created_at')))) + '</div>' +
     '<div class="a">' +
       (F(d,'storage_path') ? '<a data-docopen="' + idOf(d) + '">' + OPENI + 'Open</a>' : '') +
-      (sg ? '' : '<a data-new="sendsign" data-doc="' + idOf(d) + '">' + (rq ? 'Send it again' : 'Send for signature') + '</a>') +
+      (sg ? '' : '<a data-esign="' + idOf(d) + '">' + (rq ? 'Send it again' : 'Send for e-signature') + '</a>') +
+      (sg ? '' : '<a data-wet="' + idOf(d) + '">Email it</a>') +
       (sg || !rq ? '' : '<a data-siglink="' + idOf(rq) + '">Copy the link</a>') +
       (sg ? '' : '<a data-docsign="' + idOf(d) + '">Mark signed</a>') +
     '</div></div>';
@@ -2048,16 +2054,19 @@ function form(kind, ctx){
       '<div class="two"><div class="field"><label for="f_sname">Who signed for the client</label><input id="f_sname"></div>' +
       '<div class="field"><label for="f_stitle">Their title</label><input id="f_stitle"></div></div>' +
       '<div class="field"><label for="f_semail">Their email</label><input id="f_semail" type="email"></div>'],
-    agreement: ['Draw up an agreement.', 'Check what prints on it. Anything you fix here is saved to the client, not just to this one document.',
+    agreement: ['Draw up an agreement.', 'Pick the document. Anything missing shows up below, and what you type is saved to the client.',
       '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="field"><label for="f_kind">Document</label><select id="f_kind">' +
         DOCK.filter(d => d[0] !== 'other').map(d => '<option value="' + d[0] + '">' + d[1] + '</option>').join('') + '</select></div>' +
       '<div class="field" id="f_serow"><label for="f_se">Which role</label><select id="f_se">' +
         opts(S.searches.filter(isOpen), x => F(x,'title','role') + ' \u00b7 ' + cname(x.company_id), ctx.se) + '</select></div>' +
-      '<p class="muted small" style="margin:6px 0 0">What prints on the agreement</p>' +
+      '<div id="f_seen" class="agseen"></div>' +
+      '<div id="f_gaps" style="display:none">' +
+      '<p class="muted small" style="margin:6px 0 0">These print on the agreement and are not on the client yet</p>' +
       '<div class="field"><label for="f_legal">Legal name, as it signs</label><input id="f_legal" placeholder="Northwind Logistics, Inc."></div>' +
       '<div class="field"><label for="f_addr">Address for notices</label><input id="f_addr"></div>' +
       '<div class="field"><label for="f_notice">Notice email</label><input id="f_notice" type="email"></div>' +
+      '</div>' +
       '<div id="f_rebox">' +
         '<div class="field"><label for="f_title">Position</label><input id="f_title"></div>' +
         '<div class="two"><div class="field"><label for="f_loc">Location</label><input id="f_loc"></div>' +
@@ -2066,8 +2075,7 @@ function form(kind, ctx){
         '<div class="field"><label for="f_max">Base high</label><input id="f_max" inputmode="numeric"></div></div>' +
         '<div class="field"><label for="f_brief">Role brief, one line</label><input id="f_brief" placeholder="Brief dated 2 September, agreed in writing."></div>' +
       '</div>' +
-      '<p class="muted small" style="margin:6px 0 0">Signing for LIVEWORK</p>' +
-      '<div class="two"><div class="field"><label for="f_sname">Name</label><input id="f_sname"></div>' +
+      '<div class="two"><div class="field"><label for="f_sname">Signing for LIVEWORK</label><input id="f_sname"></div>' +
       '<div class="field"><label for="f_stitle">Title</label><input id="f_stitle" placeholder="President"></div></div>'],
     sendsign: ['Send it for signature.', 'They get a link and a code. Entering the code is the signature, and the executed copy comes back with the audit page on it.',
       '<div class="field"><label for="f_who">Who signs</label><select id="f_who"><option value="">Someone else</option>' +
@@ -2092,7 +2100,10 @@ function form(kind, ctx){
   $('#fsave').onclick = () => save(kind, ctx);
   if(kind === 'invoice') wireInvoiceForm(ctx);
   if(kind === 'candidate') wireResumeDrop();
-  if(kind === 'mail') wireMailForm(ctx);
+  if(kind === 'mail'){ wireMailForm(ctx);
+    if(ctx.subj) setv('f_subj', ctx.subj);
+    if(ctx.body) setv('f_body', ctx.body);
+  }
   if(kind === 'document') wireDocForm();
   if(kind === 'agreement') wireAgreementForm(ctx);
   if(kind === 'sendsign'){
@@ -2177,6 +2188,18 @@ function wireAgreementForm(ctx){
   const me = ME || {};
   setv('f_sname', F(me,'name','email'));
   setv('f_stitle', String(F(me,'role')) === 'admin' ? 'President' : '');
+  const gaps = () => {
+    const c = company(co.value) || {};
+    const miss = !val('f_legal') || !val('f_addr') || !val('f_notice');
+    const box = document.getElementById('f_gaps'), seen = document.getElementById('f_seen');
+    if(box) box.style.display = miss ? '' : 'none';
+    if(seen) seen.innerHTML = miss ? '' :
+      '<b>' + esc(val('f_legal')) + '</b><span>' + esc(val('f_addr')) + '</span>' +
+      '<span>' + esc(val('f_notice')) + '</span>' +
+      '<a data-gaps="1">Change what prints</a>';
+    if(seen) { const a = seen.querySelector('[data-gaps]');
+      if(a) a.onclick = () => { if(box) box.style.display = ''; seen.innerHTML = ''; }; }
+  };
   const fillCo = () => {
     const c = company(co.value); if(!c) return;
     setv('f_legal', F(c,'legal_name') || F(c,'name'));
@@ -2201,10 +2224,56 @@ function wireAgreementForm(ctx){
     if(serow) serow.style.display = ret ? '' : 'none';
     if(rebox) rebox.style.display = ret ? '' : 'none';
   };
-  co.onchange = () => { fillCo(); fillSe(); };
+  co.onchange = () => { fillCo(); fillSe(); gaps(); };
   kd.onchange = only;
   if(se) se.onchange = fillSe;
-  fillCo(); fillSe(); only();
+  fillCo(); fillSe(); only(); gaps();
+}
+
+/* the only two things you do with a fresh agreement */
+async function eSign(docId){
+  const d = byId(S.documents, docId); if(!d) return;
+  const people = contactsOf(d.company_id).filter(c => F(c,'email'));
+  if(people.length !== 1) return form('sendsign', { doc: docId, co: d.company_id });
+  const c = people[0];
+  if(!confirm('Send ' + F(d,'title') + ' to ' + F(c,'name') + ' at ' + F(c,'email') + ' to sign?'))
+    return form('sendsign', { doc: docId, co: d.company_id });
+  await sendSignature(d, { name: F(c,'name'), title: F(c,'title','role'), email: F(c,'email'), days: 14,
+    note: 'Here is the agreement we talked about. It takes about a minute to sign.' });
+}
+function wetSign(docId){
+  const d = byId(S.documents, docId); if(!d) return;
+  const co = company(d.company_id) || {};
+  form('mail', { co: d.company_id, attach: idOf(d),
+    subj: F(d,'title') + ' for ' + (F(co,'legal_name') || F(co,'name')),
+    body: 'Attached is the ' + F(d,'title') + ', already signed on our side.\n\n' +
+      'Print it, sign the client block, and send a scan back to this address. If you would rather sign it online, say the word and I will send a link instead.' });
+}
+/* one place that mints a request and mails the link */
+async function sendSignature(d, o){
+  const tok = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()) + String(Math.random())).replace(/-/g, '');
+  const until = new Date(Date.now() + (Number(o.days) || 14) * 86400000).toISOString();
+  const rq = await tryWrite(() => insert('signature_requests', { document_id: idOf(d), party: 'client',
+    signer_name: o.name, signer_title: o.title || '', signer_email: String(o.email).toLowerCase(),
+    token: tok, expires_at: until }), null);
+  if(!rq) return false;
+  const link = SITE + '/sign.html?t=' + tok;
+  const co = company(d.company_id) || {};
+  try{
+    await fnCall('mail-send', clean({ to_email: String(o.email).toLowerCase(), to_name: o.name,
+      subject: F(d,'title') + ' for ' + (F(co,'legal_name') || F(co,'name')),
+      body: (o.note || '') + '\n\nSign it here: ' + link + '\n\nThe link works until ' +
+        new Date(until).toLocaleDateString() + '. You will get a code by email when you sign, and your executed copy right after.',
+      template: 'note', company_id: d.company_id }));
+    await insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: 'Sent ' + F(d,'title') + ' for signature',
+      [M.activity.company]: d.company_id, [M.activity.staff]: meId() }));
+    toast('Sent to ' + o.email + '.');
+  }catch(err){
+    console.error(err);
+    toast('Made the link but the email did not go. Copy it from the row.', true);
+  }
+  await loadAll(); drawNav(); draw(); paintSheet();
+  return true;
 }
 
 async function docUrl(d){
@@ -2269,28 +2338,9 @@ async function save(kind, ctx){
     const to = val('f_toe').trim().toLowerCase();
     if(!to || to.indexOf('@') < 0) return toast('It needs an email to send to.', true);
     if(!val('f_name').trim()) return toast('Who is signing?', true);
-    const tok = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).replace(/-/g, '');
-    const until = new Date(Date.now() + (Number(val('f_days')) || 14) * 86400000).toISOString();
-    const rq = await tryWrite(() => insert('signature_requests', { document_id: idOf(d), party: 'client',
-      signer_name: val('f_name').trim(), signer_title: val('f_stitle').trim(), signer_email: to,
-      token: tok, expires_at: until }), null);
-    if(!rq) return;
-    const link = SITE + '/sign.html?t=' + tok;
-    const co = company(d.company_id) || {};
-    try{
-      await fnCall('mail-send', clean({ to_email: to, to_name: val('f_name').trim(),
-        subject: F(d,'title') + ' for ' + (F(co,'legal_name') || F(co,'name')),
-        body: val('f_note').trim() + '\n\nSign it here: ' + link + '\n\nThe link works until ' +
-          new Date(until).toLocaleDateString() + '. You will get a code by email when you sign, and your executed copy right after.',
-        template: 'note', company_id: d.company_id }));
-      await insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: 'Sent ' + F(d,'title') + ' for signature',
-        [M.activity.company]: d.company_id, [M.activity.staff]: meId() }));
-      toast('Sent to ' + to + '.');
-    }catch(err){
-      console.error(err);
-      toast('Made the link but the email did not go. Copy it from the row.', true);
-    }
-    closeSheet(); await loadAll(); drawNav(); draw(); paintSheet();
+    await sendSignature(d, { name: val('f_name').trim(), title: val('f_stitle').trim(), email: to,
+      days: val('f_days'), note: val('f_note').trim() });
+    closeSheet();
     return;
   }
   if(kind === 'agreement'){
@@ -2458,6 +2508,7 @@ async function save(kind, ctx){
     if(!val('f_body').trim()) return toast('It needs a message.', true);
     const c = ctx.cand ? cand(ctx.cand) : null;
     const att = $('#f_att') && $('#f_att').checked ? mailPdf(ctx) : null;
+    const adoc = ctx.attach ? byId(S.documents, ctx.attach) : null;
     const b = $('#fsave'); if(b){ b.disabled = true; b.textContent = 'Sending'; }
     try{
       const j = await fnCall('mail-send', clean({
@@ -2466,8 +2517,9 @@ async function save(kind, ctx){
         candidate_id: ctx.cand || undefined, company_id: ctx.co || undefined,
         search_id: ctx.se || undefined, pipeline_id: ctx.pipe || undefined,
         advance: $('#f_advance') ? $('#f_advance').checked : false,
-        attach_path: att ? F(att,'branded_resume_path') : undefined,
-        attach_name: att ? String(F(att,'name')).replace(/[^A-Za-z0-9]+/g,'-').toLowerCase() + '-livework.pdf' : undefined
+        attach_path: att ? F(att,'branded_resume_path') : (adoc ? F(adoc,'storage_path') : undefined),
+        attach_name: att ? String(F(att,'name')).replace(/[^A-Za-z0-9]+/g,'-').toLowerCase() + '-livework.pdf'
+          : (adoc ? String(F(adoc,'title')).replace(/[^A-Za-z0-9]+/g,'-').toLowerCase() + '-livework.pdf' : undefined)
       }));
       toast('Sent, and copied to you.' + (j.moved ? ' Moved to Submitted.' : ''));
       closeSheet(); await loadAll(); drawNav(); draw();
@@ -2542,6 +2594,8 @@ function common(root){
   root.querySelectorAll('.add .menu button').forEach(b => b.addEventListener('click', () => {
     const a = b.closest('.add'); if(a) a.classList.remove('on');
   }));
+  root.querySelectorAll('[data-esign]').forEach(b => b.onclick = e => { e.stopPropagation(); eSign(b.dataset.esign); });
+  root.querySelectorAll('[data-wet]').forEach(b => b.onclick = e => { e.stopPropagation(); wetSign(b.dataset.wet); });
   root.querySelectorAll('[data-siglink]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const r = byId(S.signature_requests, b.dataset.siglink); if(!r) return;
     const link = SITE + '/sign.html?t=' + F(r,'token');
