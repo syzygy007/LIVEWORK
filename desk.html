@@ -2334,8 +2334,8 @@ async function sendSignature(d, o){
       body: (o.note || '') + '\n\nSign it here: ' + link + '\n\nThe link works until ' +
         new Date(until).toLocaleDateString() + '. Your executed copy comes by email the moment you sign.',
       template: 'note', company_id: d.company_id }));
-    await insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: 'Sent ' + F(d,'title') + ' for signature',
-      [M.activity.company]: d.company_id, [M.activity.staff]: meId() }));
+    await insert('activity', clean({ [MAP.activity.kind]: 'note', [MAP.activity.title]: 'Sent ' + F(d,'title') + ' for signature',
+      [MAP.activity.company]: d.company_id, [MAP.activity.staff]: meId() }));
     toast('Sent to ' + o.email + '.');
   }catch(err){
     console.error(err);
