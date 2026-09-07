@@ -1,1 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#000000"/><rect x="14" y="6" width="4" height="20" fill="#FFFF00"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" fill="#000000"/>
+  <g transform="translate(10.88 21.18) scale(0.12352)" fill="#F2C632">
+    <g transform="translate(0 135.36)">
+      <path transform="translate(0.00 0) scale(0.09400 -0.09400)" d="M160 0V1440H432V254H1052V0Z"/>
+      <path transform="translate(156.04 0) scale(0.09400 -0.09400)" d="M442 0 20 1440H306L576 450L846 1438L1132 1440L1402 450L1672 1440H1958L1536 0H1268L989 972L710 0Z"/>
+      <rect x="115.81" y="-135.36" width="21.43" height="175.22"/>
+    </g>
+  </g>
+</svg>

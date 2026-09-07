@@ -1,24 +1,72 @@
 {
   "name": "LIVEWORK Desk",
   "short_name": "Desk",
-  "description": "The LIVEWORK desk. Companies, searches, candidates, pipeline, billing.",
+  "description": "The LIVEWORK desk. Clients, searches, candidates, pipeline, billing.",
   "id": "/desk",
   "start_url": "/desk.html",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait-primary",
   "background_color": "#F4F2ED",
   "theme_color": "#000000",
-  "categories": ["business", "productivity"],
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "Today", "url": "/desk.html#today", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
-    { "name": "Intake", "url": "/desk.html#intake", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
-    { "name": "Pipeline", "url": "/desk.html#pipeline", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+    {
+      "name": "Today",
+      "url": "/desk.html#today",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "url": "/desk.html#companies",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Pipeline",
+      "url": "/desk.html#pipeline",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }

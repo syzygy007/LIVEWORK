@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>The Desk. LIVEWORK</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#000000" id="tc">
+<script>(function(){try{var s=localStorage.getItem("lw_skin");if(!s)s=matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";document.documentElement.dataset.skin=s;var m=document.getElementById("tc");if(m)m.content=s==="dark"?"#000000":"#000000";}catch(e){}})();</script>
 <link rel="manifest" href="desk.webmanifest">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -13,24 +14,25 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Desk">
-<link rel="stylesheet" href="lw.css?v=2">
+<link rel="stylesheet" href="lw.css?v=4">
 <script src="lw-config.js?v=3"></script>
 <script src="lw-auth.js?v=6"></script>
 <script src="lw-app.js?v=1" defer></script>
 <style>
 body{background:var(--paper)}
 .app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
-.rail{background:var(--ink);color:var(--white);padding:28px 20px;display:flex;flex-direction:column;gap:28px;position:sticky;top:0;height:100vh;overflow:auto}
-.rail img{height:20px;margin-left:4px}
+.rail{background:var(--panel);color:var(--panel-ink);border-right:1px solid var(--panel-line);padding:28px 20px;display:flex;flex-direction:column;gap:28px;position:sticky;top:0;height:100vh;overflow:auto}
+.rail .mark{height:19px;margin-left:4px}
 .rail nav{display:grid;gap:2px}
-.rail nav button{display:flex;align-items:center;justify-content:space-between;width:100%;height:40px;padding:0 12px;border:0;border-radius:var(--r);background:transparent;color:#BDB9B1;font-weight:600;font-size:15px;text-align:left;cursor:pointer}
-.rail nav button:hover{color:var(--white);background:#161616}
-.rail nav button.on{color:var(--ink);background:var(--yellow)}
+.rail nav button{display:flex;align-items:center;justify-content:space-between;width:100%;height:40px;padding:0 12px;border:0;border-radius:var(--r);background:transparent;color:var(--panel-dim);font-weight:600;font-size:15px;text-align:left;cursor:pointer}
+.rail nav button:hover{color:var(--panel-ink);background:#151515}
+.rail nav button.on{color:#000;background:var(--yellow)}
 .rail nav button .n{font-size:12px;font-weight:600;opacity:.7}
 .rail nav button.on .n{opacity:1}
-.rail .me{margin-top:auto;font-size:13px;color:#BDB9B1;line-height:1.4;padding-top:20px}
-.rail .me b{display:block;color:var(--white)}
-.rail .me a{color:#BDB9B1;font-size:12px;font-weight:600}
+.rail .me{margin-top:auto;font-size:13px;color:var(--panel-dim);line-height:1.4;padding-top:20px;display:grid;gap:12px}
+.rail .me .who b{display:block;color:var(--panel-ink)}
+.rail .me a{color:var(--panel-dim);font-size:12px;font-weight:600}
+.rail .skin{justify-self:start}
 .main{padding:32px 40px 96px;min-width:0}
 .top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:26px}
 .top h1{font-size:44px}
@@ -48,11 +50,16 @@ body{background:var(--paper)}
 .tbl .tags{display:flex;gap:6px;flex-wrap:wrap}
 .tbl .tags .chip{height:24px;font-size:12px;padding:0 8px}
 .st{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
-.st::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--stone)}
-.st.open::before,.st.released::before,.st.interview::before{background:var(--yellow-deep)}
-.st.placed::before,.st.paid::before,.st.signed::before,.st.sent::before{background:var(--ok)}
+.st::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--s-draft);flex:none}
+/* the one status set, used by every dot in the product */
+.st.draft::before{background:var(--s-draft)}
+.st.sent::before{background:var(--s-sent)}
+.st.paid::before,.st.placed::before,.st.signed::before{background:var(--s-paid)}
+.st.past_due::before,.st.overdue::before,.st.passed::before{background:var(--s-due)}
+/* void reads as a ring, otherwise it is just another grey dot */
+.st.void::before{background:transparent;border:2px solid var(--s-void);width:11px;height:11px}
+.st.open::before,.st.released::before,.st.interview::before,.st.client_interview::before{background:var(--yellow-deep)}
 .st.offer::before{background:var(--ink)}
-.st.passed::before,.st.overdue::before{background:var(--warn)}
 .empty{padding:40px 20px;color:var(--stone)}
 .sec{margin:34px 0 14px;display:flex;align-items:baseline;justify-content:space-between;gap:16px}
 .sec h2{font-size:24px}
@@ -61,7 +68,7 @@ body{background:var(--paper)}
 .stat b{display:block;font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1}
 .stat span{font-size:13px;color:var(--stone)}
 .stat.y{background:var(--yellow)}
-.stat.y span{color:var(--ink)}
+.stat.y,.stat.y b,.stat.y span{color:#000}
 .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:12px;overflow-x:auto;padding-bottom:12px}
 .col{background:var(--wall);border-radius:var(--r);padding:12px;min-height:320px}
 .col h4{font-size:13px;font-weight:600;color:var(--stone);margin:4px 4px 12px;display:flex;justify-content:space-between}
@@ -70,9 +77,9 @@ body{background:var(--paper)}
 .card .m{display:block;font-size:13px;color:var(--stone)}
 .card .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
 .card .acts button{height:28px;padding:0 10px;border:1px solid var(--line);background:var(--white);border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer}
-.card .acts button:hover{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.card .acts button:hover{background:var(--solid);color:var(--solid-ink);border-color:var(--solid)}
 .card.rel{border-left:4px solid var(--yellow)}
-.veil{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:20}
+.veil{position:fixed;inset:0;background:var(--veil);display:none;z-index:20}
 .veil.on{display:block}
 .sheet{position:fixed;top:0;right:0;bottom:0;width:min(620px,100%);background:var(--white);z-index:21;transform:translateX(100%);transition:transform .2s;overflow:auto;padding:32px 36px 64px;display:grid;gap:22px;align-content:start}
 .sheet.on{transform:none}
@@ -92,10 +99,10 @@ body{background:var(--paper)}
 .toggle b{font-weight:600;display:block}
 .toggle small{color:var(--stone)}
 .sw{width:48px;height:28px;border-radius:14px;background:var(--line);border:0;position:relative;cursor:pointer;flex:none}
-.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--white)}
-.sw.on{background:var(--ink)}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--paper)}
+.sw.on{background:var(--solid)}
 .sw.on::after{left:23px;background:var(--yellow)}
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 18px;border-radius:var(--r);font-weight:600;font-size:14px;display:none;z-index:30;max-width:min(680px,90vw);text-align:center}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--solid);color:var(--solid-ink);padding:12px 18px;border-radius:var(--r);font-weight:600;font-size:14px;display:none;z-index:30;max-width:min(680px,90vw);text-align:center}
 .toast.on{display:block}
 .toast.bad{background:var(--warn)}
 .docs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -133,34 +140,45 @@ body{background:var(--paper)}
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
   .topbar{display:flex;position:fixed;top:0;left:0;right:0;z-index:22;align-items:center;justify-content:space-between;
-    gap:12px;background:var(--ink);color:var(--white);height:calc(54px + env(safe-area-inset-top));
+    gap:12px;background:var(--paper);color:var(--ink);border-bottom:1px solid var(--line);
+    height:calc(54px + env(safe-area-inset-top));
     padding:env(safe-area-inset-top) 16px 0}
-  .topbar img{height:15px}
+  .topbar .mark{height:14px}
+  .topbar b{margin-right:auto}
+  .on-dark{display:none}
+  html[data-skin="dark"] .on-light{display:none}
+  html[data-skin="dark"] .on-dark{display:block}
   .topbar b{font-size:15px;font-weight:600;letter-spacing:-.01em}
-  .topbar button{height:34px;padding:0 12px;border:1px solid #2A2A2A;border-radius:var(--r);
-    background:transparent;color:#BDB9B1;font-weight:600;font-size:13px;cursor:pointer}
+  .topbar .skin{margin-left:4px;flex:none}
   .rail{position:fixed;top:0;bottom:0;left:0;width:min(286px,84vw);height:100dvh;z-index:24;
     transform:translateX(-100%);transition:transform .22s ease;
     padding:calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom))}
   .rail.on{transform:none}
   .rail nav{display:grid}
-  .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:23;opacity:0;
+  .scrim{display:block;position:fixed;inset:0;background:var(--veil);z-index:23;opacity:0;
     pointer-events:none;transition:opacity .2s}
   .scrim.on{opacity:1;pointer-events:auto}
   .main{padding:calc(72px + env(safe-area-inset-top)) 18px calc(104px + env(safe-area-inset-bottom))}
   .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:22;
-    background:var(--ink);border-top:1px solid #1E1E1E;padding-bottom:env(safe-area-inset-bottom)}
-  .tabbar button{position:relative;height:58px;border:0;background:transparent;color:#8A867F;
-    font-weight:600;font-size:11px;letter-spacing:.01em;cursor:pointer;padding:0 2px}
-  .tabbar button .d{display:block;width:18px;height:3px;margin:0 auto 8px;background:transparent;border-radius:2px}
-  .tabbar button.on{color:var(--yellow)}
+    background:var(--paper);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar button{position:relative;height:62px;border:0;background:transparent;color:var(--stone);
+    font-weight:600;font-size:11px;letter-spacing:.01em;cursor:pointer;padding:6px 2px 0;
+    display:grid;gap:5px;justify-items:center;align-content:center}
+  .tabbar button svg{width:22px;height:22px;display:block;stroke:currentColor;fill:none;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .tabbar button .d{display:block;position:absolute;left:50%;bottom:5px;transform:translateX(-50%);
+    width:20px;height:2px;background:transparent;border-radius:2px}
+  .tabbar button.on{color:var(--ink)}
   .tabbar button.on .d{background:var(--yellow)}
-  .tabbar button .n{position:absolute;top:8px;right:calc(50% - 26px);min-width:17px;height:17px;padding:0 4px;
-    border-radius:9px;background:var(--yellow);color:var(--ink);font-size:10px;line-height:17px}
+  .tabbar button .n{position:absolute;top:6px;right:calc(50% - 24px);min-width:17px;height:17px;padding:0 4px;
+    border-radius:9px;background:var(--yellow);color:#000;font-size:10px;line-height:17px;font-weight:600}
   .sheet{width:100%;padding:calc(20px + env(safe-area-inset-top)) 20px calc(96px + env(safe-area-inset-bottom))}
   .sheet .x{position:sticky;top:0;float:right;margin:-4px -4px 0 12px;width:auto;padding:0 14px;height:38px;font-size:13px;font-weight:600;z-index:2}
   .toast{bottom:calc(76px + env(safe-area-inset-bottom))}
   .stats{grid-template-columns:1fr 1fr}
+  .stat{padding:18px 16px;min-width:0;overflow:hidden}
+  .stat b{font-size:30px;letter-spacing:-.035em}
+  .stat span{font-size:12px;display:block}
   .docs{grid-template-columns:1fr}
   .top{flex-direction:column;align-items:flex-start;gap:14px}
   .top h1{font-size:34px}
@@ -168,7 +186,7 @@ body{background:var(--paper)}
   .barrow{grid-template-columns:110px 1fr 44px}
   .board{grid-auto-columns:minmax(78vw,1fr);scroll-snap-type:x mandatory}
   .col{scroll-snap-align:start}
-  .rail img{height:16px}
+  .rail .mark{height:16px}
   .sec{flex-direction:column;align-items:flex-start;gap:6px}
 
   /* a table row becomes a card: the name on its own line, the rest
@@ -178,7 +196,9 @@ body{background:var(--paper)}
   .tbl .r > *{min-width:0}
   .tbl .r > *:empty{display:none}
   .tbl .r > *:first-child{grid-column:1 / -1;font-size:17px;font-weight:600}
-  .tbl .r > *:not(:first-child)::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;
+  /* the status pill draws its dot on ::before, so it opts out of the
+     column label here and lets the status word speak for itself */
+  .tbl .r > *:not(:first-child):not(.st)::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;
     color:var(--stone);letter-spacing:.02em;margin-bottom:3px}
   .tbl .r .btn{width:100%}
 }
@@ -191,15 +211,19 @@ body{background:var(--paper)}
 <div id="gate"></div>
 <div class="app" id="app" style="display:none">
   <header class="topbar" id="topbar">
-    <img src="livework-primary-all-yellow.png" alt="LIVE | WORK">
+    <img class="mark on-light" src="livework-wordmark-heavy-black.svg" alt="LIVE | WORK">
+    <img class="mark on-dark" src="livework-wordmark-heavy-yellow.svg" alt="LIVE | WORK">
     <b id="tbTitle">Today</b>
-    <button type="button" id="tbMenu">Menu</button>
+    <span id="skinTop"></span>
   </header>
   <div class="scrim" id="scrim"></div>
   <aside class="rail" id="rail">
-    <img src="livework-primary-all-yellow.png" alt="LIVE | WORK">
+    <img class="mark" src="livework-wordmark-heavy-yellow.svg" alt="LIVE | WORK">
     <nav id="nav"></nav>
-    <div class="me"><b id="meName">Loading</b><span id="meRole"></span><br><a href="#" id="signout">Sign out</a></div>
+    <div class="me">
+      <span id="skinRail"></span>
+      <div class="who"><b id="meName">Loading</b><span id="meRole"></span><br><a href="#" id="signout">Sign out</a></div>
+    </div>
   </aside>
   <main class="main" id="main"><div class="load">Loading the desk.</div></main>
   <nav class="tabbar" id="tabbar"></nav>
@@ -352,7 +376,7 @@ const byId = (arr,id) => arr.filter(x => String(idOf(x)) === String(id))[0] || n
 const company = id => byId(S.companies, id);
 const cand = id => byId(S.candidates, id);
 const search = id => byId(S.searches, id);
-const cname = id => F(company(id) || {}, 'name','company_name','title') || 'No company';
+const cname = id => F(company(id) || {}, 'name','company_name','title') || 'No client';
 const sname = id => F(search(id) || {}, 'title','role','job_title','name') || 'Search';
 const pname = id => F(cand(id) || {}, 'name','full_name') || 'Candidate';
 const stageOf = p => { const s = String(F(p,'stage','status') || '').toLowerCase(); return DISPLAYSTAGE[s] || 'Sourced'; };
@@ -387,7 +411,7 @@ const sigBar = v => v == null ? '<span class="muted small">Not submitted yet</sp
 <script>
 /* ============================ views ============================ */
 const NAV = [
-  ['today','Today'],['companies','Companies'],['searches','Searches'],['candidates','Candidates'],['intake','Intake'],
+  ['today','Today'],['companies','Clients'],['searches','Searches'],['candidates','Candidates'],['intake','Intake'],
   ['pools','Pools'],['pipeline','Pipeline'],['activity','Activity'],['placements','Placements'],
   ['invoices','Invoices'],['mail','Mail'],['reports','Reports'],['settings','Settings']
 ];
@@ -407,6 +431,7 @@ function counts(k){
   return '';
 }
 function drawNav(){
+  drawSkin();
   $('#nav').innerHTML = NAV.map(([k,l]) =>
     '<button data-v="' + k + '" class="' + (VIEW===k?'on':'') + '">' + l +
     '<span class="n">' + (counts(k)||'') + '</span></button>').join('');
@@ -415,18 +440,54 @@ function drawNav(){
 }
 
 /* phone shell: five tabs, the rest lives behind More */
-const TABS = [['today','Today'],['companies','Companies'],['candidates','Candidates'],['pipeline','Pipeline']];
+const TABS = [['today','Today'],['companies','Clients'],['candidates','Candidates'],['pipeline','Pipeline']];
+/* one icon per tab, drawn so no two read the same at thumb size:
+   a roof for Today, a building for Clients, a head for Candidates,
+   three columns for Pipeline, three rules for More */
+const ICON = {
+  today:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.5 21v-6h5v6"/>',
+  companies:'<path d="M3.5 21h17"/><path d="M5.5 21V4.5h8V21"/><path d="M13.5 21V10h5v11"/><path d="M8 8h3M8 12h3M8 16h3M16 14h0M16 17h0"/>',
+  candidates:'<circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.4a7.2 7.2 0 0 1 14.4 0"/>',
+  pipeline:'<rect x="3.4" y="4.6" width="4.6" height="14.8" rx="1"/><rect x="9.7" y="4.6" width="4.6" height="9.6" rx="1"/><rect x="16" y="4.6" width="4.6" height="12.4" rx="1"/>',
+  more:'<path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/>'
+};
+const ico = k => '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg>';
 function drawTabs(){
   const bar = $('#tabbar'); if(!bar) return;
   const onMore = !TABS.some(([k]) => k === VIEW);
   bar.innerHTML = TABS.map(([k,l]) => {
     const n = counts(k);
-    return '<button data-v="' + k + '" class="' + (VIEW===k?'on':'') + '"><span class="d"></span>' + l +
-      (n ? '<span class="n">' + (n > 99 ? '99+' : n) + '</span>' : '') + '</button>';
-  }).join('') + '<button id="tbMore" class="' + (onMore?'on':'') + '"><span class="d"></span>More</button>';
+    return '<button data-v="' + k + '" class="' + (VIEW===k?'on':'') + '">' + ico(k) + '<span>' + l + '</span>' +
+      (n ? '<span class="n">' + (n > 99 ? '99+' : n) + '</span>' : '') + '<span class="d"></span></button>';
+  }).join('') + '<button id="tbMore" class="' + (onMore?'on':'') + '">' + ico('more') +
+    '<span>More</span><span class="d"></span></button>';
   bar.querySelectorAll('button[data-v]').forEach(b => b.onclick = () => go(b.dataset.v));
   $('#tbMore').onclick = openDrawer;
   const t = $('#tbTitle'); if(t) t.textContent = (NAV.find(([k]) => k === VIEW) || [,'Desk'])[1];
+}
+
+/* ------------------------------------------------------------
+   Skins. One attribute on <html>, every colour follows from the
+   tokens in lw.css. The choice is remembered; with no choice
+   made the phone's own setting wins.
+   ------------------------------------------------------------ */
+const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2M12 19.4v2M2.6 12h2M19.4 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2Z"/></svg>';
+function skin(){ return document.documentElement.dataset.skin === 'dark' ? 'dark' : 'light'; }
+function setSkin(s){
+  document.documentElement.dataset.skin = s;
+  try{ localStorage.setItem('lw_skin', s); }catch(e){}
+  drawSkin();
+}
+function drawSkin(){
+  const s = skin();
+  const html = '<span class="skin" role="group" aria-label="Light or dark">' +
+    '<button type="button" data-skin="light" class="' + (s==='light'?'on':'') + '" aria-label="Light" aria-pressed="' + (s==='light') + '">' + SUN + '</button>' +
+    '<button type="button" data-skin="dark" class="' + (s==='dark'?'on':'') + '" aria-label="Dark" aria-pressed="' + (s==='dark') + '">' + MOON + '</button></span>';
+  ['#skinTop','#skinRail'].forEach(sel => { const el = $(sel); if(el) el.innerHTML = html; });
+  document.querySelectorAll('[data-skin]').forEach(b => {
+    if(b.tagName === 'BUTTON') b.onclick = () => setSkin(b.dataset.skin);
+  });
 }
 function openDrawer(){ $('#rail').classList.add('on'); $('#scrim').classList.add('on'); }
 function closeDrawer(){ $('#rail').classList.remove('on'); $('#scrim').classList.remove('on'); }
@@ -494,7 +555,7 @@ function myNumbers(){
       cell(inter, 'Interviews reached') +
     '</div>' +
     '<div class="stats">' +
-      cell(myCos.length, 'My companies') +
+      cell(myCos.length, 'My clients') +
       cell(openMine, 'My open searches') +
       cell(placed.length, 'My placements') +
       cell(money(fees), 'Fees on my placements') +
@@ -626,7 +687,7 @@ function vToday(){
       '180px 1.2fr 1.4fr 130px 140px') +
 
     (amAdmin() && invDue().length ? '<div class="sec"><h2>Billing.</h2><span class="muted small">' + invDue().length + ' need a send</span></div>' +
-      table(['Invoice','Company','Amount','Where it stands','Action'],
+      table(['Invoice','Client','Amount','Where it stands','Action'],
         invDue().slice(0,10).map(i => '<div class="r" style="grid-template-columns:130px 1.4fr 120px 1fr 130px">' +
           '<b>' + esc(F(i,'invoice_no','number') || 'Draft') + '</b>' +
           '<span class="muted">' + esc(cname(i.company_id)) + '</span>' +
@@ -652,9 +713,9 @@ function vToday(){
 function vCompanies(){
   const q = Q.co.toLowerCase();
   const list = S.companies.filter(c => !q || F(c,'name').toLowerCase().includes(q));
-  return head('Companies.', '<button class="btn" data-new="company">Add a company</button>') +
-    '<div class="tools"><div class="search"><input id="qco" placeholder="Search companies" value="' + esc(Q.co) + '"></div></div>' +
-    table(['Company','Open searches','In play','Placements','Last touch'],
+  return head('Clients.', '<button class="btn pill" data-new="company"><span class="p">+</span>Add a client</button>') +
+    '<div class="tools"><div class="search"><input id="qco" placeholder="Search clients" value="' + esc(Q.co) + '"></div></div>' +
+    table(['Client','Open searches','In play','Placements','Last touch'],
       list.map(c => {
         const ss = S.searches.filter(s => String(s.company_id)===String(idOf(c)));
         const ids = ss.map(s => String(idOf(s)));
@@ -678,10 +739,10 @@ function vSearches(){
     if(pl) return daysBetween(start, F(pl,'start_date','created_at')) + ' days to fill';
     return daysBetween(start) + ' days open';
   };
-  return head('Searches.', '<button class="btn" data-new="search">Open a search</button>') +
+  return head('Searches.', '<button class="btn pill" data-new="search"><span class="p">+</span>Open a search</button>') +
     '<div class="tools"><button class="chip ' + (Q.searchTab==='open'?'on':'') + '" data-stab="open">Open ' + open.length + '</button>' +
     '<button class="chip ' + (Q.searchTab==='closed'?'on':'') + '" data-stab="closed">Closed ' + closed.length + '</button></div>' +
-    table(['Search','Company','Stage spread','Days','Status'],
+    table(['Search','Client','Stage spread','Days','Status'],
       list.map(s => {
         const rows = S.pipeline.filter(p => String(p.search_id)===String(idOf(s)));
         const spread = STAGES.slice(0,5).map(st => rows.filter(p => stageOf(p)===st).length).join(' / ');
@@ -725,7 +786,7 @@ function vCandidates(){
 
 /* ---------- Pools ---------- */
 function vPools(){
-  return head('Pools.', '<button class="btn" data-new="pool">Name a pool</button>') +
+  return head('Pools.', '<button class="btn pill" data-new="pool"><span class="p">+</span>Name a pool</button>') +
     '<p class="lede" style="margin-bottom:24px">A pool is a standing shortlist. Build it once, pull from it every time a search like it opens.</p>' +
     (S.pools.length ? '<div class="docs">' + S.pools.map(p => {
       const mem = S.pool_members.filter(m => String(m.pool_id)===String(idOf(p)));
@@ -775,14 +836,14 @@ function vActivity(){
 
 /* ---------- Placements ---------- */
 function vPlacements(){
-  return head('Placements.', '<button class="btn" data-new="placement">Record a placement</button>') +
+  return head('Placements.', '<button class="btn pill" data-new="placement"><span class="p">+</span>Record a placement</button>') +
     '<div class="stats">' +
       '<div class="stat"><b>' + S.placements.length + '</b><span>All time</span></div>' +
       '<div class="stat"><b>' + money(S.placements.reduce((n,p) => n + num(F(p,'fee')), 0)) + '</b><span>Fees earned</span></div>' +
       '<div class="stat y"><b>' + S.placements.filter(p => daysBetween(F(p,'start_date','created_at')) <= 90).length + '</b><span>Inside the ninety day guarantee</span></div>' +
       '<div class="stat"><b>' + money(S.placements.length ? S.placements.reduce((n,p) => n + num(F(p,'salary')), 0) / S.placements.length : 0) + '</b><span>Average salary placed</span></div>' +
     '</div>' +
-    table(['Candidate','Company','Started','Salary','Fee','Guarantee'],
+    table(['Candidate','Client','Started','Salary','Fee','Guarantee'],
       S.placements.map(p => {
         const d = daysBetween(F(p,'start_date','created_at'));
         const pct = Math.min(100, Math.round(d / 90 * 100));
@@ -878,7 +939,7 @@ function vIntake(){
   const stamp = '<div class="form" style="background:var(--paper);padding:16px;margin-bottom:18px">' +
     '<div class="muted small" style="margin-bottom:10px">Where this batch came from. Set it once, it lands on every candidate below.</div>' +
     '<div class="two">' +
-      '<div class="field"><label>Company</label><select data-bk="company_id"><option value="">Not set</option>' +
+      '<div class="field"><label>Client</label><select data-bk="company_id"><option value="">Not set</option>' +
         cos.map(c => '<option value="' + idOf(c) + '"' + (String(BATCH.company_id) === String(idOf(c)) ? ' selected' : '') + '>' + esc(F(c,'name')) + '</option>').join('') + '</select></div>' +
       '<div class="field"><label>Search</label><select data-bk="search_id"><option value="">Not set</option>' +
         srch.map(s => '<option value="' + idOf(s) + '"' + (String(BATCH.search_id) === String(idOf(s)) ? ' selected' : '') + '>' + esc(F(s,'title')) + ' · ' + esc(cname(s.company_id)) + '</option>').join('') + '</select></div>' +
@@ -1126,14 +1187,14 @@ function vInvoices(){
     return new Date(F(i,'due_at')) < new Date() ? d + ' days past due' : 'Due in ' + daysBetween(new Date(), F(i,'due_at')) + ' days';
   };
   const out = S.invoices.filter(i => String(F(i,'status')).toLowerCase() !== 'paid');
-  return head('Invoices.', '<button class="btn" data-new="invoice">Raise an invoice</button>') +
+  return head('Invoices.', '<button class="btn pill" data-new="invoice"><span class="p">+</span>Raise an invoice</button>') +
     '<div class="stats">' +
       '<div class="stat"><b>' + money(out.reduce((n,i) => n + num(F(i,'amount')), 0)) + '</b><span>Outstanding</span></div>' +
       '<div class="stat y"><b>' + money(S.invoices.filter(i => String(F(i,'status')).toLowerCase()==='paid').reduce((n,i) => n + num(F(i,'amount')), 0)) + '</b><span>Collected</span></div>' +
       '<div class="stat"><b>' + out.filter(i => F(i,'due_at') && new Date(F(i,'due_at')) < new Date()).length + '</b><span>Past due</span></div>' +
       '<div class="stat"><b>20%</b><span>Placement fee, net thirty</span></div>' +
     '</div>' +
-    table(['Invoice','Company','Amount','Aging','Status','Billing'],
+    table(['Invoice','Client','Amount','Aging','Status','Billing'],
       S.invoices.map(i => '<div class="r" style="grid-template-columns:130px 1.4fr 130px 1fr 120px 210px" data-inv="' + idOf(i) + '">' +
         '<b>' + esc(F(i,'invoice_no','number') || 'Draft') + '</b>' +
         '<span class="muted">' + esc(cname(i.company_id)) + '</span>' +
@@ -1192,7 +1253,7 @@ function vReports(){
   return head('Reports.', '') +
     '<div class="sec"><h2>Funnel.</h2></div><div class="bars">' + funnel + '</div>' +
     '<div class="sec"><h2>Fill rate by client.</h2></div>' +
-    table(['Company','Searches','Filled','Rate'],
+    table(['Client','Searches','Filled','Rate'],
       perCo.map(x => '<div class="r" style="grid-template-columns:2fr 120px 120px 1fr">' +
         '<b>' + esc(x.name) + '</b><span>' + x.n + '</span><span>' + x.filled + '</span>' +
         '<div><span class="muted small">' + x.pct + '%</span><div class="gbar"><i style="width:' + x.pct + '%"></i></div></div></div>'),
@@ -1290,7 +1351,7 @@ function sheetCompany(){
         (F(ct,'email') ? '<button class="btn sm ghost" data-mail="ct:' + idOf(ct) + '">Email</button>' : '') +
         '<button class="btn sm ghost" data-edit="contact:' + idOf(ct) + '">Edit</button>' +
       '</div></div>').join('') +
-      '<p class="muted small">Room lets them sign in at the client room with a code. Billing sends invoices and payment reminders to them. One billing contact per company.</p>' +
+      '<p class="muted small">Room lets them sign in at the client room with a code. Billing sends invoices and payment reminders to them. One billing contact per client.</p>' +
       '<button class="btn" data-new="contact" data-co="' + idOf(c) + '">Add a contact</button>';
   if(T===2) body = (ss.length ? ss.map(s => '<div class="toggle"><div><b>' + esc(F(s,'title','role')) + '</b><small>' + esc(F(s,'location')) + ' · ' + (isOpen(s)?'Open':'Closed') + '</small></div><button class="btn sm ghost" data-se="' + idOf(s) + '">Open</button></div>').join('') : '<p class="muted small">No searches yet.</p>') +
       '<button class="btn" data-new="search" data-co="' + idOf(c) + '">Open a search</button>';
@@ -1314,7 +1375,7 @@ function sheetSearch(){
   const T = SHEET.tab;
   let body = '';
   if(T===0) body = spec([
-      ['Company', esc(cname(s.company_id))],
+      ['Client', esc(cname(s.company_id))],
       ['Status', isOpen(s) ? 'Open' : 'Closed'],
       ['Engagement', esc(F(s,'kind','engagement') || 'Contingent')],
       ['Location', esc(F(s,'location'))],
@@ -1490,15 +1551,15 @@ function opts(list, label, sel){
 function form(kind, ctx){
   ctx = ctx || {};
   const F_ = {
-    company: ['Add a company.', 'A client, or one you are working on.',
-      '<div class="field"><label for="f_name">Company</label><input id="f_name" placeholder="Northwind Logistics"></div>' +
+    company: ['Add a client.', 'One you have won, or one you are working on.',
+      '<div class="field"><label for="f_name">Client</label><input id="f_name" placeholder="Northwind Logistics"></div>' +
       '<div class="two"><div class="field"><label for="f_city">City</label><input id="f_city"></div>' +
       '<div class="field"><label for="f_ind">Industry</label><input id="f_ind"></div></div>' +
       '<div class="two"><div class="field"><label for="f_kind">Engagement</label><select id="f_kind"><option>Contingent</option><option>Retained</option><option>Prospect</option></select></div>' +
       '<div class="field"><label for="f_status">Status</label><select id="f_status"><option>Active</option><option>Prospect</option><option>Dormant</option></select></div></div>' +
       '<div class="field"><label for="f_notes">Notes</label><textarea id="f_notes"></textarea></div>'],
     contact: ['Add a contact.', 'Turn on room access and they can sign in to the client room.',
-      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="two"><div class="field"><label for="f_name">Name</label><input id="f_name"></div>' +
       '<div class="field"><label for="f_title">Title</label><input id="f_title"></div></div>' +
       '<div class="two"><div class="field"><label for="f_email">Work email</label><input id="f_email" type="email"></div>' +
@@ -1506,7 +1567,7 @@ function form(kind, ctx){
       '<div class="field"><label><input type="checkbox" id="f_room" style="height:auto;width:auto;margin-right:8px">Client room access</label></div>' +
       '<div class="field"><label><input type="checkbox" id="f_bill" style="height:auto;width:auto;margin-right:8px">Billing contact, invoices go to this person</label></div>'],
     search: ['Open a search.', 'The job order the client agreed to.',
-      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="field"><label for="f_title">Title</label><input id="f_title" placeholder="Director of Fleet Operations"></div>' +
       '<div class="two"><div class="field"><label for="f_loc">Location</label><input id="f_loc"></div>' +
       '<div class="field"><label for="f_kind">Engagement</label><select id="f_kind"><option>Contingent</option><option>Retained</option></select></div></div>' +
@@ -1531,13 +1592,13 @@ function form(kind, ctx){
       '<div class="field"><label><input type="checkbox" id="f_rel" style="height:auto;width:auto;margin-right:8px">Release to the client room now</label></div>'],
     call: ['Log a call.', 'Outcome first. A task keeps it from dying here.',
       '<div class="two"><div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
-      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div></div>' +
+      '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div></div>' +
       '<div class="field"><label for="f_out">Outcome</label><select id="f_out"><option>Reached, good conversation</option><option>Reached, not interested</option><option>Left a message</option><option>No answer</option><option>Scheduled something</option></select></div>' +
       '<div class="field"><label for="f_body">What was said</label><textarea id="f_body"></textarea></div>' +
       '<div class="two"><div class="field"><label for="f_task">Next task</label><input id="f_task" placeholder="Call back Tuesday"></div>' +
       '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date"></div></div>'],
     visit: ['Visit note.', 'In person calls are the ones worth writing down.',
-      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="field"><label for="f_who">Who you saw</label><input id="f_who" placeholder="Name and title"></div>' +
       '<div class="field"><label for="f_body">The note</label><textarea id="f_body" placeholder="What they are hiring for, what is stuck, who else is in the building."></textarea></div>' +
       '<div class="two"><div class="field"><label for="f_task">Next step</label><input id="f_task"></div>' +
@@ -1561,7 +1622,7 @@ function form(kind, ctx){
     task: ['Add a task.', '',
       '<div class="field"><label for="f_task">Task</label><input id="f_task"></div>' +
       '<div class="two"><div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
-      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div></div>' +
+      '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div></div>' +
       '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date"></div>'],
     pool: ['Name a pool.', 'A standing shortlist you pull from.',
       '<div class="field"><label for="f_name">Pool</label><input id="f_name" placeholder="Warehouse leadership, SoCal"></div>' +
@@ -1573,7 +1634,7 @@ function form(kind, ctx){
       '<div class="field"><label for="f_sal">Base salary</label><input id="f_sal" inputmode="numeric"></div></div>' +
       '<div class="field"><label for="f_fee">Fee</label><input id="f_fee" inputmode="numeric" placeholder="20% of base"></div>'],
     invoice: ['Raise an invoice.', 'It saves as a draft. Send it from the Invoices screen when you are ready.',
-      '<div class="field"><label for="f_co">Company</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="field"><label for="f_place">Placement, if any</label><select id="f_place">' + opts(S.placements, p => pname(p.candidate_id) + ' · ' + cname(p.company_id), ctx.place) + '</select></div>' +
       '<div class="field"><label for="f_desc">What it is for</label><input id="f_desc" placeholder="Pick the placement above and this fills itself"></div>' +
       '<div class="two"><div class="field"><label for="f_amt">Amount</label><input id="f_amt" inputmode="numeric"></div>' +
@@ -1680,10 +1741,10 @@ const ownerName = id => { if(!id) return 'Unassigned'; const s = byId(S.staff, i
 async function save(kind, ctx){
   const M = MAP; let r = null;
   if(kind === 'company'){
-    if(!val('f_name')) return toast('A company needs a name.', true);
+    if(!val('f_name')) return toast('A client needs a name.', true);
     r = await put('companies', clean({ [M.company.name]: val('f_name'), [M.company.city]: val('f_city'),
       [M.company.industry]: val('f_ind'), [M.company.kind]: val('f_kind'), [M.company.status]: val('f_status'),
-      [M.company.notes]: val('f_notes'), [M.company.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Company updated.' : 'Company added.');
+      [M.company.notes]: val('f_notes'), [M.company.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Client updated.' : 'Client added.');
   }
   if(kind === 'contact'){
     r = await put('contacts', { [M.contact.company]: val('f_co'), [M.contact.name]: val('f_name'),
@@ -1691,7 +1752,7 @@ async function save(kind, ctx){
       [M.contact.room]: val('f_room') === true, [M.contact.billing]: val('f_bill') === true }, ctx, ctx.edit ? 'Contact updated.' : 'Contact added.');
   }
   if(kind === 'search'){
-    if(!val('f_co')) return toast('Pick the company.', true);
+    if(!val('f_co')) return toast('Pick the client.', true);
     r = await put('searches', clean({ [M.search.company]: val('f_co'), [M.search.title]: val('f_title'),
       [M.search.location]: val('f_loc'), [M.search.kind]: val('f_kind'), [M.search.status]: val('f_stat') || 'open',
       [M.search.comp_min]: val('f_min') ? num(val('f_min')) : '', [M.search.comp_max]: val('f_max') ? num(val('f_max')) : '',
@@ -1780,7 +1841,7 @@ async function save(kind, ctx){
       [M.placement.guarantee_ends]: ends.toISOString().slice(0,10), [M.placement.status]: 'active' })), 'Placement recorded. Guarantee clock started.');
   }
   if(kind === 'invoice'){
-    if(!val('f_co')) return toast('Pick the company.', true);
+    if(!val('f_co')) return toast('Pick the client.', true);
     if(num(val('f_amt')) <= 0) return toast('Put an amount on it.', true);
     r = await tryWrite(() => insert('invoices', clean({ [M.invoice.company]: val('f_co'), [M.invoice.placement]: val('f_place'),
       [M.invoice.amount]: Math.round(num(val('f_amt'))), [M.invoice.status]: 'draft',
@@ -2020,7 +2081,7 @@ LWAuth.gate(document.getElementById('gate'), async function(staff){
   document.getElementById('meName').textContent = F(staff,'name','email');
   document.getElementById('meRole').textContent = 'The Desk · ' + (F(staff,'role') || 'staff');
   document.getElementById('signout').onclick = e => { e.preventDefault(); LWAuth.signOut(); };
-  $('#tbMenu').onclick = openDrawer;
+  
   $('#scrim').onclick = closeDrawer;
   const jump = (location.hash || '').replace('#','');
   if(NAV.some(([k]) => k === jump)) VIEW = jump;
