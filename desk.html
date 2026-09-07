@@ -1172,6 +1172,7 @@ function vPipeline(){
           '<button data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button>' +
           '<button data-mail="pipe:' + idOf(p) + '">Present</button>' +
           '<button data-note="' + p.candidate_id + '|' + p.search_id + '">Interview note</button>' +
+          '<button data-guide="' + p.candidate_id + '|' + p.search_id + '">Guide</button>' +
         '</div></div>').join('') + '</div>';
   }).join('');
   return head('Pipeline.', '<button class="btn ghost" data-new="pipeline">Submit a candidate</button>') +
@@ -1812,7 +1813,9 @@ function sheetCandidate(){
       '<b>' + esc(F(n,'kind') || 'Interview') + '</b> <span class="muted small">' + day(n.created_at) + (n.search_id ? ' · ' + esc(sname(n.search_id)) : '') + '</span>' +
       spec([['Strong at', esc(F(n,'strong_at','strong'))],['Concerns', esc(F(n,'concerns'))],['Comp', esc(F(n,'comp'))],['Availability', esc(F(n,'availability'))],['Next step', esc(F(n,'next_step','next'))]]) + '</div>').join('')
       : '<p class="muted small">No interview notes yet. Notes live on the candidate, not on one submission, so the whole file travels with them.</p>') +
-      '<button class="btn" data-note="' + idOf(c) + '|">Add an interview note</button>';
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<button class="btn" data-note="' + idOf(c) + '|">Add an interview note</button>' +
+      '<button class="btn ghost" data-guide="' + idOf(c) + '|' + ((rows[0] || {}).search_id || '') + '">Build an interview guide</button></div>';
   if(T===2) body = spec([
       ['Submitted', rows.filter(p => stageIx(p)>=1).length],
       ['Interviewed', rows.filter(p => stageIx(p)>=2 && stageOf(p)!=='Passed').length],
@@ -2649,6 +2652,163 @@ function wireSheet(){
   });
   common(sh);
 }
+/* ============================ interview guide ============================
+   One call to the interview-guide function returns the whole thing. The
+   staff copy and the client copy come out of the same payload, so the
+   toggle in the page is free and nothing is generated twice. */
+const GMARK = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 996.57 179.16" role="img" aria-label="LIVE WORK"> <g transform="translate(-308.39 -96.69)" fill="#FFFFFF"> <path d="m 325.87396,98.948 h -17.484 V 236 h 85.164 v -15.416 h -67.68 z"/> <path d="m 432.34992,98.948 h -17.672 V 236 h 17.672 z"/> <path d="m 515.88991,236 47.564,-137.052 h -18.612 l -37.976,115.996 -40.232,-115.996 h -18.8 L 497.08991,236 Z"/> <path d="m 596.42205,173.584 h 74.636 v -15.416 h -74.636 v -43.804 h 77.456 V 98.948 h -94.94 V 236 h 98.324 v -15.416 h -80.84 z"/> <path d="m 704.21402,98.948 v 176.908 h 11.28 V 98.948 Z"/> <path d="m 872.16606,236 34.78,-137.052 h -19.552 l -25.192,111.296 -31.208,-111.296 h -18.8 l -30.456,111.296 -25.756,-111.296 h -19.552 L 771.58606,236 h 19.176 l 30.644,-112.612 31.584,112.612 z"/> <path d="m 977.51419,96.692 c -39.292,0 -65.988,28.952 -65.988,71.816 0,43.052 26.508,71.816 66.176,71.816 16.732,0 31.39601,-5.076 42.48801,-14.476 14.852,-12.596 23.688,-33.84 23.688,-56.212 0,-44.18 -26.132,-72.944 -66.36401,-72.944 z m 0,15.416 c 29.70401,0 48.88001,22.372 48.88001,57.152 0,33.088 -19.74,55.648 -48.69201,55.648 -29.328,0 -48.692,-22.56 -48.692,-56.4 0,-33.84 19.364,-56.4 48.504,-56.4 z"/> <path d="m 1083.6141,176.968 h 45.12 c 15.604,0 22.56,7.52 22.56,24.44 l -0.188,12.22 c 0,8.46 1.504,16.732 3.948,22.372 h 21.244 v -4.324 c -6.58,-4.512 -7.896,-9.4 -8.272,-27.636 -0.188,-22.56 -3.76,-29.328 -18.612,-35.72 15.416,-7.708 21.62,-16.92 21.62,-32.712 0,-23.688 -14.664,-36.66 -41.736,-36.66 h -63.168 V 236 h 17.484 z m 0,-15.416 v -47.188 h 42.3 c 9.776,0 15.416,1.504 19.74,5.264 4.7,3.948 7.144,10.152 7.144,18.236 0,16.356 -8.272,23.688 -26.884,23.688 z"/> <path d="m 1213.5901,188.06 22.372,-22.372 48.316,70.312 h 20.68 l -56.4,-81.216 55.836,-55.836 h -22.56 l -68.244,69.372 V 98.948 h -17.484 V 236 h 17.484 z"/> </g> </svg>';
+const GTAGS = [['autonomy','Autonomy','Wants the rope to run their own work.'],
+  ['mastery','Mastery','Wants to get better at the craft itself.'],
+  ['people','People','Wants the team, the mentoring, the room.'],
+  ['impact','Impact','Wants the work to matter to someone.']];
+function gRate(){ return '<div class="rate"><span class="rl">Rate it now</span>' +
+  [1,2,3,4,5].map(n => '<i>' + n + '</i>').join('') + '</div>'; }
+function gRow(k, v){ return '<div class="srow"><span>' + esc(k) + '</span><b>' + esc(v || 'Not on file yet.') + '</b></div>'; }
+function guideDoc(j){
+  const m = j.meta || {}, g = j.guide || {};
+  const rd = g.read || {}, op = g.opener || {}, cl = g.close || {};
+  const qs = Array.isArray(g.questions) ? g.questions : [];
+  const asked = Array.isArray(g.already_asked) ? g.already_asked : [];
+  const probes = Array.isArray(g.probes) ? g.probes : [];
+  const listen = Array.isArray(op.listen_for) ? op.listen_for : [];
+  const when = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  const css = '*{box-sizing:border-box;margin:0;padding:0}' +
+    ':root{--ink:#111;--paper:#FAF8F5;--wall:#F1EDE7;--line:#DCD5CB;--stone:#6E6961;--y:#F2C632}' +
+    'body{background:var(--paper);color:var(--ink);font:400 16px/1.55 Manrope,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.w{max-width:880px;margin:0 auto;padding:0 40px}' +
+    '.band{background:#000;padding:26px 0}.band .w{display:flex;align-items:center;justify-content:space-between;gap:24px}' +
+    '.band svg{width:150px;height:auto;display:block}' +
+    '.micro{font:600 11px/1 Manrope,Arial,sans-serif;letter-spacing:.22em;text-transform:uppercase}' +
+    '.band .micro{color:#fff;opacity:.72;text-align:right}' +
+    '.bar{background:var(--wall);border-bottom:1px solid var(--line)}' +
+    '.bar .w{display:flex;gap:10px;align-items:center;padding-top:12px;padding-bottom:12px}' +
+    '.bar button{font:600 12px/1 Manrope,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;' +
+    'background:#fff;color:#111;border:1px solid var(--line);padding:11px 16px;border-radius:2px;cursor:pointer}' +
+    '.bar button.k{background:#111;color:#fff;border-color:#111}.bar .sp{flex:1}' +
+    'h1{font:800 clamp(40px,7vw,74px)/.96 Manrope,Arial,sans-serif;letter-spacing:-.03em;margin:56px 0 14px}' +
+    '.sub{color:var(--stone);font-size:18px;margin-bottom:40px}' +
+    '.facts{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-left:1px solid var(--line)}' +
+    '.facts div{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 16px}' +
+    '.facts span{display:block;color:var(--stone);font:600 10px/1 Manrope,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;margin-bottom:9px}' +
+    '.facts b{font-weight:700;font-size:15px;line-height:1.3}' +
+    'section{padding:56px 0 0}h2{font:800 clamp(28px,4vw,42px)/1.02 Manrope,Arial,sans-serif;letter-spacing:-.02em;margin:0 0 6px}' +
+    '.tick{width:34px;height:5px;background:var(--y);margin-bottom:18px}' +
+    '.lede{color:var(--stone);max-width:60ch;margin-bottom:26px}' +
+    '.srow{display:grid;grid-template-columns:190px 1fr;gap:22px;border-top:1px solid var(--line);padding:16px 0;align-items:start}' +
+    '.srow span{color:var(--stone);font:600 10px/1.4 Manrope,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;padding-top:3px}' +
+    '.srow b{font-weight:500;font-size:16px}' +
+    '.q{display:grid;grid-template-columns:56px 1fr;gap:0 18px;border-top:1px solid var(--line);padding:30px 0;break-inside:avoid}' +
+    '.q .n{font:800 30px/1 Manrope,Arial,sans-serif;color:var(--y)}' +
+    '.q .mh{color:var(--stone);font:600 10px/1 Manrope,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;margin-bottom:10px}' +
+    '.q .ask{font:600 22px/1.35 Manrope,Arial,sans-serif;letter-spacing:-.01em;margin-bottom:20px}' +
+    '.panes{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}' +
+    '.pane{background:#fff;padding:16px}.pane.no{background:var(--wall)}' +
+    '.pane em{display:block;font-style:normal;color:var(--stone);font:600 10px/1 Manrope,Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;margin-bottom:9px}' +
+    '.pane p{font-size:14.5px;line-height:1.5}' +
+    '.rate{display:flex;align-items:center;gap:8px;margin-top:16px}' +
+    '.rate .rl{color:var(--stone);font:600 10px/1 Manrope,Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;margin-right:6px}' +
+    '.rate i{width:34px;height:34px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;' +
+    'font:600 13px/1 Manrope,Arial,sans-serif;font-style:normal;color:var(--stone)}' +
+    '.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}' +
+    '.chips b{font:600 12px/1 Manrope,Arial,sans-serif;letter-spacing:.06em;border:1px solid var(--line);background:#fff;padding:11px 14px;border-radius:2px;font-weight:600}' +
+    '.chips b.on{background:var(--y);border-color:var(--y);color:#111}' +
+    '.yband{background:var(--y);margin-top:64px;padding:52px 0}' +
+    '.yband h2{margin-bottom:14px}.yband .tick{background:#111}' +
+    '.yband ul{list-style:none;border-top:1px solid rgba(0,0,0,.22)}' +
+    '.yband li{border-bottom:1px solid rgba(0,0,0,.22);padding:14px 0;font-weight:500}' +
+    '.yband p{max-width:58ch;font-weight:500;margin-bottom:22px}' +
+    '.dark{background:#111;color:#fff;padding:56px 0 64px;margin-top:64px}' +
+    '.dark h2{color:#fff}.dark .lede{color:#9C968D}.dark .tick{background:var(--y)}' +
+    '.wu{border-top:1px solid #2C2A27}' +
+    '.wu div{border-bottom:1px solid #2C2A27;padding:26px 0 34px}' +
+    '.wu span{display:block;color:#9C968D;font:600 10px/1 Manrope,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase}' +
+    'footer{padding:26px 0 60px;color:var(--stone);font-size:12px;display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--line);margin-top:0}' +
+    'footer .w{width:100%}footer{background:var(--paper)}' +
+    'body.client .staffonly{display:none}' +
+    '@media print{.bar{display:none}body{background:#fff}section{padding-top:40px}h1{margin-top:34px}}' +
+    '@media(max-width:700px){.w{padding:0 20px}.facts{grid-template-columns:1fr 1fr}.panes{grid-template-columns:1fr}' +
+    '.srow{grid-template-columns:1fr;gap:6px}.q{grid-template-columns:1fr}.q .n{margin-bottom:8px}}';
+  const facts = '<div class="facts">' +
+    '<div><span>The role</span><b>' + esc(m.role || 'Role') + '</b></div>' +
+    '<div><span>Client</span><b>' + esc(m.client || 'Confidential') + '</b></div>' +
+    '<div><span>Where</span><b>' + esc(m.role_location || m.location || 'Not set') + '</b></div>' +
+    '<div><span>Screened by</span><b>' + esc(m.staff || 'LIVEWORK') + '</b></div></div>';
+  const qhtml = qs.map((q, i) => '<div class="q"><div class="n">' + (i + 1) + '</div><div>' +
+    '<div class="mh">' + esc(q.must_have || 'Must have') + '</div>' +
+    '<div class="ask">' + esc(q.question || '') + '</div>' +
+    '<div class="panes"><div class="pane"><em>A strong answer sounds like</em><p>' + esc(q.strong || '') + '</p></div>' +
+    '<div class="pane no"><em>A weak answer sounds like</em><p>' + esc(q.weak || '') + '</p></div></div>' +
+    gRate() + '</div></div>').join('');
+  const prb = probes.length ? '<section class="staffonly"><div class="w"><div class="tick"></div><h2>Probe.</h2>' +
+    '<p class="lede">Recruiter copy only. These go at the unproven thing, and they do not travel to the client.</p>' +
+    probes.map(p => '<div class="srow"><span>Ask</span><b>' + esc(p.question || '') + '<br><span style="letter-spacing:0;text-transform:none;font-weight:400;font-size:14px">' +
+      esc(p.why || '') + '</span></b></div>').join('') + '</div></section>' : '';
+  const tags = '<div class="chips">' + GTAGS.map(t => '<b class="' + (String(cl.tag || '').toLowerCase() === t[0] ? 'on' : '') + '">' +
+    t[1] + '</b>').join('') + '</div>';
+  const wu = ['Strong at','Concerns','Compensation','Availability','Next step']
+    .map(k => '<div><span>' + k + '</span></div>').join('');
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>Interview guide · ' + esc(m.name || '') + '</title>' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">' +
+    '<style>' + css + '</style></head><body class="staff">' +
+    '<div class="band"><div class="w">' + GMARK + '<div class="micro">Interview guide<br>' + esc(when) + '</div></div></div>' +
+    '<div class="bar"><div class="w">' +
+      '<button class="k" onclick="document.body.className=&quot;staff&quot;">Recruiter copy</button>' +
+      '<button onclick="document.body.className=&quot;client&quot;">Client copy</button>' +
+      '<span class="sp"></span><button onclick="window.print()">Print or save as PDF</button></div></div>' +
+    '<div class="w"><h1>' + esc(m.name || 'The candidate') + '.</h1>' +
+    '<p class="sub">' + esc(m.title || '') + (m.location ? ' · ' + esc(m.location) : '') + '</p>' + facts + '</div>' +
+    '<section><div class="w"><div class="tick"></div><h2>The read.</h2>' +
+    '<p class="lede">Four lines on the file, so the hour starts where the paper stops.</p>' +
+    gRow('Where they started', rd.started) + gRow('How they moved', rd.moved) +
+    gRow('The pattern', rd.pattern) + gRow('What is unproven', rd.unproven) + '</div></section>' +
+    '<section><div class="w"><div class="tick"></div><h2>Open.</h2>' +
+    '<p class="lede">Not scored, on purpose. A rating formed during the warm up follows the warm up all the way through.</p>' +
+    '<div class="q"><div class="n">0</div><div><div class="mh">The opener</div>' +
+    '<div class="ask">' + esc(op.question || 'Take me back to the start of your career and walk me forward to today.') + '</div>' +
+    (listen.length ? '<div class="panes"><div class="pane"><em>Listen for</em><p>' + listen.map(esc).join('<br>') + '</p></div>' +
+      '<div class="pane no"><em>Do not</em><p>Do not rate this answer. Do not ask where they are from, only where they studied and worked.</p></div></div>' : '') +
+    '</div></div></div></section>' +
+    '<section><div class="w"><div class="tick"></div><h2>The role.</h2>' +
+    '<p class="lede">Same questions, same order, every candidate on this search. Rate each answer the moment it lands, not at the end.</p>' +
+    qhtml + '</div></section>' + prb +
+    '<div class="yband"><div class="w"><div class="tick"></div><h2>Do not spend your hour here.</h2>' +
+    '<p>LIVEWORK already covered the ground below on the screen. Ask it again and you buy back an answer you already own.</p>' +
+    '<ul>' + (asked.length ? asked.map(a => '<li>' + esc(a) + '</li>').join('')
+      : '<li>Our notes on this candidate are thin, so treat nothing as covered.</li>') + '</ul></div></div>' +
+    '<section><div class="w"><div class="tick"></div><h2>Close.</h2>' +
+    '<p class="lede">Two questions, always last. They tell you what actually moves this person, which is the thing that keeps them past year one.</p>' +
+    '<div class="q"><div class="n">A</div><div><div class="mh">The next chapter</div>' +
+    '<div class="ask">What are you looking for in your next career and your next company?</div></div></div>' +
+    '<div class="q"><div class="n">B</div><div><div class="mh">The intrinsic motivator</div>' +
+    '<div class="ask">What is your favorite part of your job?</div>' +
+    '<p class="lede" style="margin:16px 0 0">Tick what you hear. The file says ' +
+    esc(cl.tag_why || 'nothing yet on this one.') + '</p>' + tags + '</div></div></div></section>' +
+    '<div class="dark"><div class="w"><div class="tick"></div><h2>The write up.</h2>' +
+    '<p class="lede">Five lines, filled in before the next meeting starts. These are the same five fields the record carries, so nothing gets typed twice.</p>' +
+    '<div class="wu">' + wu + '</div></div></div>' +
+    '<footer><div class="w" style="display:flex;justify-content:space-between;gap:16px">' +
+    '<span>LIVEWORK · A talent partner for modern work</span>' +
+    '<span>' + esc(m.ref || '') + ' · ' + esc(when) + '</span></div></footer>' +
+    '</body></html>';
+}
+function openGuide(j){
+  const w = window.open('', '_blank');
+  if(!w) return toast('Allow pop ups on this site to see the guide.', true);
+  w.document.open(); w.document.write(guideDoc(j)); w.document.close();
+}
+async function buildGuide(btn, candId, seId){
+  const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Writing';
+  try{
+    const j = await fnCall('interview-guide', { candidate_id: candId, search_id: seId || null });
+    openGuide(j);
+    toast('Guide ready.');
+  }catch(err){ toast('No guide. ' + err.message, true); }
+  btn.disabled = false; btn.textContent = lbl;
+}
+
 function common(root){
   root.querySelectorAll('[data-co]').forEach(b => { if(b.dataset.new) return;
     b.onclick = e => { e.stopPropagation(); openSheet('company', b.dataset.co); }; });
@@ -2691,6 +2851,8 @@ function common(root){
       return form('mail', { pipe: id, cand: p ? p.candidate_id : '', se: p ? p.search_id : '',
         co: s ? s.company_id : '', tpl: 'presentation' }); }
   });
+  root.querySelectorAll('[data-guide]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const [c, se] = b.dataset.guide.split('|'); buildGuide(b, c, se); });
   root.querySelectorAll('[data-logcall]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [c, co] = b.dataset.logcall.split('|'); form('call', { cand: c, co: co }); });
   /* Call and Email write the activity themselves. The tel: or mailto:
