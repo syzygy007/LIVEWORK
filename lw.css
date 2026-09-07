@@ -74,6 +74,11 @@ html[data-skin="dark"]{
   --ok:#35C98A;
   --warn:#F05252;
 }
+/* the switch track is dark in the dark skin, so the knob has to rise out of
+   it rather than sink into it. Without this the knob reads as a hole. */
+html[data-skin="dark"] .skin{background:#141414;border-color:#262626}
+html[data-skin="dark"] .skin button{color:#8A867F}
+html[data-skin="dark"] .skin button.on{background:#2C2C2C;color:#fff;box-shadow:none}
 html{color-scheme:light}
 html[data-skin="dark"]{color-scheme:dark}
 

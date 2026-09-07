@@ -14,7 +14,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Desk">
-<link rel="stylesheet" href="lw.css?v=4">
+<link rel="stylesheet" href="lw.css?v=6">
 <script src="lw-config.js?v=3"></script>
 <script src="lw-auth.js?v=6"></script>
 <script src="lw-app.js?v=1" defer></script>
@@ -60,15 +60,22 @@ body{background:var(--paper)}
 .st.void::before{background:transparent;border:2px solid var(--s-void);width:11px;height:11px}
 .st.open::before,.st.released::before,.st.interview::before,.st.client_interview::before{background:var(--yellow-deep)}
 .st.offer::before{background:var(--ink)}
-.empty{padding:40px 20px;color:var(--stone)}
-.sec{margin:34px 0 14px;display:flex;align-items:baseline;justify-content:space-between;gap:16px}
-.sec h2{font-size:24px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:32px}
-.stat{background:var(--white);padding:24px}
-.stat b{display:block;font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1}
-.stat span{font-size:13px;color:var(--stone)}
-.stat.y{background:var(--yellow)}
-.stat.y,.stat.y b,.stat.y span{color:#000}
+.empty{padding:26px 20px;color:var(--stone)}
+.sec{margin:44px 0 12px;display:block}
+.sec h2{font-size:30px}
+.sec .muted{display:block;margin-top:7px;font-size:15px}
+/* the stat row. Hairlines divide it, nothing boxes it. */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:transparent;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:36px}
+.stat{background:transparent;padding:24px 24px 24px 0;border-right:1px solid var(--line);min-width:0}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-size:46px;font-weight:800;letter-spacing:-.035em;line-height:1}
+.stat span{display:block;margin-top:8px;font-size:14px;color:var(--stone)}
+/* the accent is a dot beside the number, never a filled cell */
+.stat.y b::after,.stat.flag b::after{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;
+  background:var(--yellow-deep);vertical-align:top;margin:5px 0 0 7px}
+.stat.flag b::after{background:var(--s-due)}
+.stat.flag.zero b::after,.stat.y.zero b::after{display:none}
 .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:12px;overflow-x:auto;padding-bottom:12px}
 .col{background:var(--wall);border-radius:var(--r);padding:12px;min-height:320px}
 .col h4{font-size:13px;font-weight:600;color:var(--stone);margin:4px 4px 12px;display:flex;justify-content:space-between}
@@ -131,6 +138,43 @@ body{background:var(--paper)}
 .load{padding:80px 0;color:var(--stone)}
 
 /* ------------------------------------------------------------
+   The one list on Today. Hairlines, no cards, the action sits
+   on the right as a ring you can hit with a thumb.
+   ------------------------------------------------------------ */
+.feed{border-top:1px solid var(--line)}
+.feed .f{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
+  padding:18px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.feed .fm{display:flex;align-items:center;gap:9px;margin-bottom:7px;
+  font-size:11px;font-weight:600;letter-spacing:.14em;color:var(--stone)}
+.feed .fm i{width:8px;height:8px;border-radius:50%;background:var(--yellow-deep);flex:none}
+.feed .fm.hot{color:var(--s-due)}
+.feed .fm.hot i{background:var(--s-due)}
+.feed .f b{display:block;font-weight:600;font-size:17px;letter-spacing:-.012em;line-height:1.3}
+.feed .f .why{display:block;margin-top:4px;font-size:14px;color:var(--stone)}
+.ract{display:grid;justify-items:center;gap:6px;width:66px;padding:0;border:0;background:transparent;
+  color:var(--stone);cursor:pointer}
+.ract .rc{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center}
+.ract svg{width:17px;height:17px;display:block;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+.ract .rl{font-size:11px;font-weight:600;letter-spacing:.01em}
+.ract:hover{color:var(--ink)}
+.ract:hover .rc{border-color:var(--ink)}
+.place{display:inline-flex;align-items:center;gap:6px}
+.mag{width:19px;height:19px;flex:none;stroke:var(--stone);fill:none;stroke-width:1.7;stroke-linecap:round}
+.pin{width:14px;height:14px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linejoin:round}
+
+/* one primary action in the header, the rest behind it */
+.add{position:relative}
+.add .cv{width:15px;height:15px;display:block;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;margin-left:2px}
+.add .menu{display:none;position:absolute;top:calc(100% + 8px);right:0;z-index:14;min-width:212px;padding:6px;
+  background:var(--white);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--lift)}
+.add.on .menu{display:grid}
+.add .menu button{height:44px;padding:0 12px;border:0;border-radius:var(--r);background:transparent;
+  color:var(--ink);font-weight:600;font-size:15px;text-align:left;cursor:pointer}
+.add .menu button:hover{background:var(--wall)}
+
+/* ------------------------------------------------------------
    Phone shell. Black bar on top, five tabs on the bottom, the
    full rail as a drawer behind More. Everything clears the
    notch and the home indicator so it reads as an app, not a
@@ -143,7 +187,7 @@ body{background:var(--paper)}
     gap:12px;background:var(--paper);color:var(--ink);border-bottom:1px solid var(--line);
     height:calc(54px + env(safe-area-inset-top));
     padding:env(safe-area-inset-top) 16px 0}
-  .topbar .mark{height:14px}
+  .topbar .mark{height:17px}
   .topbar b{margin-right:auto}
   .on-dark{display:none}
   html[data-skin="dark"] .on-light{display:none}
@@ -171,17 +215,23 @@ body{background:var(--paper)}
   .tabbar button.on{color:var(--ink)}
   .tabbar button.on .d{background:var(--yellow)}
   .tabbar button .n{position:absolute;top:6px;right:calc(50% - 24px);min-width:17px;height:17px;padding:0 4px;
-    border-radius:9px;background:var(--yellow);color:#000;font-size:10px;line-height:17px;font-weight:600}
+    border-radius:9px;background:var(--solid);color:var(--solid-ink);font-size:10px;line-height:17px;font-weight:600}
   .sheet{width:100%;padding:calc(20px + env(safe-area-inset-top)) 20px calc(96px + env(safe-area-inset-bottom))}
   .sheet .x{position:sticky;top:0;float:right;margin:-4px -4px 0 12px;width:auto;padding:0 14px;height:38px;font-size:13px;font-weight:600;z-index:2}
   .toast{bottom:calc(76px + env(safe-area-inset-bottom))}
-  .stats{grid-template-columns:1fr 1fr}
-  .stat{padding:18px 16px;min-width:0;overflow:hidden}
-  .stat b{font-size:30px;letter-spacing:-.035em}
-  .stat span{font-size:12px;display:block}
+  .stats{grid-template-columns:1fr 1fr;margin-bottom:30px}
+  .stat{padding:20px 16px;min-width:0;overflow:hidden}
+  .stat:nth-child(odd){padding-left:0}
+  .stat:nth-child(2n){border-right:0}
+  .stat:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .stat b{font-size:38px;letter-spacing:-.04em}
+  .stat span{font-size:13px;display:block;margin-top:5px}
+  .stat.y b::after,.stat.flag b::after{width:8px;height:8px;margin:4px 0 0 6px}
+  .sec h2{font-size:26px}
+  .sec .muted{font-size:14px}
   .docs{grid-template-columns:1fr}
-  .top{flex-direction:column;align-items:flex-start;gap:14px}
-  .top h1{font-size:34px}
+  .top{flex-flow:row wrap;align-items:center;gap:12px 14px}
+  .top h1{font-size:40px}
   .form .two{grid-template-columns:1fr}
   .barrow{grid-template-columns:110px 1fr 44px}
   .board{grid-auto-columns:minmax(78vw,1fr);scroll-snap-type:x mandatory}
@@ -192,7 +242,26 @@ body{background:var(--paper)}
   /* a table row becomes a card: the name on its own line, the rest
      in two columns, each carrying its column heading */
   .tbl .h{display:none}
-  .tbl .r{grid-template-columns:1fr 1fr!important;gap:12px 14px;padding:16px 18px;align-items:start}
+  .tbl{background:transparent;border:0;border-top:1px solid var(--line);border-radius:0}
+  .tbl .r{grid-template-columns:1fr 1fr!important;gap:12px 14px;padding:16px 0;align-items:start}
+  .tbl .r:last-child{border-bottom:1px solid var(--line)}
+  .tbl .r:hover{background:transparent}
+  .empty{padding:22px 0}
+  /* a metric row: name on its line, the numbers under it in a divided strip */
+  .tbl.strip .r{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:16px 0;padding:20px 34px 20px 0;position:relative}
+  .tbl.strip .r > *:not(:first-child){display:flex;flex-direction:column-reverse;align-items:flex-start;
+    justify-content:flex-start;gap:4px;padding-left:12px;border-left:1px solid var(--line);
+    color:var(--ink);font-weight:600;font-size:16px;line-height:1.2}
+  .tbl.strip .r > *:nth-child(2){padding-left:0;border-left:0}
+  .tbl.strip .r > *:not(:first-child)::before{margin:0;letter-spacing:.01em}
+  .tbl.strip .r::after{content:"";position:absolute;right:10px;top:26px;width:8px;height:8px;
+    border-right:1.7px solid var(--stone);border-top:1.7px solid var(--stone);transform:rotate(45deg)}
+  .feed .f{padding:18px 0}
+  .add .menu{min-width:min(280px,80vw)}
+  .search{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;
+    height:52px;padding:0;width:100%}
+  .search input{font-size:16px}
+  .tools{margin-bottom:6px}
   .tbl .r > *{min-width:0}
   .tbl .r > *:empty{display:none}
   .tbl .r > *:first-child{grid-column:1 / -1;font-size:17px;font-weight:600}
@@ -211,8 +280,8 @@ body{background:var(--paper)}
 <div id="gate"></div>
 <div class="app" id="app" style="display:none">
   <header class="topbar" id="topbar">
-    <img class="mark on-light" src="livework-wordmark-heavy-black.svg" alt="LIVE | WORK">
-    <img class="mark on-dark" src="livework-wordmark-heavy-yellow.svg" alt="LIVE | WORK">
+    <img class="mark on-light" src="livework-wordmark-black.svg" alt="LIVE | WORK">
+    <img class="mark on-dark" src="livework-wordmark-yellow.svg" alt="LIVE | WORK">
     <b id="tbTitle">Today</b>
     <span id="skinTop"></span>
   </header>
@@ -497,10 +566,11 @@ function go(v){ VIEW = v; closeSheet(); closeDrawer(); drawNav(); draw(); window
 function head(title, acts){
   return '<div class="top"><h1>' + title + '</h1><div class="acts">' + (acts||'') + '</div></div>';
 }
-function table(cols, rows, grid){
-  return '<div class="tbl"><div class="r h" style="grid-template-columns:' + grid + '">' +
+function table(cols, rows, grid, opt){
+  opt = opt || {};
+  return '<div class="tbl' + (opt.cls ? ' ' + opt.cls : '') + '"><div class="r h" style="grid-template-columns:' + grid + '">' +
     cols.map(c => '<span>' + c + '</span>').join('') + '</div>' +
-    (rows.length ? rows.join('') : '<div class="empty">Nothing here yet.</div>') + '</div>';
+    (rows.length ? rows.join('') : '<div class="empty">' + (opt.empty || 'Nothing here yet.') + '</div>') + '</div>';
 }
 function draw(){
   const m = $('#main');
@@ -526,6 +596,30 @@ function labelCells(root){
   });
 }
 
+/* ---------- The round action on a feed row, and the one Add menu ---------- */
+const RICON = {
+  done:'<path d="M5 12.5l4.4 4.4L19 7.6"/>',
+  nudge:'<path d="M4.6 12h13"/><path d="M12.6 6.8 17.8 12l-5.2 5.2"/>',
+  write:'<path d="M4.6 19.4h3.2L18.3 8.9a1.7 1.7 0 0 0 0-2.4l-.8-.8a1.7 1.7 0 0 0-2.4 0L4.6 16.2Z"/>',
+  call:'<path d="M6.2 4.6h3l1.5 3.7-2 1.4a10.4 10.4 0 0 0 5.6 5.6l1.4-2 3.7 1.5v3a1.6 1.6 0 0 1-1.8 1.6C11.3 18.9 5.1 12.7 4.6 6.4a1.6 1.6 0 0 1 1.6-1.8Z"/>'
+};
+const up = t => String(t).charAt(0).toUpperCase() + String(t).slice(1);
+const SRCH = '<svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.2"/><path d="m15.4 15.4 4 4"/></svg>';
+const PIN = '<svg class="pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.2c4.2-4.4 6.3-7.7 6.3-10.2a6.3 6.3 0 1 0-12.6 0c0 2.5 2.1 5.8 6.3 10.2Z"/><circle cx="12" cy="10.6" r="2.3"/></svg>';
+const CHEV = '<svg class="cv" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5 12 15.5 18 9.5"/></svg>';
+function ract(a){
+  if(!a) return '<span></span>';
+  return '<button class="ract" ' + a.a + ' aria-label="' + a.l + '"><span class="rc">' +
+    '<svg viewBox="0 0 24 24" aria-hidden="true">' + RICON[a.k] + '</svg></span><span class="rl">' + a.l + '</span></button>';
+}
+function addMenu(items){
+  return '<div class="add"><button class="btn pill" id="addBtn" aria-haspopup="true"><span class="p">+</span>Add' + CHEV + '</button>' +
+    '<div class="menu">' + items.map(([k,l]) => '<button data-new="' + k + '">' + l + '</button>').join('') + '</div></div>';
+}
+document.addEventListener('click', () => {
+  const a = document.querySelector('.add.on'); if(a) a.classList.remove('on');
+});
+
 /* ---------- My numbers: activity first, revenue last. thirty day window. ---------- */
 function myNumbers(){
   const me = meId(); if(!me) return '';
@@ -547,7 +641,7 @@ function myNumbers(){
   const placed = S.placements.filter(p => searchIds.indexOf(String(p.search_id)) >= 0);
   const fees = placed.reduce((n, p) => n + num(F(p,'fee','fee_amount')), 0);
   const cell = (v, l, y) => '<div class="stat' + (y ? ' y' : '') + '"><b>' + v + '</b><span>' + l + '</span></div>';
-  return '<div class="sec"><h2>My numbers.</h2><span class="muted small">last thirty days</span></div>' +
+  return '<div class="sec"><h2>My numbers.</h2><span class="muted">Last thirty days.</span></div>' +
     '<div class="stats">' +
       cell(callsMade + visits, 'Calls and visits logged') +
       cell(mail, 'Emails sent') +
@@ -587,30 +681,31 @@ function lastTouch(coId){
 /* the one list. sorted by how long it has been sitting. */
 function needsYou(sc){
   const out = [];
-  const push = (days, what, why, open, act) => out.push({ days, what, why, open, act });
+  const push = (days, tag, hot, what, why, open, act) => out.push({ days, tag, hot, what, why, open, act });
 
   sc.ses.filter(isOpen).forEach(s => {
     const rows = sc.pipe.filter(p => String(p.search_id) === String(idOf(s)) && stageIx(p) >= 1);
     if(rows.length) return;
     const d = daysBetween(F(s,'opened_at','created_at'));
     if(d < 3) return;
-    push(d, esc(F(s,'title','role')) + ' · ' + esc(cname(s.company_id)), 'Open ' + d + ' days, nobody submitted yet', 'se:' + idOf(s), '');
+    push(d, 'NOBODY SUBMITTED', d >= 14, esc(F(s,'title','role')) + ' · ' + esc(cname(s.company_id)),
+      'The search is open and empty', 'se:' + idOf(s), null);
   });
 
   sc.pipe.filter(p => stageIx(p) >= 1 && stageOf(p) !== 'Placed' && stageOf(p) !== 'Passed').forEach(p => {
     const d = daysBetween(F(p,'since','created_at'));
     if(d < 7) return;
-    push(d, esc(pname(p.candidate_id)) + ' · ' + esc(sname(p.search_id)),
-      'Sat at ' + stageOf(p) + ' for ' + d + ' days', 'cand:' + p.candidate_id,
-      '<button class="btn sm ghost" data-mail="pipe:' + idOf(p) + '">Nudge</button>');
+    push(d, 'SITTING', d >= 14, esc(pname(p.candidate_id)) + ' · ' + esc(sname(p.search_id)),
+      'Still at ' + stageOf(p), 'cand:' + p.candidate_id,
+      { k:'nudge', l:'Nudge', a:'data-mail="pipe:' + idOf(p) + '"' });
   });
 
   sc.notes.filter(noteOpen).forEach(n => {
     const d = daysBetween(noteWhen(n));
     if(new Date(noteWhen(n)) > new Date()) return;
-    push(d, esc(pname(n.candidate_id)) + (n.search_id ? ' · ' + esc(sname(n.search_id)) : ''),
-      'Interviewed ' + short(noteWhen(n)) + ', no notes written', 'cand:' + n.candidate_id,
-      '<button class="btn sm" data-fillnote="' + idOf(n) + '">Write it up</button>');
+    push(d, 'NOTES DUE', true, esc(pname(n.candidate_id)) + (n.search_id ? ' · ' + esc(sname(n.search_id)) : ''),
+      'Interviewed ' + short(noteWhen(n)) + ', nothing written', 'cand:' + n.candidate_id,
+      { k:'write', l:'Write up', a:'data-fillnote="' + idOf(n) + '"' });
   });
 
   sc.cos.forEach(c => {
@@ -619,15 +714,16 @@ function needsYou(sc){
     const last = lastTouch(idOf(c));
     const d = last ? daysBetween(last) : 999;
     if(d < 14) return;
-    push(d, esc(F(c,'name')), last ? 'No contact in ' + d + ' days' : 'Never contacted',
-      'co:' + idOf(c), '<button class="btn sm ghost" data-logcall="|' + idOf(c) + '">Log a call</button>');
+    push(d, last ? 'NO CONTACT' : 'NEVER CONTACTED', d >= 30, esc(F(c,'name')),
+      'An open search is running here', 'co:' + idOf(c),
+      { k:'call', l:'Log', a:'data-logcall="|' + idOf(c) + '"' });
   });
 
   sc.tasks.filter(t => F(t,'due_at','due_on') && new Date(F(t,'due_at','due_on')) < new Date(new Date().setHours(0,0,0,0))).forEach(t => {
     const d = daysBetween(F(t,'due_at','due_on'));
-    push(d, esc(F(t,'title','body')), 'Task overdue by ' + d + ' days',
+    push(d, 'OVERDUE', true, esc(F(t,'title','body')), 'Waiting for action',
       t.candidate_id ? 'cand:' + t.candidate_id : t.company_id ? 'co:' + t.company_id : '',
-      '<button class="btn sm ghost" data-done="' + idOf(t) + '">Done</button>');
+      { k:'done', l:'Done', a:'data-done="' + idOf(t) + '"' });
   });
 
   return out.sort((a,b) => b.days - a.days);
@@ -653,30 +749,26 @@ function vToday(){
     '<button class="chip ' + (SCOPE === 'mine' ? 'on' : '') + '" data-scope="mine">Mine</button>' +
     '<button class="chip ' + (SCOPE === 'all' ? 'on' : '') + '" data-scope="all">Everyone</button></div>' : '';
 
-  return head('Today.',
-      '<button class="btn ghost" data-new="task">Add a task</button>' +
-      '<button class="btn ghost" data-new="visit">Visit note</button>' +
-      '<button class="btn ghost" data-new="interview">New interview</button>' +
-      '<button class="btn" data-new="call">Log a call</button>') +
+  const sat = w => w.days > 900 ? w.tag : w.tag + ' \u00b7 ' + w.days + (w.days === 1 ? ' DAY' : ' DAYS');
+
+  return head('Today.', addMenu([['call','Log a call'],['task','Add a task'],['interview','New interview'],['visit','Visit note']])) +
     scopeBar +
     '<div class="stats">' +
-      '<div class="stat"><b>' + openS.length + '</b><span>Open searches</span></div>' +
+      '<div class="stat"><b>' + openS.length + '</b><span>Open roles</span></div>' +
       '<div class="stat"><b>' + live.length + '</b><span>Candidates in play</span></div>' +
-      '<div class="stat"><b>' + thisWeek.length + '</b><span>Interviews inside seven days</span></div>' +
-      '<div class="stat y"><b>' + work.length + '</b><span>Things sitting</span></div>' +
+      '<div class="stat"><b>' + thisWeek.length + '</b><span>Interviews \u00b7 7 days</span></div>' +
+      '<div class="stat flag' + (work.length ? '' : ' zero') + '"><b>' + work.length + '</b><span>Needs attention</span></div>' +
     '</div>' +
 
-    '<div class="sec"><h2>What needs you.</h2><span class="muted small">longest sitting first, nothing here was typed by hand</span></div>' +
-    table(['What','Why it is here','Sitting','Do it'],
-      work.slice(0, 15).map(w => '<div class="r" style="grid-template-columns:1.6fr 1.6fr 110px 150px"' +
-        (w.open ? ' data-' + w.open.split(':')[0] + '="' + w.open.split(':')[1] + '"' : '') + '>' +
-        '<b>' + w.what + '</b>' +
-        '<span class="muted">' + esc(w.why) + '</span>' +
-        '<span class="' + (w.days >= 14 ? 'st overdue' : 'muted') + '">' + w.days + ' days</span>' +
-        '<span>' + (w.act || '') + '</span></div>'),
-      '1.6fr 1.6fr 110px 150px') +
+    '<div class="sec"><h2>What needs you.</h2><span class="muted">Longest sitting first. Nothing here was typed by hand.</span></div>' +
+    '<div class="feed">' + (work.length ? work.slice(0, 15).map(w =>
+      '<div class="f"' + (w.open ? ' data-' + w.open.split(':')[0] + '="' + w.open.split(':')[1] + '"' : '') + '>' +
+        '<div><div class="fm' + (w.hot ? ' hot' : '') + '"><i></i>' + sat(w) + '</div>' +
+        '<b>' + w.what + '</b><span class="why">' + esc(w.why) + '</span></div>' +
+        ract(w.act) + '</div>').join('')
+      : '<div class="empty">Nothing is sitting. Go find work.</div>') + '</div>' +
 
-    '<div class="sec"><h2>Interviews booked.</h2><span class="muted small">the meeting lives in Outlook, the notes live here</span></div>' +
+    '<div class="sec"><h2>Interviews booked.</h2><span class="muted">The meeting lives in Outlook. The notes live here.</span></div>' +
     table(['When','Candidate','Search','Kind','Notes'],
       booked.slice(0, 10).map(n => '<div class="r" style="grid-template-columns:180px 1.2fr 1.4fr 130px 140px" data-cand="' + n.candidate_id + '">' +
         '<b>' + esc(when(noteWhen(n))) + '</b>' +
@@ -684,9 +776,9 @@ function vToday(){
         '<span class="muted">' + esc(n.search_id ? sname(n.search_id) + ' · ' + cname(coOfSearch(n.search_id)) : 'No search') + '</span>' +
         '<span class="muted small">' + esc(String(F(n,'kind') || 'interview').replace(/_/g,' ')) + '</span>' +
         '<span><button class="btn sm ghost" data-fillnote="' + idOf(n) + '">Write it up</button></span></div>'),
-      '180px 1.2fr 1.4fr 130px 140px') +
+      '180px 1.2fr 1.4fr 130px 140px', { empty:'No interviews scheduled.' }) +
 
-    (amAdmin() && invDue().length ? '<div class="sec"><h2>Billing.</h2><span class="muted small">' + invDue().length + ' need a send</span></div>' +
+    (amAdmin() && invDue().length ? '<div class="sec"><h2>Billing.</h2><span class="muted">' + invDue().length + ' need a send.</span></div>' +
       table(['Invoice','Client','Amount','Where it stands','Action'],
         invDue().slice(0,10).map(i => '<div class="r" style="grid-template-columns:130px 1.4fr 120px 1fr 130px">' +
           '<b>' + esc(F(i,'invoice_no','number') || 'Draft') + '</b>' +
@@ -699,14 +791,14 @@ function vToday(){
 
     myNumbers() +
 
-    '<div class="sec"><h2>The queue.</h2><span class="muted small">' + openT.length + ' open</span></div>' +
+    '<div class="sec"><h2>The queue.</h2><span class="muted">' + openT.length + ' open.</span></div>' +
     table(['Task','Who','Due','Done'],
       openT.slice(0,10).map(t => '<div class="r" style="grid-template-columns:2fr 1.2fr 120px 90px" data-task="' + idOf(t) + '">' +
         '<b>' + esc(F(t,'title','body')) + '</b>' +
         '<span class="muted">' + esc(t.candidate_id ? pname(t.candidate_id) : t.company_id ? cname(t.company_id) : '') + '</span>' +
         '<span class="' + (F(t,'due_at') && new Date(F(t,'due_at')) < new Date() ? 'st overdue' : 'muted') + '">' + (short(F(t,'due_at')) || 'No date') + '</span>' +
         '<span><button class="btn sm ghost" data-done="' + idOf(t) + '">Done</button></span></div>'),
-      '2fr 1.2fr 120px 90px');
+      '2fr 1.2fr 120px 90px', { empty:'The queue is clear.' });
 }
 
 /* ---------- Companies ---------- */
@@ -714,19 +806,19 @@ function vCompanies(){
   const q = Q.co.toLowerCase();
   const list = S.companies.filter(c => !q || F(c,'name').toLowerCase().includes(q));
   return head('Clients.', '<button class="btn pill" data-new="company"><span class="p">+</span>Add a client</button>') +
-    '<div class="tools"><div class="search"><input id="qco" placeholder="Search clients" value="' + esc(Q.co) + '"></div></div>' +
-    table(['Client','Open searches','In play','Placements','Last touch'],
+    '<div class="tools"><div class="search">' + SRCH + '<input id="qco" placeholder="Search clients" value="' + esc(Q.co) + '"></div></div>' +
+    table(['Client','Open roles','In play','Placements','Last touch'],
       list.map(c => {
         const ss = S.searches.filter(s => String(s.company_id)===String(idOf(c)));
         const ids = ss.map(s => String(idOf(s)));
         const play = S.pipeline.filter(p => ids.includes(String(p.search_id)) && stageOf(p)!=='Placed' && stageOf(p)!=='Passed').length;
         const last = S.activity.filter(a => String(a.company_id)===String(idOf(c))).map(a=>a.created_at).sort().pop();
         return '<div class="r" style="grid-template-columns:2fr 130px 100px 110px 140px" data-co="' + idOf(c) + '">' +
-          '<div><b>' + esc(F(c,'name')) + '</b><br><span class="muted small">' + esc(F(c,'city','location','industry')) + '</span></div>' +
+          '<div><b>' + esc(F(c,'name')) + '</b><br><span class="muted small place">' + PIN + esc(F(c,'city','location','industry')) + '</span></div>' +
           '<span>' + ss.filter(isOpen).length + '</span><span>' + play + '</span>' +
           '<span>' + S.placements.filter(p => String(p.company_id)===String(idOf(c))).length + '</span>' +
-          '<span class="muted small">' + (last ? ago(last) : 'No activity') + '</span></div>';
-      }), '2fr 130px 100px 110px 140px');
+          '<span class="muted small">' + up(last ? ago(last) : 'None') + '</span></div>';
+      }), '2fr 130px 100px 110px 140px', { cls:'strip', empty:'No clients yet.' });
 }
 
 /* ---------- Searches ---------- */
@@ -768,7 +860,7 @@ function vCandidates(){
   return head('Candidates.',
       '<button class="btn ghost" data-new="candidate">Add one by hand</button>' +
       '<button class="btn" data-v="intake">Drop resumes</button>') +
-    '<div class="tools"><div class="search"><input id="qcand" placeholder="Name, title, location" value="' + esc(Q.cand) + '"></div>' +
+    '<div class="tools"><div class="search">' + SRCH + '<input id="qcand" placeholder="Name, title, location" value="' + esc(Q.cand) + '"></div>' +
       '<button class="chip ' + (Q.tag?'':'on') + '" data-tag="">All</button>' +
       tags.map(t => '<button class="chip ' + (Q.tag===t?'on':'') + '" data-tag="' + esc(t) + '">' + esc(t) + '</button>').join('') +
     '</div>' +
@@ -1936,6 +2028,11 @@ function common(root){
   root.querySelectorAll('[data-cand]').forEach(b => { if(b.dataset.new) return;
     b.onclick = e => { e.stopPropagation(); openSheet('candidate', b.dataset.cand); }; });
   root.querySelectorAll('[data-pool]').forEach(b => b.onclick = e => { e.stopPropagation(); openSheet('pool', b.dataset.pool); });
+  const ab = root.querySelector('#addBtn');
+  if(ab) ab.onclick = e => { e.stopPropagation(); ab.parentElement.classList.toggle('on'); };
+  root.querySelectorAll('.add .menu button').forEach(b => b.addEventListener('click', () => {
+    const a = b.closest('.add'); if(a) a.classList.remove('on');
+  }));
   root.querySelectorAll('[data-new]').forEach(b => b.onclick = e => { e.stopPropagation();
     form(b.dataset.new, { co: b.dataset.co, se: b.dataset.se, cand: b.dataset.cand }); });
   root.querySelectorAll('[data-edit]').forEach(b => b.onclick = e => { e.stopPropagation();
