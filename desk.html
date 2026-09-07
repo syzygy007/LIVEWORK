@@ -286,6 +286,7 @@ body{background:var(--paper)}
 .clist .ch .pill{font-size:12px;font-weight:600;background:var(--wall);color:var(--ink);
   padding:5px 12px;border-radius:999px;white-space:nowrap;flex:none}
 .clist .ch .pill.warn{background:var(--s-due);color:#fff}
+.agview{display:block;width:100%;height:min(52vh,520px);border:1px solid var(--line);background:var(--paper)}
 .agseen{display:grid;gap:3px;padding:12px 14px;border:1px solid var(--line);background:var(--white);font-size:14px}
 .agseen:empty{display:none}
 .agseen b{font-weight:600}
@@ -2078,6 +2079,8 @@ function form(kind, ctx){
       '<div class="two"><div class="field"><label for="f_sname">Signing for LIVEWORK</label><input id="f_sname"></div>' +
       '<div class="field"><label for="f_stitle">Title</label><input id="f_stitle" placeholder="President"></div></div>'],
     sendsign: ['Send it for signature.', 'They get a link and a code. Entering the code is the signature, and the executed copy comes back with the audit page on it.',
+      '<div class="field"><label for="f_doc">Document</label><select id="f_doc">' +
+        opts(S.documents.filter(x => !docSigned(x)), x => F(x,'title') + ' \u00b7 ' + cname(x.company_id), ctx.doc) + '</select></div>' +
       '<div class="field"><label for="f_who">Who signs</label><select id="f_who"><option value="">Someone else</option>' +
         contactsOf((byId(S.documents, ctx.doc) || {}).company_id).map(c =>
           '<option value="' + esc(F(c,'email')) + '|' + esc(F(c,'name')) + '|' + esc(F(c,'title','role')) + '">' +
@@ -2094,7 +2097,8 @@ function form(kind, ctx){
   SHEET = { kind:'form', id:kind, tab:0, ctx };
   const editing = ctx.edit ? editRow(kind, ctx.edit) : null;
   shell(editing ? 'Edit.' : F_[0], editing ? 'Change what is wrong and save it.' : F_[1],
-    '<div class="form">' + F_[2] + '<button class="btn" id="fsave">' + (kind === 'mail' ? 'Send' : editing ? 'Save changes' : 'Save') + '</button></div>');
+    '<div class="form">' + F_[2] + '<button class="btn" id="fsave">' +
+      (kind === 'mail' ? 'Send' : kind === 'agreement' ? 'Create it' : editing ? 'Save changes' : 'Save') + '</button></div>');
   if(editing) prefill(kind, editing);
   const first = $('#sheet').querySelector('input,select,textarea'); if(first) first.focus();
   $('#fsave').onclick = () => save(kind, ctx);
@@ -2190,7 +2194,7 @@ function wireAgreementForm(ctx){
   setv('f_stitle', String(F(me,'role')) === 'admin' ? 'President' : '');
   const gaps = () => {
     const c = company(co.value) || {};
-    const miss = !val('f_legal') || !val('f_addr') || !val('f_notice');
+    const miss = ctx.gaps || !val('f_legal') || !val('f_addr') || !val('f_notice');
     const box = document.getElementById('f_gaps'), seen = document.getElementById('f_seen');
     if(box) box.style.display = miss ? '' : 'none';
     if(seen) seen.innerHTML = miss ? '' :
@@ -2225,9 +2229,41 @@ function wireAgreementForm(ctx){
     if(rebox) rebox.style.display = ret ? '' : 'none';
   };
   co.onchange = () => { fillCo(); fillSe(); gaps(); };
+  if(ctx.kind) kd.value = ctx.kind;
   kd.onchange = only;
   if(se) se.onchange = fillSe;
   fillCo(); fillSe(); only(); gaps();
+}
+
+/* the second and last press. the document is made, this is where it goes. */
+function approve(j, coid, kd, seid){
+  const co = company(coid) || {};
+  const who = contactsOf(coid).filter(c => F(c,'email'))[0];
+  SHEET = { kind:'form', id:'approve', tab:0, ctx:{ co: coid } };
+  shell('Read it, then send it.',
+    esc(dockLabel(kd)) + ' for ' + esc(F(co,'legal_name') || F(co,'name')) + (j.reference ? ' \u00b7 ' + esc(j.reference) : ''),
+    '<div class="form">' +
+      '<iframe class="agview" src="' + esc(j.url || '') + '" title="The agreement"></iframe>' +
+      '<div class="field"><label for="f_toe">Send it to</label><input id="f_toe" type="email" value="' + esc(F(who,'email')) + '" placeholder="dana@northwind.com"></div>' +
+      '<div class="two"><div class="field"><label for="f_name">Who signs</label><input id="f_name" value="' + esc(F(who,'name')) + '"></div>' +
+      '<div class="field"><label for="f_stitle">Their title</label><input id="f_stitle" value="' + esc(F(who,'title','role')) + '"></div></div>' +
+      '<button class="btn" id="fsend">Approve and send for signature</button>' +
+      '<button class="btn ghost" id="fwet">Email it for a wet signature</button>' +
+      '<button class="btn ghost" id="fedit">Change what prints and redo it</button>' +
+      '<p class="muted small">Nothing has gone out yet. It is saved on the client either way.</p>' +
+    '</div>');
+  const doc = byId(S.documents, j.id) || { id: j.id, company_id: coid, title: dockLabel(kd) };
+  $('#fsend').onclick = async () => {
+    const to = val('f_toe').trim().toLowerCase();
+    if(!to || to.indexOf('@') < 0) return toast('It needs an email to send to.', true);
+    if(!val('f_name').trim()) return toast('Who is signing?', true);
+    const b = $('#fsend'); b.disabled = true; b.textContent = 'Sending';
+    const ok = await sendSignature(doc, { name: val('f_name').trim(), title: val('f_stitle').trim(), email: to, days: 14,
+      note: 'Here is the agreement we talked about. It takes about a minute to sign.' });
+    if(ok) closeSheet(); else { b.disabled = false; b.textContent = 'Approve and send for signature'; }
+  };
+  $('#fwet').onclick = () => wetSign(idOf(doc));
+  $('#fedit').onclick = () => form('agreement', { co: coid, se: seid, kind: kd, gaps: true });
 }
 
 /* the only two things you do with a fresh agreement */
@@ -2333,8 +2369,8 @@ async function save(kind, ctx){
       [M.company.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Client updated.' : 'Client added.');
   }
   if(kind === 'sendsign'){
-    const d = byId(S.documents, ctx.doc);
-    if(!d) return toast('That document is gone.', true);
+    const d = byId(S.documents, val('f_doc') || ctx.doc);
+    if(!d) return toast('Pick the document it is for.', true);
     const to = val('f_toe').trim().toLowerCase();
     if(!to || to.indexOf('@') < 0) return toast('It needs an email to send to.', true);
     if(!val('f_name').trim()) return toast('Who is signing?', true);
@@ -2365,9 +2401,8 @@ async function save(kind, ctx){
       const j = await fnCall('agreement-pdf', clean({ company_id: coid, kind: kd, search_id: seid,
         signer_name: val('f_sname'), signer_title: val('f_stitle') }));
       if(!j || j.ok === false) throw new Error((j && j.error) || 'the renderer said no');
-      closeSheet(); await loadAll(); drawNav(); draw(); paintSheet();
-      toast(dockLabel(kd) + ' ready. ' + (j.reference || ''));
-      if(j.url) openUrl(j.url);
+      await loadAll(); drawNav(); draw(); paintSheet();
+      approve(j, coid, kd, seid);
     }catch(err){ console.error(err); toast('Could not draw it up. ' + err.message, true); }
     return;
   }
