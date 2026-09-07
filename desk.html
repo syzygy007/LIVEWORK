@@ -2289,9 +2289,9 @@ function wetSign(docId){
 async function sendSignature(d, o){
   const tok = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()) + String(Math.random())).replace(/-/g, '');
   const until = new Date(Date.now() + (Number(o.days) || 14) * 86400000).toISOString();
-  const rq = await tryWrite(() => insert('signature_requests', { document_id: idOf(d), party: 'client',
+  const rq = await tryWrite(() => insert('signature_requests', clean({ document_id: idOf(d), party: 'client',
     signer_name: o.name, signer_title: o.title || '', signer_email: String(o.email).toLowerCase(),
-    token: tok, expires_at: until }), null);
+    notify_email: F(ME || {}, 'email'), token: tok, expires_at: until })), null);
   if(!rq) return false;
   const link = SITE + '/sign.html?t=' + tok;
   const co = company(d.company_id) || {};
