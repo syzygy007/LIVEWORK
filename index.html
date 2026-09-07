@@ -141,6 +141,20 @@ body{overflow-x:hidden}
 .terms.one .micro{font-size:15px;max-width:36em}
 @media (max-width:860px){.terms{grid-template-columns:1fr}}
 
+/* the guarantee, one split plate -------------------------------- */
+.guar{display:grid;grid-template-columns:minmax(0,.42fr) minmax(0,1fr);margin-top:56px;border:1px solid var(--line)}
+.guar .n{background:var(--yellow);padding:clamp(32px,4vw,56px);display:grid;align-content:space-between;gap:clamp(24px,4vw,56px)}
+.guar .big{font-weight:800;font-size:clamp(88px,11vw,190px);line-height:.8;letter-spacing:-.05em}
+.guar .unit{font-weight:800;font-size:15px;letter-spacing:.34em;text-transform:uppercase}
+.guar .say{background:#0C0C0C;color:#fff;padding:clamp(32px,4vw,64px);display:grid;align-content:center;gap:18px}
+.guar .say .micro{color:var(--yellow)}
+.guar .say .poster{font-size:clamp(30px,3.6vw,54px);letter-spacing:-.035em;line-height:1}
+.guar .say .read{color:#CFCBC4;font-size:18px;max-width:26em;padding-bottom:26px;border-bottom:1px solid #262626}
+@media (max-width:800px){
+  .guar{grid-template-columns:1fr}
+  .guar .n{grid-template-columns:auto auto;align-items:baseline;justify-content:start;gap:18px}
+}
+
 /* weekly, contact, footer --------------------------------------- */
 .weekly{background:var(--wall);padding:clamp(64px,8vw,120px) 0}
 .weekly .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,5vw,80px);align-items:center}
@@ -316,8 +330,13 @@ body{overflow-x:hidden}
           <div class="row"><b>A more accountable process</b><span>Every engagement includes structured evaluation, clear terms, a private client room, and a written replacement period. Read the <a href="engagement.html">Client Engagement Terms</a>.</span></div>
         </div>
       </div>
-      <div class="terms one">
-        <div class="y"><span class="num">90 days</span><p class="micro">Replacement search period on every placement. Fees and engagement terms are set in the first conversation and documented before work begins.</p></div>
+      <div class="guar">
+        <div class="n"><span class="big">90</span><span class="unit">Days</span></div>
+        <div class="say">
+          <p class="micro">Placement protection</p>
+          <h3 class="poster">The right fit should last.</h3>
+          <p class="read">If a placement does not work out within 90 days, we run the search again.</p>
+        </div>
       </div>
     </div>
   </section>
