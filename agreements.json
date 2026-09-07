@@ -1,0 +1,179 @@
+{
+ "version": "2026-09-07",
+ "notice": "LIVEWORK notices: legal@livework.inc, 26632 Towne Centre Dr. #300, Foothill Ranch, CA 92610. Client notices go to the address above.",
+ "livework_party": "GERMANN INC dba LIVEWORK",
+ "docs": {
+  "recruiting": {
+   "short_title": "Client Recruiting Agreement",
+   "footer": "LIVEWORK  ·  CLIENT RECRUITING AGREEMENT",
+   "eyebrow": "Account wide  ·  Contingent direct hire search",
+   "title": "Recruiting agreement.",
+   "lede": "This agreement is between GERMANN INC, a California corporation doing business as LIVEWORK, and the client identified below. It is signed once for the account, and no separate signed Search Order is required for each contingent opening.",
+   "facts": [
+    [
+     "Client",
+     "{{client_legal_name}}"
+    ],
+    [
+     "Address",
+     "{{client_address}}"
+    ],
+    [
+     "Notices to",
+     "{{client_notice_email}}"
+    ],
+    [
+     "Effective",
+     "{{effective_date}}"
+    ]
+   ],
+   "sections": [
+    [
+     "Engagement",
+     "LIVEWORK will provide nonexclusive direct hire recruiting for positions Client requests and LIVEWORK accepts in writing, including email or the client portal. This agreement is signed once for the account; no separate signed Search Order is required for each contingent opening.",
+     "The parties will confirm role requirements, compensation, work arrangement and authorized contacts in writing. Retained searches require a separate Retained Search Agreement. Staffing, payroll and employer of record services are excluded."
+    ],
+    [
+     "Placement fee",
+     "The fee is 20% of the hired candidate’s first year annualized base salary, excluding bonuses, commissions, equity, benefits and expenses. Full time hourly pay is annualized at 2,080 hours; other schedules require a written basis before presentation.",
+     "The fee is earned and due on the actual start date. If the candidate never starts, no contingent fee is earned and any prepaid contingent fee is refunded within 30 days. Base pay increases within the first 90 days are adjusted and invoiced as provided in the Terms."
+    ],
+    [
+     "Introductions and replacement protection",
+     "The Terms’ 12 month introduction period, documented prior process exception and covered affiliate hire provisions apply. Client will report accepted offers and actual starts within 10 days of learning of them.",
+     "An eligible resignation or termination for cause within 90 days receives one replacement search, subject to timely payment, notice and the Terms’ conditions. This is not a cash refund or a guarantee of a replacement."
+    ],
+    [
+     "Responsibilities and confidentiality",
+     "LIVEWORK will use reasonable professional skill and care with meaningful human review. Client makes hiring decisions and remains responsible for its employment terms and checks; each party remains responsible for its own lawful conduct. Verification services require a separately agreed scope and applicable candidate permissions.",
+     "The Terms’ mutual confidentiality, candidate data restrictions, security, payment, expense and liability provisions apply. No candidate is charged a recruiting fee."
+    ],
+    [
+     "Term and controlling documents",
+     "The Client Engagement Terms effective September 6, 2026 at livework.inc/engagement.html are incorporated into this agreement. The Data Processing Addendum effective September 6, 2026 at livework.inc/dpa.html applies only to processing within its stated scope. Client acknowledges access to these documents before signing. Later website revisions do not amend this agreement.",
+     "This agreement replaces the Terms’ requirement for a separately accepted Search Order for each contingent role; references to a Search Order mean the applicable written role confirmation under this agreement. The DPA controls covered data processing, and this agreement controls conflicting engagement formation and commercial provisions. A signed Retained Search Agreement controls its specified search.",
+     "Either party may terminate this agreement or a search on 30 days written notice; breach termination and surviving obligations follow the Terms. Amendments require mutual written agreement. California law and the Terms’ Orange County and Central District of California forum provisions apply, subject to mandatory law."
+    ]
+   ]
+  },
+  "retained": {
+   "short_title": "Retained Search Agreement",
+   "footer": "LIVEWORK  ·  RETAINED SEARCH AGREEMENT",
+   "eyebrow": "Role specific  ·  Exclusive direct hire",
+   "title": "Retained search.",
+   "lede": "This agreement is between GERMANN INC, a California corporation doing business as LIVEWORK, and the client identified below. It is an accepted Search Order under the Client Engagement Terms and may be signed without a separate Client Recruiting Agreement.",
+   "facts": [
+    [
+     "Client",
+     "{{client_legal_name}}"
+    ],
+    [
+     "Address",
+     "{{client_address}}"
+    ],
+    [
+     "Notices to",
+     "{{client_notice_email}}"
+    ],
+    [
+     "Position",
+     "{{position_title}}"
+    ],
+    [
+     "Search reference",
+     "{{search_ref}}"
+    ],
+    [
+     "Location and work",
+     "{{location_and_work}}"
+    ],
+    [
+     "Base range",
+     "{{comp_range}}"
+    ],
+    [
+     "Role brief",
+     "{{role_brief}}"
+    ]
+   ],
+   "sections": [
+    [
+     "Exclusive engagement",
+     "Client retains LIVEWORK exclusively for the position above. LIVEWORK will provide role definition, research, screening, candidate presentation, interview coordination and offer coordination with reasonable professional skill and care.",
+     "Client will not engage another recruiting firm for this role during the active engagement and will coordinate candidates from all sources through the agreed process. No particular hire or completion date is guaranteed."
+    ],
+    [
+     "Retainer and placement fee",
+     "A $10,000 retainer is invoiced upon acceptance and due within 15 days. Dedicated work need not begin before payment.",
+     "The retainer is credited in full against a placement fee of 20% of first year annualized base salary, with the remaining balance earned and due on the candidate’s actual start date. The Terms govern compensation exclusions, annualization and early base pay increases. There is no negative balance or refund merely because the calculated fee is less than an earned retainer."
+    ],
+    [
+     "Cancellation and independent hires",
+     "Once substantive search work begins, the retainer is earned and nonrefundable if Client cancels or fills the role independently. Before that work begins, a Client cancellation requires return of the retainer less reasonable, documented, nonrecoverable costs Client authorized.",
+     "If LIVEWORK terminates for convenience or Client terminates for LIVEWORK’s uncured material breach, LIVEWORK refunds the unearned portion based on documented services performed. Exclusivity alone does not create a placement fee for an independently sourced hire; no such fee applies unless separately agreed in writing."
+    ],
+    [
+     "Protection and incorporated terms",
+     "The Terms’ 12 month introduction period, prior process exception, covered affiliate hires and conditional 90 day replacement search apply.",
+     "The Client Engagement Terms effective September 6, 2026 at livework.inc/engagement.html are incorporated into this agreement. The Data Processing Addendum effective September 6, 2026 at livework.inc/dpa.html applies only to processing within its stated scope. Client acknowledges access to these documents before signing. Later website revisions do not amend this agreement.",
+     "The DPA controls covered processing; this agreement controls conflicting search specific commercial provisions. Other matters follow the Terms, including confidentiality, responsibilities, liability, notices and termination on 30 days written notice or for uncured material breach. California law and the Terms’ Orange County and Central District of California forum provisions apply, subject to mandatory law. Changes to scope or fees require mutual written agreement."
+    ]
+   ]
+  },
+  "nda": {
+   "short_title": "Mutual Non-Disclosure Agreement",
+   "footer": "LIVEWORK  ·  MUTUAL NON-DISCLOSURE AGREEMENT",
+   "eyebrow": "Confidential recruiting and business discussions",
+   "title": "Mutual NDA.",
+   "lede": "This agreement is between GERMANN INC, a California corporation doing business as LIVEWORK, and the counterparty identified below.",
+   "facts": [
+    [
+     "Counterparty",
+     "{{client_legal_name}}"
+    ],
+    [
+     "Address",
+     "{{client_address}}"
+    ],
+    [
+     "Notices to",
+     "{{client_notice_email}}"
+    ],
+    [
+     "Effective",
+     "{{effective_date}}"
+    ]
+   ],
+   "sections": [
+    [
+     "Purpose and confidential information",
+     "The parties may exchange information to evaluate or carry out a recruiting engagement or related business relationship, the Purpose. Confidential Information includes nonpublic business, financial, technical, client, candidate and personnel information disclosed in any form that is marked confidential or reasonably understood to be confidential, including confidential search plans and information derived from it."
+    ],
+    [
+     "Protection and permitted use",
+     "The receiving party will use Confidential Information only for the Purpose and protect it with at least reasonable care. It may disclose it only to personnel, professional advisers and service providers who need to know and are bound by confidentiality duties at least as protective in substance. The receiving party is responsible for their compliance.",
+     "It will promptly notify the disclosing party of unauthorized access or disclosure and reasonably assist with containment. Neither party may publicize the other’s name, logo or participation without prior written permission."
+    ],
+    [
+     "Exclusions and required disclosure",
+     "Confidential Information excludes information the receiving party can demonstrate is public without breach, previously lawfully known, independently developed without use of the disclosed information, or lawfully received without restriction. Disclosure required by law is permitted to the extent required, with advance notice when lawful and reasonably practicable and reasonable cooperation in seeking protective treatment."
+    ],
+    [
+     "Duration and return",
+     "This agreement covers disclosures for two years from the effective date unless ended earlier by written notice. Confidentiality and use restrictions continue for three years after each disclosure; trade secrets remain protected while they qualify under applicable law, and personal information remains protected as applicable law requires.",
+     "On written request, the receiving party will return or delete Confidential Information within 30 days, except legally required records and routine backups unavailable for ordinary use. Retained copies remain protected and may not be used for another purpose."
+    ],
+    [
+     "Rights and limitations",
+     "No intellectual property rights are transferred, and neither party must disclose information or enter a transaction. Information is provided without a warranty of accuracy or completeness, without limiting liability for fraud or other nonwaivable duties.",
+     "This agreement creates no noncompete, no hire or employee nonsolicitation restriction. It does not restrict lawful discussion of wages or working conditions, protected reporting, cooperation with authorities, legal advice or disclosures protected by 18 U.S.C. 1833(b). Either party may seek injunctive relief subject to applicable legal standards."
+    ],
+    [
+     "General terms",
+     "This agreement is the entire agreement on its subject and may be amended only by mutual written agreement. It supplements any recruiting agreement; a DPA controls covered personal data processing, and liability provisions in a signed recruiting agreement govern disclosures within that engagement.",
+     "California law governs, subject to mandatory law, with exclusive venue in California state courts in Orange County or the U.S. District Court for the Central District of California where jurisdiction exists. Invalid provisions do not affect the remainder. Notices go to the emails above and legal@livework.inc and are effective when acknowledged or the next business day after sending without a delivery failure; service of proceedings follows applicable law."
+    ]
+   ]
+  }
+ }
+}
