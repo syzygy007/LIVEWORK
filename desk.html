@@ -285,6 +285,11 @@ body{background:var(--paper)}
 .clist .ch b{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.2;cursor:pointer}
 .clist .ch .pill{font-size:12px;font-weight:600;background:var(--wall);color:var(--ink);
   padding:5px 12px;border-radius:999px;white-space:nowrap;flex:none}
+.clist .ch .pill.warn{background:var(--s-due);color:#fff}
+.docgate{padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);
+  margin-bottom:18px;font-size:14px;line-height:1.5;color:var(--stone)}
+.docgate.bad{border-color:var(--s-due);color:var(--s-due);font-weight:600}
+.docgate.bad a{color:var(--s-due);text-decoration:underline;cursor:pointer}
 .clist .m{margin-top:4px;font-size:14px;color:var(--stone)}
 .clist .t{margin-top:6px;font-size:13px;color:var(--stone)}
 .clist .a{display:flex;gap:8px;margin-top:14px;max-width:560px}
@@ -347,7 +352,8 @@ body{background:var(--paper)}
    ============================================================ */
 /* locked to schema v2 (column dump Sep 2026) */
 const MAP = {
-  company:   { name:'name', status:'status', kind:'engagement_type', city:'city', industry:'industry', notes:'notes', owner:'owner_id' },
+  company:   { name:'name', status:'status', kind:'engagement_type', city:'city', industry:'industry', notes:'notes', owner:'owner_id',
+               legal:'legal_name', address:'address', notice:'notice_email' },
   contact:   { company:'company_id', name:'name', email:'email', title:'title', phone:'phone', room:'room_access', billing:'is_billing' },
   search:    { company:'company_id', title:'title', location:'location', kind:'engagement_type', status:'status',
                comp_min:'comp_low', comp_max:'comp_high', opened:'opened_at', notes:'notes', owner:'owner_id' },
@@ -382,6 +388,18 @@ const AUTOS = [
   ['placement_day_one','Day one note','Goes out to the placed candidate on their start date.'],
   ['guarantee_close','Guarantee closed','Tells the client when the ninety days are clear.']
 ];
+
+/* The three agreements, and what each one proves.
+   gate:true means a signed copy satisfies the account.
+   scoped:true means it only covers the one search it names. */
+const DOCK = [
+  ['recruiting', 'Client recruiting agreement', 'Account wide. Signed once, covers every contingent role.', true, false],
+  ['retained',   'Retained search agreement',   'Role specific. It is its own search order.',                true, true],
+  ['nda',        'Mutual NDA',                  'Optional. Usually the first thing signed.',                 false, false],
+  ['other',      'Other document',              'Anything else the account should carry.',                   false, false]
+];
+const dockRow   = k => DOCK.filter(d => d[0] === k)[0] || ['other','Document','',false,false];
+const dockLabel = k => dockRow(k)[1];
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -715,6 +733,53 @@ function lastTouch(coId){
 }
 
 /* the one list. sorted by how long it has been sitting. */
+/* ------------------------------------------------------------
+   The agreement gate. A client is complete when it holds a
+   signed recruiting agreement, or a signed retained agreement
+   for every open role. Anything else with a search running is
+   incomplete and says so.
+   ------------------------------------------------------------ */
+function docsOf(coId){ return S.documents.filter(d => String(d.company_id) === String(coId)); }
+function docSigned(d){ return d.signed === true || d[MAP.doc && MAP.doc.signed] === true || d.signed_at != null; }
+function docState(coId){
+  const open = S.searches.filter(s => String(s.company_id) === String(coId) && isOpen(s));
+  const ds = docsOf(coId);
+  if(ds.filter(d => F(d,'kind') === 'recruiting' && docSigned(d)).length)
+    return { ok:true, why:'Client recruiting agreement signed and on file' };
+  const ret = ds.filter(d => F(d,'kind') === 'retained' && docSigned(d));
+  const covered = id => ret.some(d => String(d.search_id) === String(id));
+  const bare = open.filter(s => !covered(idOf(s)));
+  if(!open.length) return { ok:true, quiet:true, why: ds.length ? 'No open role right now' : 'No agreement yet, and no open role' };
+  if(!bare.length) return { ok:true, why:'Every open role has a signed retained agreement' };
+  return { ok:false, need:bare,
+    why: bare.length === open.length
+      ? 'No signed agreement, and ' + open.length + (open.length === 1 ? ' open role' : ' open roles')
+      : bare.length + (bare.length === 1 ? ' open role has' : ' open roles have') + ' no signed agreement' };
+}
+function gateBanner(coId){
+  const st = docState(coId);
+  if(st.ok && st.quiet) return '';
+  return '<div class="docgate ' + (st.ok ? 'ok' : 'bad') + '">' +
+    (st.ok ? 'Complete. ' : 'Incomplete. ') + esc(st.why) +
+    (st.ok ? '' : ' <a data-new="document" data-co="' + coId + '">Add the agreement</a>') + '</div>';
+}
+function docRow(d){
+  const sg = docSigned(d);
+  const who = F(d,'signer_name');
+  return '<div class="c">' +
+    '<div class="ch"><b>' + esc(F(d,'title') || dockLabel(F(d,'kind'))) + '</b>' +
+      '<span class="pill' + (sg ? '' : ' warn') + '">' + (sg ? 'Signed' : 'Unsigned') + '</span></div>' +
+    '<div class="m">' + esc(dockLabel(F(d,'kind'))) +
+      (d.search_id ? ' \u00b7 ' + esc(sname(d.search_id)) : '') + '</div>' +
+    '<div class="t">' + (sg
+      ? 'Signed ' + (who ? 'by ' + esc(who) + ' ' : '') + (d.signed_at ? short(d.signed_at) : '')
+      : 'Added ' + short(F(d,'created_at'))) + '</div>' +
+    '<div class="a">' +
+      (F(d,'storage_path') ? '<a data-docopen="' + idOf(d) + '">' + OPENI + 'Open</a>' : '') +
+      (sg ? '' : '<a data-docsign="' + idOf(d) + '">Mark signed</a>') +
+    '</div></div>';
+}
+
 function needsYou(sc){
   const out = [];
   const push = (days, tag, hot, what, why, open, act) => out.push({ days, tag, hot, what, why, open, act });
@@ -753,6 +818,14 @@ function needsYou(sc){
     push(d, last ? 'NO CONTACT' : 'NEVER CONTACTED', d >= 30, esc(F(c,'name')),
       'An open search is running here', 'co:' + idOf(c),
       { k:'call', l:'Log', a:'data-logcall="|' + idOf(c) + '"' });
+  });
+
+  sc.cos.forEach(c => {
+    const st = docState(idOf(c));
+    if(st.ok) return;
+    const d = daysBetween(F(st.need[0],'opened_at','created_at'));
+    push(d, 'NO AGREEMENT', true, esc(F(c,'name')), st.why, 'co:' + idOf(c),
+      { k:'doc', l:'Add', a:'data-new="document" data-co="' + idOf(c) + '"' });
   });
 
   sc.tasks.filter(t => F(t,'due_at','due_on') && new Date(F(t,'due_at','due_on')) < new Date(new Date().setHours(0,0,0,0))).forEach(t => {
@@ -894,7 +967,8 @@ function coRow(c){
   const stale = open && (d === null || d >= 14);
   return '<div class="c">' +
     '<div class="ch"><b data-co="' + id + '">' + esc(F(c,'name')) + '</b>' +
-      '<span class="pill">' + (open ? open + (open === 1 ? ' open role' : ' open roles') : 'No open role') + '</span></div>' +
+      '<span class="pill">' + (open ? open + (open === 1 ? ' open role' : ' open roles') : 'No open role') + '</span>' +
+      (docState(id).ok ? '' : '<span class="pill warn">No agreement</span>') + '</div>' +
     '<div class="m">' + esc(line) + (F(c,'city','location') ? ' \u00b7 ' + esc(F(c,'city','location')) : '') + '</div>' +
     '<div class="t">' + touched + '</div>' +
     '<div class="a">' +
@@ -1596,7 +1670,7 @@ function sheetCompany(){
   const docs = S.documents.filter(d => String(d.company_id)===String(idOf(c)));
   const T = SHEET.tab;
   let body = '';
-  if(T===0) body = spec([
+  if(T===0) body = gateBanner(idOf(c)) + spec([
       ['Status', esc(F(c,'status') || 'Active')],
       ['Engagement', esc(F(c,'kind','engagement') || 'Contingent')],
       ['Location', esc(F(c,'city','location'))],
@@ -1604,6 +1678,9 @@ function sheetCompany(){
       ['Fee', esc(F(c,'fee','fee_pct') || '20% of first year base')],
       ['Guarantee', '90 days'],
       ['Owner', esc(ownerName(F(c,'owner_id')))],
+      ['Legal name', esc(F(c,'legal_name') || 'Not on file')],
+      ['Address', esc(F(c,'address') || 'Not on file')],
+      ['Notices to', esc(F(c,'notice_email') || 'Not on file')],
       ['Notes', esc(F(c,'notes','bio'))]
     ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-edit="company:' + idOf(c) + '">Edit</button><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button></div>';
   if(T===1) body = '<div class="clist">' + contactsOf(idOf(c)).map(ct => {
@@ -1645,8 +1722,11 @@ function sheetCompany(){
       ['Outstanding', money(inv.filter(i => String(F(i,'status')).toLowerCase()!=='paid').reduce((n,i) => n + num(F(i,'amount')), 0))]
     ]) + (inv.length ? logList(inv.map(i => [esc(F(i,'invoice_no','number') || 'Draft'), money(F(i,'amount')) + ' · ' + esc(F(i,'status') || 'draft')])) : '') +
     '<button class="btn ghost" data-new="invoice" data-co="' + idOf(c) + '">Raise an invoice</button>';
-  if(T===5) body = (docs.length ? logList(docs.map(d => [short(d.created_at), esc(F(d,'name','title','kind'))]))
-      : '<p class="muted small">No documents on file. Signed agreements and search orders land here.</p>');
+  if(T===5) body = gateBanner(idOf(c)) +
+    (docs.length
+      ? '<div class="clist">' + docs.slice().sort((a,b) => String(F(b,'created_at')).localeCompare(String(F(a,'created_at')))).map(docRow).join('') + '</div>'
+      : '<p class="muted small">Nothing on file yet. The client recruiting agreement is the one that counts, it is signed once and covers every contingent role.</p>') +
+    '<button class="btn" data-new="document" data-co="' + idOf(c) + '">Add a document</button>';
   shell(esc(F(c,'name')) + '.', esc(F(c,'city','location','industry')),
     tabs(['Profile','Contacts','Searches','Activity','Money','Documents']) + body);
 }
@@ -1808,7 +1888,8 @@ function setv(id, v){ const e = $('#' + id); if(!e) return;
   if(e.type === 'checkbox') e.checked = v === true; else e.value = v == null ? '' : v; }
 function prefill(kind, r){
   if(kind === 'company'){ setv('f_name', F(r,'name')); setv('f_city', F(r,'city','location')); setv('f_ind', F(r,'industry'));
-    setv('f_kind', F(r,'kind','engagement_type')); setv('f_status', F(r,'status')); setv('f_notes', F(r,'notes','bio')); }
+    setv('f_kind', F(r,'kind','engagement_type')); setv('f_status', F(r,'status')); setv('f_notes', F(r,'notes','bio'));
+    setv('f_legal', F(r,'legal_name')); setv('f_addr', F(r,'address')); setv('f_notice', F(r,'notice_email')); }
   if(kind === 'contact'){ setv('f_co', r.company_id); setv('f_name', F(r,'name')); setv('f_title', F(r,'title'));
     setv('f_email', F(r,'email')); setv('f_phone', F(r,'phone'));
     setv('f_room', r[MAP.contact.room] === true); setv('f_bill', r[MAP.contact.billing] === true); }
@@ -1839,6 +1920,9 @@ function form(kind, ctx){
       '<div class="field"><label for="f_ind">Industry</label><input id="f_ind"></div></div>' +
       '<div class="two"><div class="field"><label for="f_kind">Engagement</label><select id="f_kind"><option>Contingent</option><option>Retained</option><option>Prospect</option></select></div>' +
       '<div class="field"><label for="f_status">Status</label><select id="f_status"><option>Active</option><option>Prospect</option><option>Dormant</option></select></div></div>' +
+      '<div class="field"><label for="f_legal">Legal name, as it signs</label><input id="f_legal" placeholder="Northwind Logistics, Inc."></div>' +
+      '<div class="two"><div class="field"><label for="f_addr">Address for notices</label><input id="f_addr"></div>' +
+      '<div class="field"><label for="f_notice">Notice email</label><input id="f_notice" type="email"></div></div>' +
       '<div class="field"><label for="f_notes">Notes</label><textarea id="f_notes"></textarea></div>'],
     contact: ['Add a contact.', 'Turn on room access and they can sign in to the client room.',
       '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
@@ -1934,6 +2018,23 @@ function form(kind, ctx){
       '<div class="field"><label for="f_body">Message</label><textarea id="f_body" style="min-height:220px"></textarea></div>' +
       (mailPdf(ctx) ? '<div class="field"><label><input type="checkbox" id="f_att" checked style="height:auto;width:auto;margin-right:8px">Attach the branded profile, client copy with no contact details</label></div>' : '') +
       (mailAdv(ctx) ? '<div class="field"><label><input type="checkbox" id="f_advance" checked style="height:auto;width:auto;margin-right:8px">Move this candidate to Submitted when it sends</label></div>' : '')],
+    document: ['Add a document.', 'The signed agreement, an NDA, anything the account should carry.',
+      '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="field"><label for="f_kind">Document</label><select id="f_kind">' +
+        DOCK.map(d => '<option value="' + d[0] + '">' + d[1] + '</option>').join('') + '</select></div>' +
+      '<div class="field" id="f_serow"><label for="f_se">Which role it covers</label><select id="f_se">' +
+        opts(S.searches, s => F(s,'title','role') + ' \u00b7 ' + cname(s.company_id), ctx.se) + '</select></div>' +
+      '<div id="ddrop" style="border:2px dashed var(--line,#D3CEC4);padding:22px;text-align:center;cursor:pointer;background:var(--paper,#F4F2ED)">' +
+        '<b id="ddropt">Drop the PDF here, or click to pick one</b><br>' +
+        '<span class="muted small" id="ddrops">Stored privately on the client account. 15MB limit.</span>' +
+        '<input id="dfile" type="file" accept="application/pdf" style="display:none"></div>' +
+      '<div class="field"><label for="f_title">Title</label><input id="f_title" placeholder="Leave it blank to use the document name"></div>' +
+      '<div class="two"><div class="field"><label for="f_eff">Effective date</label><input id="f_eff" type="date"></div>' +
+      '<div class="field"><label for="f_sdate">Date signed</label><input id="f_sdate" type="date"></div></div>' +
+      '<div class="field"><label><input type="checkbox" id="f_signed" style="height:auto;width:auto;margin-right:8px">Signed by both parties</label></div>' +
+      '<div class="two"><div class="field"><label for="f_sname">Who signed for the client</label><input id="f_sname"></div>' +
+      '<div class="field"><label for="f_stitle">Their title</label><input id="f_stitle"></div></div>' +
+      '<div class="field"><label for="f_semail">Their email</label><input id="f_semail" type="email"></div>'],
     premier: ['Premier.', 'A human call, so it needs a reason.',
       '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
   }[kind];
@@ -1947,6 +2048,7 @@ function form(kind, ctx){
   if(kind === 'invoice') wireInvoiceForm(ctx);
   if(kind === 'candidate') wireResumeDrop();
   if(kind === 'mail') wireMailForm(ctx);
+  if(kind === 'document') wireDocForm();
 }
 /* resume drop: upload the original with the staff token, let the backend read it, fill the form */
 let RESUME = null;
@@ -1984,6 +2086,44 @@ function wireResumeDrop(){
   z.ondragleave = () => { z.style.borderColor = ''; };
   z.ondrop = e => { e.preventDefault(); z.style.borderColor = ''; take(e.dataTransfer.files[0]); };
 }
+/* document drop. the file goes to the private documents bucket
+   under the client, and the row carries its sha256 so a swapped
+   file can be spotted later. */
+let DOCFILE = null;
+function wireDocForm(){
+  DOCFILE = null;
+  const z = document.getElementById('ddrop'), inp = document.getElementById('dfile'),
+        k = document.getElementById('f_kind'), row = document.getElementById('f_serow');
+  if(!z || !inp) return;
+  const say = (t, s2) => { document.getElementById('ddropt').textContent = t;
+    if(s2 != null) document.getElementById('ddrops').textContent = s2; };
+  const take = f => {
+    if(!f) return;
+    if(!/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)) return toast('PDF only.', true);
+    if(f.size > 15000000) return toast('That file is over 15MB.', true);
+    DOCFILE = f;
+    const t = document.getElementById('f_title'); if(t && !t.value) t.value = f.name.replace(/\.pdf$/i, '');
+    say(f.name, Math.round(f.size / 1024) + 'KB, ready to save.');
+  };
+  z.onclick = () => inp.click();
+  inp.onchange = () => take(inp.files[0]);
+  z.ondragover = e => { e.preventDefault(); z.style.borderColor = 'var(--yellow,#F2C632)'; };
+  z.ondragleave = () => { z.style.borderColor = ''; };
+  z.ondrop = e => { e.preventDefault(); z.style.borderColor = ''; take(e.dataTransfer.files[0]); };
+  const only = () => { if(row) row.style.display = (k && k.value === 'retained') ? '' : 'none'; };
+  if(k) k.onchange = only;
+  only();
+}
+async function docUrl(d){
+  await alive();
+  const r = await fetch(LW.url + '/storage/v1/object/sign/documents/' + F(d,'storage_path'), {
+    method:'POST', headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/json' },
+    body: JSON.stringify({ expiresIn: 3600 }) });
+  const j = await r.json().catch(() => null);
+  if(!r.ok || !j || !j.signedURL) throw new Error((j && j.message) || 'That file would not open.');
+  return LW.url + '/storage/v1' + j.signedURL;
+}
+
 /* picking a placement fills the company, the amount and the description,
    so nobody types "Placement Feed" onto a client invoice again. */
 function invoiceLine(p){
@@ -2026,7 +2166,35 @@ async function save(kind, ctx){
     if(!val('f_name')) return toast('A client needs a name.', true);
     r = await put('companies', clean({ [M.company.name]: val('f_name'), [M.company.city]: val('f_city'),
       [M.company.industry]: val('f_ind'), [M.company.kind]: val('f_kind'), [M.company.status]: val('f_status'),
-      [M.company.notes]: val('f_notes'), [M.company.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Client updated.' : 'Client added.');
+      [M.company.notes]: val('f_notes'), [M.company.legal]: val('f_legal'), [M.company.address]: val('f_addr'),
+      [M.company.notice]: val('f_notice').toLowerCase(),
+      [M.company.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Client updated.' : 'Client added.');
+  }
+  if(kind === 'document'){
+    if(!val('f_co')) return toast('Pick the client.', true);
+    let path = '', hash = '';
+    if(DOCFILE){
+      try{
+        await alive();
+        const safe = DOCFILE.name.replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60);
+        path = 'clients/' + val('f_co') + '/' + Date.now() + '-' + safe;
+        const up = await fetch(LW.url + '/storage/v1/object/documents/' + path, { method:'POST',
+          headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/pdf', 'x-upsert':'true' }, body: DOCFILE });
+        if(!up.ok) throw new Error((await up.text()).slice(0, 140));
+        hash = await hashFile(DOCFILE);
+      }catch(err){ console.error(err); return toast('Upload failed. ' + err.message, true); }
+    }
+    const sg = val('f_signed') === true;
+    const kd = val('f_kind') || 'other';
+    r = await put('documents', clean({ company_id: val('f_co'), kind: kd,
+      title: val('f_title') || dockLabel(kd),
+      search_id: kd === 'retained' ? val('f_se') : '',
+      storage_path: path, file_hash: hash, effective_date: val('f_eff'),
+      signed: sg, signed_at: sg ? (val('f_sdate') ? new Date(val('f_sdate')).toISOString() : new Date().toISOString()) : '',
+      signer_name: val('f_sname'), signer_title: val('f_stitle'), signer_email: val('f_semail').toLowerCase()
+    }), ctx, sg ? 'Signed document on file.' : 'Document saved, still unsigned.');
+    if(r) await insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: (sg ? 'Signed ' : 'Added ') + dockLabel(kd),
+      [M.activity.company]: val('f_co'), [M.activity.staff]: meId() }));
   }
   if(kind === 'contact'){
     r = await put('contacts', { [M.contact.company]: val('f_co'), [M.contact.name]: val('f_name'),
@@ -2223,6 +2391,14 @@ function common(root){
   root.querySelectorAll('.add .menu button').forEach(b => b.addEventListener('click', () => {
     const a = b.closest('.add'); if(a) a.classList.remove('on');
   }));
+  root.querySelectorAll('[data-docopen]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const d = byId(S.documents, b.dataset.docopen); if(!d) return;
+    try{ openUrl(await docUrl(d)); }catch(err){ toast(err.message, true); } });
+  root.querySelectorAll('[data-docsign]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const d = byId(S.documents, b.dataset.docsign); if(!d) return;
+    if(!confirm('Mark ' + (F(d,'title') || 'this document') + ' as signed by both parties?')) return;
+    const ok = await tryWrite(() => patch('documents', idOf(d), { signed: true, signed_at: new Date().toISOString() }), 'Marked signed.');
+    if(ok){ await loadAll(); paintSheet(); drawNav(); draw(); } });
   root.querySelectorAll('[data-new]').forEach(b => b.onclick = e => { e.stopPropagation();
     form(b.dataset.new, { co: b.dataset.co, se: b.dataset.se, cand: b.dataset.cand }); });
   root.querySelectorAll('[data-edit]').forEach(b => b.onclick = e => { e.stopPropagation();
