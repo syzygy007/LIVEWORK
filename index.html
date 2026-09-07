@@ -3,206 +3,397 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LIVEWORK. A talent partner for modern work.</title>
-<meta name="description" content="LIVEWORK connects complex skills and individual ambition with modern business needs. Recruiting and talent advisory. Orange County, California.">
-<meta property="og:title" content="LIVEWORK. Work should feel right.">
-<meta property="og:description" content="A talent partner for modern work.">
-<meta property="og:image" content="https://livework.inc/lobby.jpg">
+<title>LIVEWORK | Modern recruiting for companies and candidates</title>
+<meta name="description" content="LIVEWORK connects exceptional talent with forward thinking companies through focused search, thoughtful evaluation, and a better modern recruiting experience.">
+<meta property="og:title" content="LIVEWORK. A talent partner for modern work.">
+<meta property="og:description" content="Find exceptional talent. Discover work worth doing.">
+<meta property="og:image" content="https://livework.inc/img/close-three.jpg">
 <meta property="og:url" content="https://livework.inc/">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="lw.css?v=4">
+<link rel="stylesheet" href="lw.css?v=5">
 <style>
-.wrap{width:min(1200px,100% - 96px);margin:0 auto}
-@media (max-width:720px){.wrap{width:calc(100% - 48px)}}
+/* ---------------------------------------------------------------
+   livework.inc marketing page, editorial pass (Sep 2026)
+   Rules held to: black, warm concrete, one yellow accent used as a
+   bar, a button and a single stat cell. Poster headlines on a hard
+   left rail. Photography full bleed with the type set into the
+   empty part of the frame, never a caption under a picture.
+----------------------------------------------------------------*/
+:root{
+  --rail:clamp(24px,6vw,112px);
+  --d1:clamp(38px,4.4vw,68px);
+  --d2:clamp(36px,5vw,88px);
+  --d3:clamp(26px,2.6vw,40px);
+}
+body{overflow-x:hidden}
+.wrap{width:100%;padding:0 var(--rail);margin:0 auto;max-width:1560px}
+.poster{font-weight:800;letter-spacing:-.035em;line-height:.94}
+.poster.d1{font-size:var(--d1)}
+.poster.d2{font-size:var(--d2)}
+.poster.d3{font-size:var(--d3);letter-spacing:-.025em;line-height:1.04}
+.read{font-size:19px;line-height:1.6;max-width:34em}
+.read + .read{margin-top:1.1em}
+.rule{width:56px;height:6px;background:var(--yellow);border-radius:1px}
 
-/* nav */
-.nav{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--line)}
-.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
-.nav img{height:22px}
-.nav nav{display:flex;align-items:center;gap:28px;font-weight:600;font-size:15px}
+/* nav ---------------------------------------------------------- */
+.nav{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:78px}
+.nav .mark{height:20px}
+.nav nav{display:flex;align-items:center;gap:34px;font-weight:600;font-size:15px}
 .nav nav a{text-decoration:none}
-.nav nav a:not(.btn):hover{text-decoration:underline;text-underline-offset:6px}
-@media (max-width:720px){.nav nav a:not(.btn){display:none}}
+.nav nav a:not(.btn):hover{box-shadow:inset 0 -2px 0 var(--yellow)}
+@media (max-width:860px){.nav nav a:not(.btn){display:none}}
+
+/* full bleed photographic plate --------------------------------- */
+.plate{position:relative;display:grid;align-items:end;min-height:var(--h,86vh);background-size:cover;background-position:var(--pos,center);isolation:isolate}
+.plate::before{content:"";position:absolute;inset:0;background:var(--veilbg,none);z-index:-1}
+.plate .wrap{padding-top:88px;padding-bottom:clamp(48px,7vw,104px)}
+.plate .set{max-width:min(760px,54%)}
+.plate .poster{font-size:clamp(34px,4.2vw,64px)}
+.plate .poster.d1{font-size:var(--d1)}
+.plate.dark{color:#fff}
+.plate.dark .micro{color:#CFCBC4}
 
 /* hero */
-.hero{padding:112px 0 72px}
-.hero h1{font-size:clamp(56px,9vw,132px);max-width:9em}
-.hero .lede{margin:32px 0 40px 28px}
-.hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-left:28px}
-@media (max-width:720px){.hero{padding:64px 0 48px}.hero .lede,.hero .cta{margin-left:0}}
+.hero{--h:min(94vh,940px);--pos:78% center;
+  background-image:url(img/hero-walk.jpg);
+  --veilbg:linear-gradient(100deg,rgba(244,242,237,.86) 0%,rgba(244,242,237,.62) 38%,rgba(244,242,237,0) 62%)}
+.hero .set{max-width:min(780px,56%)}
+.hero .lede{margin:26px 0 34px;font-size:18px;max-width:30em;color:#22201D}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
 
-/* plate */
-.plate{margin:24px 0 0}
-.plate img{width:100%;aspect-ratio:3/2;object-fit:cover}
-.plate figcaption{padding:12px 0;font-size:13px;color:var(--stone)}
+/* a silent cinematic band, a breath between sections ------------- */
+.band{height:min(58vh,560px);background-size:cover;background-position:var(--pos,center)}
 
-/* doors */
-.doors{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin:96px 0}
-.door{background:var(--white);padding:56px 48px;display:grid;gap:20px;align-content:start;min-height:420px}
-.door.y{background:var(--wall)}
-.door h2{font-size:clamp(36px,4.6vw,64px);max-width:8em}
-.door p{max-width:32em;font-size:17px}
-.door .btn{justify-self:start;margin-top:8px}
-@media (max-width:820px){.doors{grid-template-columns:1fr}.door{padding:40px 28px;min-height:0}}
+/* phone: the plates stop being posters and become scrimmed cards */
+@media (max-width:900px){
+  .plate{min-height:76vh;--h:auto;background-position:center}
+  .plate .set{max-width:none}
+  .plate .wrap{padding-top:56px;padding-bottom:56px}
+  .plate::before{background:linear-gradient(180deg,rgba(244,242,237,.88),rgba(244,242,237,.66) 55%,rgba(244,242,237,.5))}
+  .plate.dark::before{background:linear-gradient(180deg,rgba(0,0,0,.6),rgba(0,0,0,.84))}
+  .band{height:38vh}
+}
 
-/* sections */
-.sec{padding:64px 0}
-.sec h2{font-size:clamp(40px,5.6vw,80px);max-width:10em;margin-bottom:40px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:64px}
-@media (max-width:820px){.two{grid-template-columns:1fr;gap:32px}}
-.prose p{margin-bottom:18px;font-size:17px;max-width:34em}
+/* quiet type page ---------------------------------------------- */
+.page{padding:clamp(88px,11vw,176px) 0}
+.page.wallbg{background:var(--wall)}
+.split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(32px,6vw,96px);align-items:start}
+@media (max-width:900px){.split{grid-template-columns:1fr;gap:32px}}
+.hang{display:grid;gap:26px}
 
-/* contact */
-.contact{background:var(--ink);color:var(--white);padding:96px 0}
-.contact .bar{background:var(--yellow)}
-.contact h2{font-size:clamp(40px,5.6vw,80px);max-width:9em}
-.contact .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:64px;margin-top:48px}
-@media (max-width:820px){.contact .grid{grid-template-columns:1fr}}
-.contact .field input,.contact .field textarea,.contact .field select{background:#111;border-color:#333;color:var(--white)}
-.contact .field input:focus,.contact .field textarea:focus{border-color:var(--yellow)}
-.contact form{display:grid;gap:16px}.contact form .btn{justify-self:start}
-.contact .addr{display:grid;gap:12px;font-size:17px}
-.contact .addr a{color:var(--yellow);text-decoration:none}
-.contact .addr a:hover{text-decoration:underline}
+/* two door rows ------------------------------------------------- */
+.door{display:grid;grid-template-columns:1fr 1fr;min-height:min(78vh,760px);border-top:1px solid var(--line)}
+.door .shot{background-size:cover;background-position:var(--pos,center)}
+.door .say{display:grid;align-content:center;gap:24px;padding:clamp(40px,5vw,88px) var(--rail)}
+.door .say .btn{justify-self:start;margin-top:6px}
+.door .say .read + .read{margin-top:0}
+.door.flip .shot{order:2}
+@media (max-width:900px){
+  .door{grid-template-columns:1fr;min-height:0}
+  .door .shot{min-height:56vh;order:0}
+  .door.flip .shot{order:0}
+  .door .say{padding:48px var(--rail) 64px}
+}
 
-/* footer */
-footer{padding:40px 0;border-top:1px solid var(--line);font-size:13px;color:var(--stone)}
-footer .wrap{display:grid;gap:20px}
-footer img{height:16px}
-footer .legal-links{display:flex;gap:20px;flex-wrap:wrap}
-footer a{color:var(--stone)}
+/* the approach, a real sequence so it is numbered ---------------- */
+.steps{border-top:1px solid var(--line)}
+.step{display:grid;grid-template-columns:64px 1fr;gap:clamp(16px,3vw,40px);padding:34px 0;border-bottom:1px solid var(--line)}
+.step .n{font-weight:800;font-size:15px;letter-spacing:.04em;padding-top:6px;color:var(--stone)}
+.step h3{font-weight:800;font-size:clamp(22px,2.2vw,34px);letter-spacing:-.02em;margin-bottom:10px}
+.step p{max-width:40em;color:var(--stone);font-size:17px;line-height:1.55}
+.stick{position:sticky;top:118px}
+.stick img{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:78% center}
 
-/* weekly */
-.weekly{padding:96px 0;border-top:1px solid var(--line)}
-.weekly h2{font-size:clamp(40px,5.6vw,80px);max-width:9em;margin-bottom:24px}
-.weekly p{font-size:18px;max-width:34em}
-.weekly .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:64px;align-items:end}
-@media (max-width:820px){.weekly .grid{grid-template-columns:1fr;gap:32px}}
-.weekly .row{display:flex;gap:12px;flex-wrap:wrap}
-.weekly input{flex:1 1 220px;padding:14px 16px;border:1px solid var(--line);background:var(--white);font:inherit;border-radius:2px}
-.weekly .btn{flex:none}
-.weekly .hp{position:absolute;left:-9999px;opacity:0}
-.weekly .ok{margin-top:14px;font-weight:600}
-.weekly .err{margin-top:14px;color:#8a1f11}
+/* engagement ---------------------------------------------------- */
+.terms{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:48px}
+.terms div{background:var(--paper);padding:32px 28px;display:grid;gap:10px;align-content:start}
+.terms .num{font-weight:800;font-size:clamp(34px,3.6vw,56px);letter-spacing:-.03em;line-height:1}
+.terms .y{background:var(--yellow)}
+.terms .y .micro{color:#4A3B00}
+@media (max-width:860px){.terms{grid-template-columns:1fr}}
+
+/* weekly, contact, footer --------------------------------------- */
+.weekly{background:var(--wall);padding:clamp(64px,8vw,120px) 0}
+.weekly .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,5vw,80px);align-items:center}
+.weekly .row{display:flex;gap:10px;flex-wrap:wrap}
+.weekly input[type=email]{flex:1;min-width:240px;height:48px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--white)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px}
+.ok{color:var(--ok);font-weight:600;margin-top:12px}
+.err{color:var(--warn);font-weight:600;margin-top:12px}
+@media (max-width:900px){.weekly .grid{grid-template-columns:1fr}}
+
+.tail{background:#000;color:#fff}
+.tail .contact{padding:clamp(72px,9vw,140px) 0 clamp(48px,6vw,88px)}
+.tail .grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,96px);margin-top:48px}
+.tail .field label{color:#BDB9B1}
+.tail .field input,.tail .field select,.tail .field textarea{background:#101010;border-color:#2A2A2A;color:#fff}
+.tail .field input:focus,.tail .field select:focus,.tail .field textarea:focus{border-color:var(--yellow)}
+.tail a{color:#fff}
+.tail .addr{display:grid;gap:14px;align-content:start;font-size:17px;color:#BDB9B1}
+.tail .addr b{color:#fff;font-weight:600}
+.tail .privacy-notice{font-size:13px;line-height:1.5;color:#8A867F;max-width:44em}
+.tail .btn{background:var(--yellow);color:#000;border-color:var(--yellow)}
+.tail .btn:hover{background:#fff;border-color:#fff}
+.foot{border-top:1px solid #1E1E1E;padding:44px 0 64px;display:grid;gap:22px}
+.foot .mark{height:20px}
+.foot .links{display:flex;flex-wrap:wrap;gap:22px;font-size:14px;font-weight:600}
+.foot .fine{font-size:13px;color:#8A867F;display:flex;flex-wrap:wrap;gap:18px}
+@media (max-width:900px){.tail .grid{grid-template-columns:1fr}}
+
+/* one orchestrated moment, the hero settling in ------------------ */
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.hero .set > *{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+.hero .set > *:nth-child(2){animation-delay:.08s}
+.hero .set > *:nth-child(3){animation-delay:.16s}
+.hero .set > *:nth-child(4){animation-delay:.24s}
+@media (prefers-reduced-motion:reduce){.hero .set > *{animation:none}}
 </style>
 </head>
 <body>
 
 <header class="nav">
   <div class="wrap">
-    <a href="/" aria-label="LIVEWORK home"><img class="mark" src="livework-wordmark-black.svg" alt="LIVE | WORK"></a>
+    <a href="#top" aria-label="LIVEWORK home"><img class="mark" src="livework-wordmark-black.svg" alt="LIVE | WORK"></a>
     <nav>
       <a href="#companies">Companies</a>
       <a href="#candidates">Candidates</a>
-      <a href="#contact">Contact</a>
+      <a href="#approach">Our approach</a>
       <a class="btn ink sm" href="room.html">Client sign in</a>
     </nav>
   </div>
 </header>
 
-<main>
-  <section class="hero">
+<main id="top">
+
+  <section class="plate hero">
     <div class="wrap">
-      <div class="hl"><span class="bar"></span>
-        <h1>Work should feel right.</h1>
+      <div class="set">
+        <p class="micro">A talent partner for modern work</p>
+        <h1 class="poster d1" style="margin-top:18px">Find exceptional talent.<br>Discover work worth doing.</h1>
+        <p class="lede">LIVEWORK connects ambitious people with forward thinking companies, building better matches around ability, ambition, culture, and the way people want to work today.</p>
+        <div class="cta">
+          <a class="btn ink" href="#companies">Find talent</a>
+          <a class="btn ghost" href="#candidates">Discover opportunities</a>
+        </div>
       </div>
-      <p class="lede">Talent for the way we work today. We connect complex skills and individual ambition with the teams, environments, and opportunities where they can make a difference.</p>
-      <div class="cta">
-        <a class="btn" href="#companies">Find talent</a>
-        <a class="btn ghost" href="#candidates">Explore opportunities</a>
-      </div>
-    </div>
-    <div class="wrap">
-      <figure class="plate">
-        <img src="lobby.jpg" alt="The LIVEWORK reception, concrete wall with the wordmark and a yellow desk">
-        <figcaption>Foothill Ranch, California.</figcaption>
-      </figure>
     </div>
   </section>
 
-  <div class="wrap">
-    <div class="doors">
-      <div class="door y" id="companies">
-        <p class="tiny">For companies</p>
-        <h2>Build for what comes next.</h2>
-        <p>Today’s roles demand more than a familiar job title. We work to understand the capabilities your business needs, how your team operates, and where you are going, then build a focused search around those requirements.</p>
-        <a class="btn ink" href="#contact">Start a conversation</a>
+  <section class="page">
+    <div class="wrap split">
+      <div class="hang">
+        <span class="rule"></span>
+        <h2 class="poster d2">The right fit changes everything.</h2>
       </div>
-      <div class="door" id="candidates">
-        <p class="tiny">For candidates</p>
-        <h2>Make your next move matter.</h2>
-        <p>Your experience is only part of the picture. We consider your strengths, ambitions, and preferred way of working to help you explore a more considered next step. Our recruiting services are always free to candidates.</p>
-        <a class="btn" href="#contact">Explore opportunities</a>
+      <div>
+        <p class="read">Great people do more than fill positions. Great opportunities do more than advance careers.</p>
+        <p class="read">We look beyond job titles and resumes to understand what people can do, where companies are going, and what will allow both to succeed.</p>
       </div>
     </div>
-  </div>
+  </section>
 
-  <section class="sec">
+  <section class="door" id="companies">
+    <div class="shot" style="background-image:url(img/companies-table.jpg);--pos:72% center" role="img" aria-label="An executive at a stone table above the ocean"></div>
+    <div class="say">
+      <p class="micro">For companies</p>
+      <h2 class="poster d3">Build the team that builds what comes next.</h2>
+      <p class="read">We start with where your business is going, not simply the vacancy in front of you.</p>
+      <p class="read">Then we define what success requires, run a focused search, and introduce a tight shortlist of people equipped to make a difference.</p>
+      <a class="btn ink" href="#contact">Find talent</a>
+    </div>
+  </section>
+
+  <section class="door flip" id="candidates">
+    <div class="shot" style="background-image:url(img/candidates-ledge.jpg);--pos:70% center" role="img" aria-label="Two colleagues talking on a sunlit ledge"></div>
+    <div class="say">
+      <p class="micro">For candidates</p>
+      <h2 class="poster d3">Find work that moves your life forward.</h2>
+      <p class="read">Your next role should fit your abilities, your ambition, and the life you want to build.</p>
+      <p class="read">We take the time to understand the full picture and connect you with opportunities genuinely worth considering. Our recruiting services are always free for candidates.</p>
+      <a class="btn ink" href="#contact">Discover opportunities</a>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="wrap split">
+      <div class="hang">
+        <span class="rule"></span>
+        <h2 class="poster d2">Work has changed.<br>Recruiting should too.</h2>
+      </div>
+      <div>
+        <p class="read">People expect more from work. Companies need more from people. The strongest matches happen when skills, ambition, environment, and expectations align.</p>
+        <p class="read">LIVEWORK brings those elements together through focused research, smarter technology, and accountable human judgment. Because better work builds stronger companies, and better lives.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="band" style="background-image:url(img/manifesto-coast.jpg);--pos:58% center" role="img" aria-label="A stone terrace open to the Pacific"></div>
+
+  <section class="page wallbg" id="approach">
+    <div class="wrap split">
+      <div>
+        <p class="micro">Our approach</p>
+        <h2 class="poster d2" style="margin:18px 0 34px">Fewer resumes.<br>Better decisions.</h2>
+        <p class="read" style="margin-bottom:40px">A sharper brief. A more focused search. A considered shortlist. Clear communication from the first conversation through the final decision.</p>
+        <div class="stick"><img src="img/approach-desk.jpg" alt="A designer working through a plan at a stone desk"></div>
+      </div>
+      <div class="steps">
+        <div class="step"><span class="n">01</span><div><h3>Start with what matters.</h3><p>We learn what the role must accomplish, how the team operates, and where the business is going.</p></div></div>
+        <div class="step"><span class="n">02</span><div><h3>Look beyond the obvious.</h3><p>We search across titles, industries, and conventional career paths to find the capabilities that matter.</p></div></div>
+        <div class="step"><span class="n">03</span><div><h3>See the whole person.</h3><p>Experience matters. So do motivation, judgment, working style, potential, and ambition.</p></div></div>
+        <div class="step"><span class="n">04</span><div><h3>Make every introduction count.</h3><p>We introduce people and opportunities only when we believe the conversation is worth having.</p></div></div>
+        <div style="padding-top:44px;max-width:36em">
+          <p class="micro">Technology</p>
+          <h3 class="poster d3" style="margin:16px 0 14px">Technology sharpens the process. People make the judgment.</h3>
+          <p class="read">Our technology keeps searches organized, communication clear, and every decision visible. It supports better judgment. It never replaces the human understanding behind it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate dark" style="--h:min(88vh,900px);--pos:52% center;background-image:url(img/room-night.jpg);--veilbg:linear-gradient(90deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 44%,rgba(0,0,0,.15) 74%)">
     <div class="wrap">
-      <div class="hl"><span class="bar"></span><h2>Fewer resumes. Better decisions.</h2></div>
-      <div class="two">
-        <div class="prose">
-          <p>Modern work brings together specialized expertise, transferable skills, and changing expectations about where and how work happens. LIVEWORK combines research, structured evaluation, and technology with human judgment to make those connections more thoughtfully.</p>
-          <p>Our approach considers the full context of a role: the skills required, the work arrangement, the team’s operating needs, and the candidate’s goals. Technology supports the process. People remain accountable for the judgment.</p>
-          <p>LIVEWORK is a talent and recruiting firm based in Orange County, California, built for the evolving demands of modern work. We combine informed human judgment with technology to understand complex skill sets, align professional ambitions with business needs, and develop more considered matches across on-site, remote, and hybrid environments. Our purpose is to improve the lives of the people we serve and help companies build the teams they need today to succeed tomorrow.</p>
+      <div class="set">
+        <p class="micro">Client room</p>
+        <h2 class="poster d2" style="margin:20px 0 26px">Every search.<br>One clear view.</h2>
+        <p class="read" style="max-width:30em;color:#E6E3DE">Review every candidate released by LIVEWORK in one private place, with their resume, profile, notes, current stage, and your team's feedback. No scattered emails. No missing context. No wondering what happens next.</p>
+        <div class="cta" style="margin-top:32px"><a class="btn" href="room.html">Client sign in</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="wrap">
+      <div class="split">
+        <div class="hang">
+          <span class="rule"></span>
+          <h2 class="poster d2">Search built around what you need.</h2>
         </div>
         <div class="spec">
-          <div class="row"><b>Contingent search</b><span>A 20% fee on first-year annualized base salary, earned and due when an introduced candidate starts, subject to an accepted Search Order and the Client Engagement Terms.</span></div>
-          <div class="row"><b>Retained search</b><span>An exclusive search with a $10,000 retainer credited against the placement fee. Scope, timing, and terms are documented before work begins.</span></div>
-          <div class="row"><b>90-day replacement search</b><span>One replacement search for an eligible departure within 90 days, subject to the conditions and limits in the Client Engagement Terms. No cash refund or guaranteed replacement.</span></div>
-          <div class="row"><b>Your client room</b><span>Every released candidate, with profile, notes, and stage, in one place. Feedback in a click. Email updates as the search moves.</span></div>
-          <div class="row"><b>The terms</b><span>Written down and public. Read the <a href="engagement.html">Client Engagement Terms</a> before we start.</span></div>
+          <div class="row"><b>Retained search</b><span>A dedicated engagement for leadership, specialized, and hard to fill roles. Scope, timing, and terms are documented before work begins.</span></div>
+          <div class="row"><b>Contingent search</b><span>Focused recruiting support with a fee earned only when your selected candidate starts.</span></div>
+          <div class="row"><b>A more accountable process</b><span>Every engagement includes structured evaluation, clear terms, a private client room, and a written replacement period. Read the <a href="engagement.html">Client Engagement Terms</a>.</span></div>
+        </div>
+      </div>
+      <div class="terms">
+        <div><span class="num">20%</span><p class="micro">Of first year base salary, due when your candidate starts</p></div>
+        <div><span class="num">$10,000</span><p class="micro">Retained deposit, credited against the placement fee</p></div>
+        <div class="y"><span class="num">90 days</span><p class="micro">Replacement search period on every placement</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" style="--h:min(84vh,880px);--pos:74% center;background-image:url(img/life-walk.jpg);--veilbg:linear-gradient(100deg,rgba(244,242,237,.88) 0%,rgba(244,242,237,.5) 36%,rgba(244,242,237,0) 58%)">
+    <div class="wrap">
+      <div class="set">
+        <h2 class="poster d2">Careers with momentum.<br>Lives with dimension.</h2>
+        <p class="read" style="max-width:26em;margin-top:26px">Work can be ambitious without consuming everything around it. It can build companies, advance careers, support families, and create lives people are proud to live.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="wrap split">
+      <div class="hang">
+        <span class="rule"></span>
+        <h2 class="poster d2">Based in Orange County. Searching nationwide.</h2>
+      </div>
+      <div>
+        <p class="read">We work with ambitious professionals and progressive companies across on site, hybrid, and remote environments.</p>
+        <div class="spec" style="margin-top:36px">
+          <div class="row"><b>Office</b><span>26632 Towne Centre Dr. #300, Foothill Ranch, CA 92610</span></div>
+          <div class="row"><b>Find talent</b><span><a href="mailto:team@livework.inc">team@livework.inc</a></span></div>
+          <div class="row"><b>Find a job</b><span><a href="mailto:careers@livework.inc">careers@livework.inc</a></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plate" style="--h:min(88vh,920px);--pos:66% center;align-items:start;background-image:url(img/close-three.jpg);--veilbg:linear-gradient(100deg,rgba(244,242,237,.84) 0%,rgba(244,242,237,.5) 34%,rgba(244,242,237,0) 56%)">
+    <div class="wrap" style="padding-top:clamp(64px,9vw,120px)">
+      <div class="set">
+        <h2 class="poster d2">Build the team.<br>Make the move.</h2>
+        <p class="read" style="max-width:26em;margin:26px 0 32px">Whether you are searching for someone who can change what happens next, or you are ready to become that person, we should talk.</p>
+        <div class="cta">
+          <a class="btn ink" href="#contact">Find talent</a>
+          <a class="btn ghost" href="#contact">Discover opportunities</a>
         </div>
       </div>
     </div>
   </section>
 
   <section class="weekly" id="weekly">
-    <div class="wrap">
-      <div class="grid">
-        <div>
-          <div class="hl"><span class="bar"></span><h2>Once a week. One idea, one nudge.</h2></div>
-          <p>A short email on hiring, modern work, and the call you have been putting off. No noise, no selling, off the list in one click.</p>
-        </div>
-        <form id="wf" novalidate>
-          <div class="row">
-            <input id="we" name="email" type="email" placeholder="you@company.com" autocomplete="email" required aria-label="Email">
-            <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <button class="btn" type="submit">Join the list</button>
-          </div>
-          <p class="ok" id="wfok" hidden>You are on the list. Check your inbox for the first note.</p>
-          <p class="err" id="wferr" hidden></p>
-          <p class="small muted">By joining you agree to our <a href="privacy.html">Privacy Policy</a>. We only use your address to send this email.</p>
-        </form>
+    <div class="wrap grid">
+      <div>
+        <h2 class="poster d3">Once a week. One idea, one nudge.</h2>
+        <p class="read" style="margin-top:16px">A short email on hiring, modern work, and the call you have been putting off. No noise, no selling, off the list in one click.</p>
       </div>
+      <form id="wf" novalidate>
+        <div class="row">
+          <input id="we" name="email" type="email" placeholder="you@company.com" autocomplete="email" required aria-label="Email">
+          <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <button class="btn ink" type="submit">Join the list</button>
+        </div>
+        <p class="ok" id="wfok" hidden>You are on the list. Check your inbox for the first note.</p>
+        <p class="err" id="wferr" hidden></p>
+        <p class="small muted" style="margin-top:12px">By joining you agree to our <a href="privacy.html">Privacy Policy</a>. We only use your address to send this email.</p>
+      </form>
     </div>
   </section>
 
-  <section class="contact" id="contact">
-    <div class="wrap">
-      <div class="hl"><span class="bar"></span><h2>Ready to hire, or ready to move. Start a conversation.</h2></div>
-      <div class="grid">
-        <form id="cf" novalidate>
-          <div class="field"><label for="n">Name</label><input id="n" name="name" required></div>
-          <div class="field"><label for="e">Email</label><input id="e" name="email" type="email" required></div>
-          <div class="field"><label for="k">I am</label>
-            <select id="k" name="kind"><option>Hiring for my company</option><option>Looking for my next role</option></select></div>
-          <div class="field"><label for="m">A few words</label><textarea id="m" name="message"></textarea></div>
-          <p class="privacy-notice">We use the information you provide to respond and coordinate recruiting services. Read our <a href="privacy.html#notice-at-collection">Notice at Collection</a> and <a href="privacy.html">Privacy Policy</a> before submitting. Please do not include sensitive personal information. An inquiry does not authorize us to distribute your resume or begin a paid search.</p>
-          <button class="btn" type="submit">Send</button>
-          <p class="small muted" id="cfnote" hidden>Your email app should open with the message ready to send.</p>
-        </form>
-        <div class="addr">
-          <p>Companies: <a href="mailto:hello@livework.inc">hello@livework.inc</a></p>
-          <p>Candidates: <a href="mailto:careers@livework.inc">careers@livework.inc</a></p>
-          <p>26632 Towne Centre Dr. #300, Suite 3<br>Foothill Ranch, CA 92610</p>
-          <p class="muted">Foothill Ranch, California. Searches run nationwide.</p>
+  <div class="tail">
+    <section class="contact" id="contact">
+      <div class="wrap">
+        <p class="micro">Start a conversation</p>
+        <h2 class="poster d2" style="margin-top:18px">Tell us what you are<br>looking for.</h2>
+        <div class="grid">
+          <form id="cf" novalidate>
+            <div class="field" style="margin-bottom:16px"><label for="k">I am looking to</label>
+              <select id="k" name="kind"><option>Hire exceptional talent</option><option>Explore new opportunities</option></select></div>
+            <div class="field" style="margin-bottom:16px"><label for="n">Name</label><input id="n" name="name" required></div>
+            <div class="field" style="margin-bottom:16px"><label for="e">Email</label><input id="e" name="email" type="email" required></div>
+            <div class="field" style="margin-bottom:16px"><label for="c">Company</label><input id="c" name="company"></div>
+            <div class="field" style="margin-bottom:20px"><label for="m">A few words</label><textarea id="m" name="message"></textarea></div>
+            <button class="btn" type="submit">Start the conversation</button>
+            <p class="small" id="cfnote" hidden style="margin-top:12px;color:#8A867F">Your email app should open with the message ready to send.</p>
+            <p class="privacy-notice" style="margin-top:22px">We use what you send to respond and coordinate recruiting services. Read the <a href="privacy.html#notice-at-collection">Notice at Collection</a> and <a href="privacy.html">Privacy Policy</a> first. Please leave out sensitive personal information. An inquiry does not authorize us to send your resume anywhere or to start a paid search.</p>
+          </form>
+          <div class="addr">
+            <p><b>Hiring for your company</b><br><a href="mailto:team@livework.inc">team@livework.inc</a></p>
+            <p><b>Looking for your next role</b><br><a href="mailto:careers@livework.inc">careers@livework.inc</a></p>
+            <p><b>Office</b><br>26632 Towne Centre Dr. #300<br>Foothill Ranch, CA 92610</p>
+            <p>Searches run nationwide. Candidates are never charged a fee.</p>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <footer class="foot">
+      <div class="wrap">
+        <img class="mark" src="livework-wordmark-white.svg" alt="LIVE | WORK">
+        <p class="read" style="margin-top:22px;color:#BDB9B1;max-width:26em">Better matches for modern work.</p>
+        <div class="links" style="margin-top:28px">
+          <a href="#companies">Companies</a>
+          <a href="#candidates">Candidates</a>
+          <a href="room.html">Client room</a>
+          <a href="#contact">Contact</a>
+          <a href="terms.html">Terms of Use</a>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="candidates.html">Candidate Terms</a>
+          <a href="engagement.html">Client Engagement Terms</a>
+          <a href="dpa.html">Data Processing Addendum</a>
+        </div>
+        <div class="fine" style="margin-top:26px">
+          <span>&copy; 2026 GERMANN INC, a California corporation, dba LIVEWORK. All rights reserved.</span>
+          <span>Orange County, California. Searches conducted nationwide.</span>
+          <a href="desk.html">Staff</a>
+        </div>
+      </div>
+    </footer>
+  </div>
 </main>
 
 <script src="lw-config.js?v=3"></script>
@@ -229,28 +420,14 @@ footer a{color:var(--stone)}
   f.addEventListener('submit',function(e){
     e.preventDefault();
     var g=function(n){var el=f.elements[n];return el?el.value.trim():''};
-    var name=g('name'), email=g('email'), kind=g('kind'), msg=g('message');
+    var name=g('name'), email=g('email'), kind=g('kind'), company=g('company'), msg=g('message');
     if(!name||!email){ f.reportValidity&&f.reportValidity(); return; }
-    var to = kind.indexOf('Hiring')===0 ? 'hello@livework.inc' : 'careers@livework.inc';
-    var body = 'Name: '+name+'\nEmail: '+email+'\nI am: '+kind+'\n\n'+msg;
+    var to = kind.indexOf('Hire')===0 ? 'team@livework.inc' : 'careers@livework.inc';
+    var body = 'Name: '+name+'\nEmail: '+email+'\nCompany: '+company+'\nI am looking to: '+kind+'\n\n'+msg;
     document.getElementById('cfnote').hidden=false;
     window.location.href='mailto:'+to+'?subject='+encodeURIComponent('livework.inc enquiry, '+name)+'&body='+encodeURIComponent(body);
   });
 })();
 </script>
-
-<footer>
-  <div class="wrap">
-    <img class="mark" src="livework-wordmark-black.svg" alt="LIVE | WORK">
-    <div class="legal-links">
-      <a href="terms.html">Terms of Use</a>
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="candidates.html">Candidate Terms</a>
-      <a href="engagement.html">Client Engagement Terms</a>
-      <a href="dpa.html">Data Processing Addendum</a>
-    </div>
-    <span>&copy; 2026 LIVEWORK. All rights reserved. Candidates are never charged a fee. &nbsp; <a href="room.html">Client room</a> &nbsp; <a href="desk.html">Staff</a></span>
-  </div>
-</footer>
 </body>
 </html>
