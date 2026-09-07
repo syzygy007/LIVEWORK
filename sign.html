@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sign. LIVEWORK</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="lw.css?v=4">
+<script src="lw-config.js?v=3"></script>
+<style>
+.wrap{width:min(1040px,100% - 96px);margin:0 auto}
+@media (max-width:720px){.wrap{width:calc(100% - 40px)}}
+.nav{border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:5;padding-top:env(safe-area-inset-top)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
+.nav img{height:20px}
+.nav .who{font-size:14px;color:var(--stone)}
+body{padding-bottom:env(safe-area-inset-bottom)}
+.sg-head{padding:48px 0 28px}
+.sg-head .micro{font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--stone)}
+.sg-head h1{margin:14px 0 10px;font-weight:800;letter-spacing:-.03em;line-height:.95;font-size:clamp(38px,7vw,68px)}
+.sg-head p{margin:0;max-width:58ch;color:var(--stone)}
+.sg-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px;align-items:start;padding-bottom:64px}
+.sg-grid>*{min-width:0}
+@media (max-width:860px){.sg-grid{grid-template-columns:1fr}}
+.sg-doc{border:1px solid var(--line);background:var(--white)}
+.sg-doc iframe{display:block;width:100%;height:min(74vh,760px);border:0;background:var(--paper)}
+.sg-doc .sg-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;color:var(--stone)}
+.sg-doc .sg-bar a{color:var(--ink);font-weight:600}
+.sg-card{border:1px solid var(--line);background:var(--white);padding:26px;display:grid;gap:18px;position:sticky;top:96px}
+@media (max-width:860px){.sg-card{position:static}}
+.sg-card h2{margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em}
+.sg-card .sg-note{font-size:13px;line-height:1.5;color:var(--stone)}
+.sg-tick{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5}
+.sg-tick input{width:20px;height:20px;flex:none;margin-top:2px}
+.sg-code{letter-spacing:.4em;font-weight:700;font-size:22px;text-align:center}
+.sg-step{display:none}.sg-step.on{display:grid;gap:18px}
+.sg-ok{padding:26px;border:1px solid var(--line);background:var(--white);display:grid;gap:14px}
+.sg-ok b{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.sg-msg{font-size:13px;min-height:18px}
+.sg-msg.bad{color:#C4453F}
+.sg-msg.good{color:#2E6F62}
+.sg-rows{border-top:1px solid var(--line)}
+.sg-rows div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.sg-rows span{color:var(--stone)}
+.sg-rows b{font-weight:600;text-align:right}
+</style>
+</head>
+<body>
+
+<header class="nav"><div class="wrap">
+  <a href="index.html" aria-label="LIVEWORK"><img class="mark" src="livework-wordmark-black.svg" alt="LIVE | WORK"></a>
+  <span class="who" id="who"></span>
+</div></header>
+
+<main class="wrap">
+  <div class="sg-head">
+    <div class="micro" id="eyebrow">Ready for signature</div>
+    <h1 id="title">Loading.</h1>
+    <p id="sub">One moment while we open your document.</p>
+  </div>
+
+  <div class="sg-grid" id="grid" style="display:none">
+    <div class="sg-doc">
+      <div class="sg-bar"><span>Read it in full before you sign</span><a id="dl" href="#" target="_blank" rel="noopener">Open in a new tab</a></div>
+      <iframe id="doc" title="The agreement"></iframe>
+    </div>
+
+    <div class="sg-card" id="card">
+      <div class="sg-step on" id="s1">
+        <h2>Sign it.</h2>
+        <div class="sg-rows" id="rows"></div>
+        <div class="field"><label for="name">Your full name</label><input id="name" autocomplete="name" placeholder="Dana Reyes"></div>
+        <div class="field"><label for="title2">Your title</label><input id="title2" placeholder="VP Operations"></div>
+        <label class="sg-tick"><input type="checkbox" id="consent">
+          I agree to sign this electronically, I have read the document, and I have authority to bind the company named in it.</label>
+        <button class="btn" id="go">Email me a code</button>
+        <p class="sg-note">We send a six digit code to the email on file. Entering it is your signature.</p>
+        <div class="sg-msg" id="m1"></div>
+      </div>
+
+      <div class="sg-step" id="s2">
+        <h2>Enter the code.</h2>
+        <p class="sg-note" id="sent"></p>
+        <div class="field"><label for="code">Six digits</label><input id="code" class="sg-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000"></div>
+        <button class="btn" id="sign">Sign the document</button>
+        <button class="btn ghost" id="again">Send it again</button>
+        <div class="sg-msg" id="m2"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sg-ok" id="done" style="display:none">
+    <b id="dtitle">Signed.</b>
+    <p class="sg-note" id="dnote"></p>
+    <a class="btn" id="dlink" href="#" target="_blank" rel="noopener">Open your executed copy</a>
+  </div>
+</main>
+
+<script>
+const TOKEN = new URLSearchParams(location.search).get('t') || '';
+const $ = s => document.querySelector(s);
+const say = (el, t, bad) => { const e = $(el); e.textContent = t || ''; e.className = 'sg-msg' + (t ? (bad ? ' bad' : ' good') : ''); };
+async function fn(body){
+  const r = await fetch(LW.url + '/functions/v1/sign-doc', { method: 'POST',
+    headers: { 'content-type': 'application/json', apikey: LW.anon, Authorization: 'Bearer ' + LW.anon },
+    body: JSON.stringify(Object.assign({ token: TOKEN }, body)) });
+  return r.json().catch(() => ({ ok: false, error: 'no answer from the server' }));
+}
+function stop(msg, sub){
+  $('#title').textContent = msg;
+  $('#sub').textContent = sub || '';
+  $('#eyebrow').textContent = 'Nothing to sign';
+  $('#grid').style.display = 'none';
+}
+let DOC = null;
+async function boot(){
+  if(!TOKEN) return stop('That link is missing something.', 'Use the link from the email we sent you.');
+  const d = await fn({ action: 'open' });
+  if(!d.ok) return stop('This link will not open.', d.error || '');
+  DOC = d;
+  $('#eyebrow').textContent = d.signed ? 'Already signed' : 'Ready for signature';
+  $('#title').textContent = d.title ? d.title.replace(/\s+Agreement$/, '.') : 'Your agreement.';
+  $('#sub').textContent = d.signed
+    ? 'This one is already signed. Nothing further is needed.'
+    : 'Read it, then sign at the right. It takes about a minute.';
+  $('#who').textContent = d.client || '';
+  if(d.url){ $('#doc').src = d.url; $('#dl').href = d.url; }
+  $('#rows').innerHTML =
+    '<div><span>Document</span><b>' + (d.title || '') + '</b></div>' +
+    '<div><span>For</span><b>' + (d.client || '') + '</b></div>' +
+    '<div><span>Code goes to</span><b>' + (d.email_hint || '') + '</b></div>';
+  if(d.signer_name) $('#name').value = d.signer_name;
+  if(d.signer_title) $('#title2').value = d.signer_title;
+  $('#grid').style.display = '';
+  if(d.signed){ $('#card').style.display = 'none'; }
+}
+async function ask(btn){
+  if(!$('#consent').checked) return say('#m1', 'Tick the box first, that is the part that counts.', true);
+  if(!$('#name').value.trim()) return say('#m1', 'Type your full name.', true);
+  btn.disabled = true; btn.textContent = 'Sending';
+  const d = await fn({ action: 'code' });
+  btn.disabled = false; btn.textContent = 'Email me a code';
+  if(!d.ok) return say('#m1', d.error || 'That did not send.', true);
+  $('#s1').classList.remove('on'); $('#s2').classList.add('on');
+  $('#sent').textContent = 'Sent to ' + (d.sent_to || 'your email') + '. It is good for fifteen minutes.';
+  $('#code').focus();
+}
+async function sign(){
+  const b = $('#sign');
+  const code = $('#code').value.trim();
+  if(code.length < 6) return say('#m2', 'All six digits.', true);
+  b.disabled = true; b.textContent = 'Signing';
+  const d = await fn({ action: 'verify', code: code, name: $('#name').value.trim(), title: $('#title2').value.trim(), consent: true });
+  b.disabled = false; b.textContent = 'Sign the document';
+  if(!d.ok) return say('#m2', d.error || 'That did not go through.', true);
+  $('#grid').style.display = 'none';
+  $('#eyebrow').textContent = 'Done';
+  $('#title').textContent = 'Signed.';
+  $('#sub').textContent = 'Thank you. A copy is on its way to your inbox.';
+  $('#dnote').textContent = 'Your executed copy carries the signature page and the audit record. LIVEWORK keeps a copy on your account.';
+  if(d.url) $('#dlink').href = d.url;
+  $('#done').style.display = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$('#go').onclick = e => ask(e.currentTarget);
+$('#sign').onclick = sign;
+$('#again').onclick = async () => { const d = await fn({ action: 'code' }); say('#m2', d.sg-ok ? 'Sent again.' : (d.error || 'That did not send.'), !d.ok); };
+$('#code').addEventListener('keydown', e => { if(e.key === 'Enter') sign(); });
+boot();
+</script>
+</body>
+</html>
