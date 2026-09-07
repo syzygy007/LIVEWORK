@@ -300,6 +300,10 @@ body{background:var(--paper)}
 .clist .f.none{color:var(--stone);font-weight:400}
 .clist .f svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;
   stroke-linecap:round;stroke-linejoin:round}
+.clist .ctsw{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+.clist .ctsw .sw{width:44px;height:26px}
+.clist .ctsw .sw::after{width:20px;height:20px}
+.clist .ctsw .sw.on::after{left:21px}
 @media (max-width:900px){
   .clist .c{padding:22px 0}
   .clist .ch b{font-size:21px}
@@ -517,7 +521,7 @@ const NAV = [
   ['invoices','Invoices'],['mail','Mail'],['reports','Reports'],['settings','Settings']
 ];
 let VIEW = 'today';
-let Q = { cand:'', co:'', tag:'', searchTab:'open' };
+let Q = { cand:'', co:'', tag:'', searchTab:'open', coTab:'open' };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -834,23 +838,91 @@ function vToday(){
 }
 
 /* ---------- Companies ---------- */
+/* ---------- Clients ----------
+   A company does not answer a phone, so the row names the person you
+   actually deal with. Who that is comes out of the log: whoever was
+   last spoken to, then whoever holds the client room, then the first
+   contact on file. The billing contact is skipped because that is
+   accounts payable, not who you call about a search. */
+function keyContact(coId){
+  const list = contactsOf(coId);
+  if(!list.length) return null;
+  const spoken = S.activity.filter(a => String(a.company_id) === String(coId) && a.contact_id)
+    .sort((a,b) => String(F(a,'created_at','occurred_at') || '').localeCompare(String(F(b,'created_at','occurred_at') || '')))
+    .map(a => a.contact_id).pop();
+  const found = spoken ? list.filter(x => String(idOf(x)) === String(spoken))[0] : null;
+  if(found) return found;
+  const room = list.filter(x => x[MAP.contact.room] === true)[0];
+  if(room) return room;
+  const notBilling = list.filter(x => x[MAP.contact.billing] !== true);
+  return notBilling[0] || list[0];
+}
+/* the last touch on a client, and the name it went to if we know it */
+function coTouch(coId){
+  const acts = S.activity.filter(a => String(a.company_id) === String(coId))
+    .sort((a,b) => String(F(a,'created_at','occurred_at') || '').localeCompare(String(F(b,'created_at','occurred_at') || '')));
+  const last = acts[acts.length - 1];
+  if(!last) return null;
+  const ct = last.contact_id ? byId(S.contacts, last.contact_id) : null;
+  return { when: F(last,'created_at','occurred_at'), who: ct ? F(ct,'name') : '' };
+}
+/* open searches drive the order. a client with work running and nobody
+   spoken to in weeks sits at the top. quiet clients fall to the bottom. */
+function coRank(c){
+  const id = idOf(c);
+  const open = S.searches.filter(x => String(x.company_id) === String(id) && isOpen(x)).length;
+  const t = coTouch(id);
+  const d = t ? daysBetween(t.when) : 999;
+  return open ? -d : 1000 - d;
+}
+function coRow(c){
+  const id = idOf(c);
+  const ct = keyContact(id);
+  const open = S.searches.filter(x => String(x.company_id) === String(id) && isOpen(x)).length;
+  const t = coTouch(id);
+  const d = t ? daysBetween(t.when) : null;
+  const ph = ct ? String(F(ct,'phone') || '').replace(/[^0-9+]/g, '') : '';
+  const em = ct ? F(ct,'email') : '';
+  const line = ct ? [F(ct,'name'), F(ct,'title')].filter(Boolean).join(' \u00b7 ')
+                  : 'No contact on file';
+  const touched = !t ? 'No contact yet'
+    : 'Last contacted ' + (t.who ? esc(t.who) + ' ' : '') + ago(t.when);
+  const stale = open && (d === null || d >= 14);
+  return '<div class="c">' +
+    '<div class="ch"><b data-co="' + id + '">' + esc(F(c,'name')) + '</b>' +
+      '<span class="pill">' + (open ? open + (open === 1 ? ' open role' : ' open roles') : 'No open role') + '</span></div>' +
+    '<div class="m">' + esc(line) + (F(c,'city','location') ? ' \u00b7 ' + esc(F(c,'city','location')) : '') + '</div>' +
+    '<div class="t">' + touched + '</div>' +
+    '<div class="a">' +
+      (ph ? '<a href="tel:' + esc(ph) + '" data-touch="ct:' + idOf(ct) + '|call">' + CALLI + 'Call</a>'
+          : '<a data-logcall="|' + id + '">' + CALLI + 'Log a call</a>') +
+      (em ? '<a href="mailto:' + esc(em) + '" data-touch="ct:' + idOf(ct) + '|email">' + MAILI + 'Email</a>'
+          : '<a data-mail="co:' + id + '">' + MAILI + 'Email</a>') +
+      '<a data-co="' + id + '">' + OPENI + 'Open</a>' +
+    '</div>' +
+    (stale ? '<div class="f hot">' + CLOCKI +
+      (d === null ? 'A search is open and nobody has been called'
+                  : 'A search is open, ' + d + ' days since anyone was called') + '</div>' : '') +
+    '</div>';
+}
+
 function vCompanies(){
   const q = Q.co.toLowerCase();
-  const list = S.companies.filter(c => !q || F(c,'name').toLowerCase().includes(q));
+  const hay = c => (F(c,'name') + ' ' + contactsOf(idOf(c)).map(x => F(x,'name') + ' ' + F(x,'title')).join(' ')).toLowerCase();
+  const found = S.companies.filter(c => !q || hay(c).includes(q));
+  const withOpen = found.filter(c => S.searches.some(x => String(x.company_id) === String(idOf(c)) && isOpen(x)));
+  const list = (Q.coTab === 'open' && !q) ? withOpen : found;
+  const rows = list.map(c => ({ c, r: coRank(c) })).sort((a,b) => a.r - b.r).map(x => coRow(x.c));
   return head('Clients.', '<button class="btn pill" data-new="company"><span class="p">+</span>Add a client</button>') +
-    '<div class="tools"><div class="search">' + SRCH + '<input id="qco" placeholder="Search clients" value="' + esc(Q.co) + '"></div></div>' +
-    table(['Client','Open roles','In play','Placements','Last touch'],
-      list.map(c => {
-        const ss = S.searches.filter(s => String(s.company_id)===String(idOf(c)));
-        const ids = ss.map(s => String(idOf(s)));
-        const play = S.pipeline.filter(p => ids.includes(String(p.search_id)) && stageOf(p)!=='Placed' && stageOf(p)!=='Passed').length;
-        const last = S.activity.filter(a => String(a.company_id)===String(idOf(c))).map(a=>a.created_at).sort().pop();
-        return '<div class="r" style="grid-template-columns:2fr 130px 100px 110px 140px" data-co="' + idOf(c) + '">' +
-          '<div><b>' + esc(F(c,'name')) + '</b><br><span class="muted small place">' + PIN + esc(F(c,'city','location','industry')) + '</span></div>' +
-          '<span>' + ss.filter(isOpen).length + '</span><span>' + play + '</span>' +
-          '<span>' + S.placements.filter(p => String(p.company_id)===String(idOf(c))).length + '</span>' +
-          '<span class="muted small">' + up(last ? ago(last) : 'None') + '</span></div>';
-      }), '2fr 130px 100px 110px 140px', { cls:'strip', empty:'No clients yet.' });
+    '<div class="tools"><div class="search">' + SRCH + '<input id="qco" placeholder="Client or contact name" value="' + esc(Q.co) + '"></div>' +
+      (q ? '' :
+        '<button class="chip ' + (Q.coTab==='open'?'on':'') + '" data-cotab="open">Open searches ' + withOpen.length + '</button>' +
+        '<button class="chip ' + (Q.coTab==='all'?'on':'') + '" data-cotab="all">Everyone ' + found.length + '</button>') +
+    '</div>' +
+    (rows.length ? '<div class="clist">' + rows.join('') + '</div>'
+                 : '<div class="tbl"><div class="empty">' +
+                   (q ? 'Nothing matches that.' : Q.coTab === 'open' ? 'No client has an open search right now.' : 'No clients yet.') +
+                   '</div></div>');
 }
 
 /* ---------- Searches ---------- */
@@ -941,9 +1013,9 @@ function candRow(c){
     (line ? '<div class="m">' + esc(line) + '</div>' : '') +
     '<div class="t">' + (t ? 'Last contacted ' + ago(t) : 'No contact yet') + '</div>' +
     '<div class="a">' +
-      (ph ? '<a href="tel:' + esc(ph) + '" data-touch="' + id + '|call">' + CALLI + 'Call</a>'
+      (ph ? '<a href="tel:' + esc(ph) + '" data-touch="cand:' + id + '|call">' + CALLI + 'Call</a>'
           : '<a data-logcall="' + id + '|">' + CALLI + 'Call</a>') +
-      (em ? '<a href="mailto:' + esc(em) + '" data-touch="' + id + '|email">' + MAILI + 'Email</a>'
+      (em ? '<a href="mailto:' + esc(em) + '" data-touch="cand:' + id + '|email">' + MAILI + 'Email</a>'
           : '<a data-mail="cand:' + id + '">' + MAILI + 'Email</a>') +
       '<a data-cand="' + id + '">' + OPENI + 'Open</a>' +
     '</div>' +
@@ -1530,14 +1602,33 @@ function sheetCompany(){
       ['Owner', esc(ownerName(F(c,'owner_id')))],
       ['Notes', esc(F(c,'notes','bio'))]
     ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-edit="company:' + idOf(c) + '">Edit</button><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button></div>';
-  if(T===1) body = contactsOf(idOf(c)).map(ct =>
-      '<div class="toggle"><div><b>' + esc(F(ct,'name')) + '</b><small>' + esc(F(ct,'title')) + ' · ' + esc(F(ct,'email')) + (F(ct,'phone') ? ' · <a href="tel:' + esc(String(F(ct,'phone')).replace(/[^0-9+]/g,'')) + '">' + esc(F(ct,'phone')) + '</a>' : '') + '</small></div>' +
-      '<div style="display:flex;gap:16px;align-items:center">' +
-        '<span class="muted small">Room</span><button class="sw ' + (ct[MAP.contact.room]===true?'on':'') + '" data-room="' + idOf(ct) + '" aria-label="Client room access"></button>' +
-        '<span class="muted small">Billing</span><button class="sw ' + (ct[MAP.contact.billing]===true?'on':'') + '" data-bill="' + idOf(ct) + '" aria-label="Billing contact"></button>' +
-        (F(ct,'email') ? '<button class="btn sm ghost" data-mail="ct:' + idOf(ct) + '">Email</button>' : '') +
-        '<button class="btn sm ghost" data-edit="contact:' + idOf(ct) + '">Edit</button>' +
-      '</div></div>').join('') +
+  if(T===1) body = '<div class="clist">' + contactsOf(idOf(c)).map(ct => {
+      const cid = idOf(ct);
+      const ph = String(F(ct,'phone') || '').replace(/[^0-9+]/g,'');
+      const em = F(ct,'email');
+      const last = S.activity.filter(a => String(a.contact_id) === String(cid))
+        .map(a => F(a,'created_at','occurred_at')).filter(Boolean).sort().pop();
+      const marks = [ct[MAP.contact.room] === true ? 'Client room' : '',
+                     ct[MAP.contact.billing] === true ? 'Billing' : ''].filter(Boolean).join(' · ');
+      return '<div class="c">' +
+        '<div class="ch"><b>' + esc(F(ct,'name')) + '</b>' +
+          (marks ? '<span class="pill">' + esc(marks) + '</span>' : '') + '</div>' +
+        (F(ct,'title') ? '<div class="m">' + esc(F(ct,'title')) + '</div>' : '') +
+        '<div class="t">' + (last ? 'Last contacted ' + ago(last) : 'No contact yet') + '</div>' +
+        '<div class="a">' +
+          (ph ? '<a href="tel:' + esc(ph) + '" data-touch="ct:' + cid + '|call">' + CALLI + 'Call</a>'
+              : '<a data-logcall="|' + idOf(c) + '">' + CALLI + 'Log a call</a>') +
+          (em ? '<a href="mailto:' + esc(em) + '" data-touch="ct:' + cid + '|email">' + MAILI + 'Email</a>'
+              : '<a data-mail="co:' + idOf(c) + '">' + MAILI + 'Email</a>') +
+          '<a data-edit="contact:' + cid + '">' + OPENI + 'Edit</a>' +
+        '</div>' +
+        '<div class="ctsw">' +
+          '<span class="muted small">Client room</span>' +
+          '<button class="sw ' + (ct[MAP.contact.room]===true?'on':'') + '" data-room="' + cid + '" aria-label="Client room access"></button>' +
+          '<span class="muted small">Billing</span>' +
+          '<button class="sw ' + (ct[MAP.contact.billing]===true?'on':'') + '" data-bill="' + cid + '" aria-label="Billing contact"></button>' +
+        '</div></div>';
+    }).join('') + '</div>' +
       '<p class="muted small">Room lets them sign in at the client room with a code. Billing sends invoices and payment reminders to them. One billing contact per client.</p>' +
       '<button class="btn" data-new="contact" data-co="' + idOf(c) + '">Add a contact</button>';
   if(T===2) body = (ss.length ? ss.map(s => '<div class="toggle"><div><b>' + esc(F(s,'title','role')) + '</b><small>' + esc(F(s,'location')) + ' · ' + (isOpen(s)?'Open':'Closed') + '</small></div><button class="btn sm ghost" data-se="' + idOf(s) + '">Open</button></div>').join('') : '<p class="muted small">No searches yet.</p>') +
@@ -2146,18 +2237,30 @@ function common(root){
     const [c, co] = b.dataset.logcall.split('|'); form('call', { cand: c, co: co }); });
   /* Call and Email write the activity themselves. The tel: or mailto:
      still opens, this only records that it happened. */
+  /* Call and Email write the activity themselves, for a candidate or for
+     a contact at a client. A contact call carries both the company and
+     the person, so a client's last touch knows who it went to. */
   root.querySelectorAll('[data-touch]').forEach(b => b.addEventListener('click', async e => {
     e.stopPropagation();
-    const [id, kind] = b.dataset.touch.split('|');
-    const who = cand(id);
+    const [what, kind] = b.dataset.touch.split('|');
+    const [type, id] = what.split(':');
+    const verb = kind === 'call' ? 'Called ' : 'Emailed ';
+    let row = { [MAP.activity.kind]: kind, [MAP.activity.staff]: meId() || undefined };
+    if(type === 'ct'){
+      const ct = byId(S.contacts, id);
+      if(!ct) return;
+      row[MAP.activity.contact] = id;
+      row[MAP.activity.company] = ct.company_id;
+      row[MAP.activity.title] = verb + F(ct,'name') + ' at ' + cname(ct.company_id);
+    }else{
+      const who = cand(id);
+      row[MAP.activity.candidate] = id;
+      row[MAP.activity.title] = verb + F(who || {}, 'name', 'full_name');
+    }
     try{
-      await insert('activity', clean({
-        [MAP.activity.kind]: kind,
-        [MAP.activity.title]: (kind === 'call' ? 'Called ' : 'Emailed ') + F(who || {}, 'name', 'full_name'),
-        [MAP.activity.candidate]: id,
-        [MAP.activity.staff]: meId() || undefined
-      }));
+      await insert('activity', clean(row));
       await loadAll(); draw();
+      if(SHEET.kind && SHEET.kind !== 'form') paintSheet();
     }catch(err){ console.warn('touch not logged', err.message); }
   }));
   root.querySelectorAll('[data-note]').forEach(b => b.onclick = e => { e.stopPropagation();
@@ -2260,6 +2363,7 @@ function wire(){
     }catch(err){ toast('No PDF. ' + err.message, true); console.error(err); }
     b.disabled = false; b.textContent = lbl; });
   m.querySelectorAll('[data-stab]').forEach(b => b.onclick = () => { Q.searchTab = b.dataset.stab; draw(); });
+  m.querySelectorAll('[data-cotab]').forEach(b => b.onclick = () => { Q.coTab = b.dataset.cotab; draw(); });
   m.querySelectorAll('[data-tag]').forEach(b => b.onclick = () => { Q.tag = b.dataset.tag; draw(); });
   m.querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
     const k = b.dataset.auto;
