@@ -466,7 +466,7 @@ async function tryWrite(fn, okMsg){
 const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_tags:[], candidates:[],
   candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
   automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[],
-  pools:[], pool_members:[], intake_queue:[] };
+  pools:[], pool_members:[], intake_queue:[], signature_requests:[] };
 let ME = null;
 
 async function loadAll(){
@@ -763,9 +763,17 @@ function gateBanner(coId){
     (st.ok ? 'Complete. ' : 'Incomplete. ') + esc(st.why) +
     (st.ok ? '' : ' <a data-new="agreement" data-co="' + coId + '">Draw up the agreement</a>') + '</div>';
 }
+const SITE = 'https://livework.inc';
+const reqsOf = id => S.signature_requests.filter(r => String(r.document_id) === String(id));
+/* the live request on a document: the newest one still open */
+function docReq(id){
+  const open = reqsOf(id).filter(r => !r.signed_at && (!r.expires_at || new Date(r.expires_at) > new Date()));
+  return open.sort((a,b) => String(F(b,'created_at')).localeCompare(String(F(a,'created_at'))))[0] || null;
+}
 function docRow(d){
   const sg = docSigned(d);
   const who = F(d,'signer_name');
+  const rq = sg ? null : docReq(idOf(d));
   return '<div class="c">' +
     '<div class="ch"><b>' + esc(F(d,'title') || dockLabel(F(d,'kind'))) + '</b>' +
       '<span class="pill' + (sg ? '' : ' warn') + '">' + (sg ? 'Signed' : 'Unsigned') + '</span></div>' +
@@ -773,9 +781,12 @@ function docRow(d){
       (d.search_id ? ' \u00b7 ' + esc(sname(d.search_id)) : '') + '</div>' +
     '<div class="t">' + (sg
       ? 'Signed ' + (who ? 'by ' + esc(who) + ' ' : '') + (d.signed_at ? short(d.signed_at) : '')
-      : 'Added ' + short(F(d,'created_at'))) + '</div>' +
+      : (rq ? 'Waiting on ' + esc(F(rq,'signer_name') || F(rq,'signer_email')) + ', sent ' + short(F(rq,'created_at'))
+            : 'Added ' + short(F(d,'created_at')))) + '</div>' +
     '<div class="a">' +
       (F(d,'storage_path') ? '<a data-docopen="' + idOf(d) + '">' + OPENI + 'Open</a>' : '') +
+      (sg ? '' : '<a data-new="sendsign" data-doc="' + idOf(d) + '">' + (rq ? 'Send it again' : 'Send for signature') + '</a>') +
+      (sg || !rq ? '' : '<a data-siglink="' + idOf(rq) + '">Copy the link</a>') +
       (sg ? '' : '<a data-docsign="' + idOf(d) + '">Mark signed</a>') +
     '</div></div>';
 }
@@ -2058,6 +2069,17 @@ function form(kind, ctx){
       '<p class="muted small" style="margin:6px 0 0">Signing for LIVEWORK</p>' +
       '<div class="two"><div class="field"><label for="f_sname">Name</label><input id="f_sname"></div>' +
       '<div class="field"><label for="f_stitle">Title</label><input id="f_stitle" placeholder="President"></div></div>'],
+    sendsign: ['Send it for signature.', 'They get a link and a code. Entering the code is the signature, and the executed copy comes back with the audit page on it.',
+      '<div class="field"><label for="f_who">Who signs</label><select id="f_who"><option value="">Someone else</option>' +
+        contactsOf((byId(S.documents, ctx.doc) || {}).company_id).map(c =>
+          '<option value="' + esc(F(c,'email')) + '|' + esc(F(c,'name')) + '|' + esc(F(c,'title','role')) + '">' +
+          esc(F(c,'name')) + (F(c,'title','role') ? ', ' + esc(F(c,'title','role')) : '') + '</option>').join('') + '</select></div>' +
+      '<div class="two"><div class="field"><label for="f_name">Their name</label><input id="f_name"></div>' +
+      '<div class="field"><label for="f_stitle">Their title</label><input id="f_stitle" placeholder="VP Operations"></div></div>' +
+      '<div class="field"><label for="f_toe">Their email</label><input id="f_toe" type="email"></div>' +
+      '<div class="field"><label for="f_days">The link stops working after</label><select id="f_days">' +
+        '<option value="14">14 days</option><option value="7">7 days</option><option value="30">30 days</option></select></div>' +
+      '<div class="field"><label for="f_note">A line at the top of the email</label><textarea id="f_note" style="min-height:80px">Here is the agreement we talked about. It takes about a minute to sign.</textarea></div>'],
     premier: ['Premier.', 'A human call, so it needs a reason.',
       '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
   }[kind];
@@ -2073,6 +2095,12 @@ function form(kind, ctx){
   if(kind === 'mail') wireMailForm(ctx);
   if(kind === 'document') wireDocForm();
   if(kind === 'agreement') wireAgreementForm(ctx);
+  if(kind === 'sendsign'){
+    const w = $('#f_who');
+    if(w) w.onchange = () => { const p = String(w.value).split('|');
+      setv('f_toe', p[0] || ''); setv('f_name', p[1] || ''); setv('f_stitle', p[2] || ''); };
+    if(w && w.options.length > 1){ w.selectedIndex = 1; w.onchange(); }
+  }
 }
 /* resume drop: upload the original with the staff token, let the backend read it, fill the form */
 let RESUME = null;
@@ -2234,6 +2262,36 @@ async function save(kind, ctx){
       [M.company.notes]: val('f_notes'), [M.company.legal]: val('f_legal'), [M.company.address]: val('f_addr'),
       [M.company.notice]: val('f_notice').toLowerCase(),
       [M.company.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Client updated.' : 'Client added.');
+  }
+  if(kind === 'sendsign'){
+    const d = byId(S.documents, ctx.doc);
+    if(!d) return toast('That document is gone.', true);
+    const to = val('f_toe').trim().toLowerCase();
+    if(!to || to.indexOf('@') < 0) return toast('It needs an email to send to.', true);
+    if(!val('f_name').trim()) return toast('Who is signing?', true);
+    const tok = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).replace(/-/g, '');
+    const until = new Date(Date.now() + (Number(val('f_days')) || 14) * 86400000).toISOString();
+    const rq = await tryWrite(() => insert('signature_requests', { document_id: idOf(d), party: 'client',
+      signer_name: val('f_name').trim(), signer_title: val('f_stitle').trim(), signer_email: to,
+      token: tok, expires_at: until }), null);
+    if(!rq) return;
+    const link = SITE + '/sign.html?t=' + tok;
+    const co = company(d.company_id) || {};
+    try{
+      await fnCall('mail-send', clean({ to_email: to, to_name: val('f_name').trim(),
+        subject: F(d,'title') + ' for ' + (F(co,'legal_name') || F(co,'name')),
+        body: val('f_note').trim() + '\n\nSign it here: ' + link + '\n\nThe link works until ' +
+          new Date(until).toLocaleDateString() + '. You will get a code by email when you sign, and your executed copy right after.',
+        template: 'note', company_id: d.company_id }));
+      await insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: 'Sent ' + F(d,'title') + ' for signature',
+        [M.activity.company]: d.company_id, [M.activity.staff]: meId() }));
+      toast('Sent to ' + to + '.');
+    }catch(err){
+      console.error(err);
+      toast('Made the link but the email did not go. Copy it from the row.', true);
+    }
+    closeSheet(); await loadAll(); drawNav(); draw(); paintSheet();
+    return;
   }
   if(kind === 'agreement'){
     const coid = val('f_co'); if(!coid) return toast('Pick the client.', true);
@@ -2484,6 +2542,11 @@ function common(root){
   root.querySelectorAll('.add .menu button').forEach(b => b.addEventListener('click', () => {
     const a = b.closest('.add'); if(a) a.classList.remove('on');
   }));
+  root.querySelectorAll('[data-siglink]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const r = byId(S.signature_requests, b.dataset.siglink); if(!r) return;
+    const link = SITE + '/sign.html?t=' + F(r,'token');
+    try{ await navigator.clipboard.writeText(link); toast('Link copied.'); }
+    catch(err){ prompt('Copy the signing link', link); } });
   root.querySelectorAll('[data-docopen]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const d = byId(S.documents, b.dataset.docopen); if(!d) return;
     try{ openUrl(await docUrl(d)); }catch(err){ toast(err.message, true); } });
