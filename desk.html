@@ -1172,7 +1172,8 @@ function vPipeline(){
           '<button data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button>' +
           '<button data-mail="pipe:' + idOf(p) + '">Present</button>' +
           '<button data-note="' + p.candidate_id + '|' + p.search_id + '">Interview note</button>' +
-          '<button data-guide="' + p.candidate_id + '|' + p.search_id + '">Guide</button>' +
+          '<button data-guide="' + p.candidate_id + '|' + p.search_id + '|' + idOf(p) + '">Guide</button>' +
+          (isReleased(p) ? '<button data-guidemail="' + p.candidate_id + '|' + p.search_id + '">Send guide</button>' : '') +
         '</div></div>').join('') + '</div>';
   }).join('');
   return head('Pipeline.', '<button class="btn ghost" data-new="pipeline">Submit a candidate</button>') +
@@ -1829,6 +1830,8 @@ function sheetCandidate(){
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
         '<button class="btn ghost" data-prof="' + idOf(c) + '">Branded profile PDF</button>' +
         '<button class="btn ghost" data-prof="' + idOf(c) + '" data-redact="1">Client copy, no contact info</button>' +
+        '<button class="btn ghost" data-guidepdf="' + idOf(c) + '|' + ((rows[0] || {}).search_id || '') + '">Interview guide PDF</button>' +
+        '<button class="btn ghost" data-guidemail="' + idOf(c) + '|' + ((rows[0] || {}).search_id || '') + '">Send the guide to the client</button>' +
       '</div>';
   shell(esc(F(c,'name','full_name')) + '.', esc(F(c,'title','headline')) + (F(c,'location') ? ' · ' + esc(F(c,'location')) : ''),
     tabs(['Profile','Notes','History','Activity','Documents']) + body);
@@ -2799,13 +2802,34 @@ function openGuide(j){
   if(!w) return toast('Allow pop ups on this site to see the guide.', true);
   w.document.open(); w.document.write(guideDoc(j)); w.document.close();
 }
-async function buildGuide(btn, candId, seId){
+async function buildGuide(btn, candId, seId, pipeId){
   const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Writing';
   try{
-    const j = await fnCall('interview-guide', { candidate_id: candId, search_id: seId || null });
+    const j = await fnCall('interview-guide', { candidate_id: candId, search_id: seId || null, pipeline_id: pipeId || null });
     openGuide(j);
-    toast('Guide ready.');
+    toast('Guide ready. It is on the candidate file now.');
   }catch(err){ toast('No guide. ' + err.message, true); }
+  btn.disabled = false; btn.textContent = lbl;
+}
+/* the recruiter PDF. The read and the probes are in this one. */
+async function guidePdf(btn, candId, seId, redact){
+  const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Building';
+  try{
+    const j = await fnCall('guide-pdf', { candidate_id: candId, search_id: seId || null, redact: redact === true });
+    if(j.url) openUrl(j.url);
+    toast('Guide PDF ready.');
+  }catch(err){ toast('No PDF. ' + err.message, true); }
+  btn.disabled = false; btn.textContent = lbl;
+}
+/* the courtesy send. Client copy only, and only ever on a press. */
+async function sendGuide(btn, candId, seId){
+  if(!confirm('Send the client copy of the interview guide to the client contact on this search?\n\nThe read and the probes stay on our side.')) return;
+  const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Sending';
+  try{
+    const j = await fnCall('guide-mail', { candidate_id: candId, search_id: seId || null });
+    toast('Guide sent to ' + j.to + '.');
+    await loadAll(); draw();
+  }catch(err){ toast('Not sent. ' + err.message, true); }
   btn.disabled = false; btn.textContent = lbl;
 }
 
@@ -2852,7 +2876,11 @@ function common(root){
         co: s ? s.company_id : '', tpl: 'presentation' }); }
   });
   root.querySelectorAll('[data-guide]').forEach(b => b.onclick = e => { e.stopPropagation();
-    const [c, se] = b.dataset.guide.split('|'); buildGuide(b, c, se); });
+    const [c, se, pi] = b.dataset.guide.split('|'); buildGuide(b, c, se, pi); });
+  root.querySelectorAll('[data-guidepdf]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const [c, se] = b.dataset.guidepdf.split('|'); guidePdf(b, c, se, b.dataset.redact === '1'); });
+  root.querySelectorAll('[data-guidemail]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const [c, se] = b.dataset.guidemail.split('|'); sendGuide(b, c, se); });
   root.querySelectorAll('[data-logcall]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [c, co] = b.dataset.logcall.split('|'); form('call', { cand: c, co: co }); });
   /* Call and Email write the activity themselves. The tel: or mailto:
