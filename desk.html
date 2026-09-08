@@ -326,6 +326,67 @@ body{background:var(--paper)}
   .clist .a{max-width:none;gap:7px}
   .clist .a a{height:48px;font-size:14px;gap:6px}
 }
+
+/* ---------- Pipeline on a phone ----------
+   Six board columns cannot be read on a 390px screen, so the phone gets
+   stage tiles that filter one list. The rows match Clients and Candidates,
+   with one verb menu per row instead of a strip of buttons. */
+.pphone{display:none}
+.pfil{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.pfil select{-webkit-appearance:none;appearance:none;width:100%;height:50px;padding:0 36px 0 15px;
+  border:1px solid var(--line);border-radius:var(--r);background-color:var(--white);color:var(--ink);
+  font:600 15px/1 Manrope,Arial,sans-serif;cursor:pointer;text-overflow:ellipsis;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236E6961' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5 12 15.5 18 9.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:17px}
+.pstage{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 28px}
+.pstage button{padding:15px 12px 13px;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--white);color:var(--ink);text-align:left;cursor:pointer;min-width:0}
+.pstage button b{display:block;font-size:30px;font-weight:800;letter-spacing:-.035em;line-height:1}
+.pstage button span{display:block;margin-top:6px;font-size:12.5px;color:var(--stone);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pstage button.on{background:var(--yellow);border-color:var(--yellow);color:#000}
+.pstage button.on span{color:#000}
+.phead{display:flex;align-items:baseline;justify-content:space-between;gap:14px}
+.phead h2{font-size:27px;font-weight:800;letter-spacing:-.025em;line-height:1.1}
+.phead span{font-size:14px;color:var(--stone);flex:none}
+.plist{display:grid;gap:12px;margin-top:16px}
+.plist .p{position:relative;border:1px solid var(--line);border-radius:var(--r);background:var(--white)}
+.plist .p.rel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--yellow);border-radius:var(--r) 0 0 var(--r)}
+.plist .bd{padding:17px 16px 15px}
+.plist .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.plist .ph b{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.plist .ph svg{width:20px;height:20px;flex:none;stroke:var(--stone);fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;margin-top:2px}
+.plist .m{margin-top:5px;font-size:15.5px;color:var(--stone)}
+.plist .t{margin-top:5px;font-size:13.5px;color:var(--stone);opacity:.78}
+.plist .pl{display:inline-block;margin-top:13px;font-size:12px;font-weight:600;padding:6px 11px;
+  border:1px solid var(--line);border-radius:20px;color:var(--stone)}
+.plist .pf{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  border-top:1px solid var(--line);padding-left:16px;min-height:54px}
+.plist .stx{display:flex;align-items:center;gap:9px;min-width:0;font-size:14px;font-weight:600;color:var(--stone)}
+.plist .stx span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist .stx.hot{color:var(--s-due)}
+.plist .stx svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+.mv{position:relative;flex:none;align-self:stretch;display:flex;align-items:center;
+  border-left:1px solid var(--line)}
+.mv>button{display:flex;align-items:center;gap:5px;height:100%;padding:0 14px;border:0;
+  background:transparent;color:var(--ink);font:600 15px/1 Manrope,Arial,sans-serif;cursor:pointer}
+.mv>button .cv{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.mv .menu{display:none;position:absolute;right:0;bottom:calc(100% + 6px);z-index:16;min-width:216px;
+  max-height:62vh;overflow:auto;padding:6px;background:var(--white);border:1px solid var(--line);
+  border-radius:var(--r);box-shadow:var(--lift)}
+.mv.on .menu{display:grid}
+.mv .menu button{height:44px;padding:0 12px;border:0;border-radius:var(--r);background:transparent;
+  color:var(--ink);font-weight:600;font-size:15px;text-align:left;cursor:pointer}
+.mv .menu button.on{background:var(--wall)}
+.mv .menu i{display:block;height:1px;background:var(--line);margin:6px 4px}
+@media (max-width:900px){
+  .board,.pdesk{display:none}
+  .pphone{display:block}
+}
 </style>
 </head>
 <body>
@@ -550,7 +611,7 @@ const NAV = [
   ['invoices','Invoices'],['mail','Mail'],['reports','Reports'],['settings','Settings']
 ];
 let VIEW = 'today';
-let Q = { cand:'', co:'', tag:'', searchTab:'open', coTab:'open' };
+let Q = { cand:'', co:'', tag:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', stage:'Submitted' };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -683,6 +744,7 @@ function addMenu(items){
 }
 document.addEventListener('click', () => {
   const a = document.querySelector('.add.on'); if(a) a.classList.remove('on');
+  document.querySelectorAll('.mv.on').forEach(x => x.classList.remove('on'));
 });
 
 /* ---------- My numbers: activity first, revenue last. thirty day window. ---------- */
@@ -1158,8 +1220,94 @@ function vPools(){
     }).join('') + '</div>' : '<div class="tbl"><div class="empty">No pools yet. Name one and start dropping candidates in.</div></div>');
 }
 
-/* ---------- Pipeline ---------- */
+/* ---------- Pipeline ----------
+   Desktop keeps the six column board. Under 900px the board is replaced by
+   stage tiles that filter one list, because six columns of cards cannot be
+   read on a phone. Both are drawn, CSS picks. */
+const CALI = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="1.6"/><path d="M3.5 10h17M8 3.5v4M16 3.5v4"/></svg>';
+const RCHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6 15.5 12 9.5 18"/></svg>';
+
+/* what this row is waiting on. the follow up task wins, then the stage clock. */
+function pipeStatus(p){
+  const c = cand(p.candidate_id);
+  const f = c ? candFollow(c) : null;
+  if(f){
+    const n = dayDiff(f);
+    const w = n < -1 ? 'Overdue ' + Math.abs(n) + ' days'
+      : n === -1 ? 'Overdue since yesterday'
+      : n === 0 ? 'Follow up today'
+      : n === 1 ? 'Follow up tomorrow'
+      : n <= 6 ? 'Follow up ' + new Date(f).toLocaleDateString('en-US', { weekday:'long' })
+      : 'Follow up ' + short(f);
+    return { hot: n <= 0, icon: CALI, text: w };
+  }
+  const st = stageOf(p);
+  const d = daysBetween(F(p,'since','created_at'));
+  if(d <= 0) return { hot:false, icon: CALI, text: st + ' today' };
+  if(st === 'Submitted') return { hot: d >= 7, icon: CLOCKI, text: 'Awaiting feedback \u00b7 ' + d + 'd' };
+  return { hot: d >= 14, icon: CLOCKI, text: st + ' \u00b7 ' + d + 'd' };
+}
+
+function pipeRow(p){
+  const id = idOf(p);
+  const se = search(p.search_id) || {};
+  const rel = isReleased(p);
+  const st = pipeStatus(p);
+  const where = [cname(se.company_id), F(se,'location')].filter(Boolean).join(' \u00b7 ');
+  return '<div class="p' + (rel ? ' rel' : '') + '" data-pipe="' + id + '">' +
+    '<div class="bd">' +
+      '<div class="ph"><b>' + esc(pname(p.candidate_id)) + '</b>' + RCHEV + '</div>' +
+      '<div class="m">' + esc(sname(p.search_id)) + '</div>' +
+      (where ? '<div class="t">' + esc(where) + '</div>' : '') +
+      '<span class="pl">' + (rel ? 'Client visible' : 'Held back') + '</span>' +
+    '</div>' +
+    '<div class="pf">' +
+      '<div class="stx' + (st.hot ? ' hot' : '') + '">' + st.icon + '<span>' + esc(st.text) + '</span></div>' +
+      '<div class="mv"><button data-mvstage="' + id + '">Move stage' + CHEV + '</button>' +
+        '<div class="menu">' +
+          STAGES.map(x => '<button' + (x === stageOf(p) ? ' class="on"' : '') +
+            ' data-setstage="' + id + '|' + x + '">' + x + '</button>').join('') +
+          '<i></i>' +
+          '<button data-rel="' + id + '">' + (rel ? 'Hold back' : 'Release to the client') + '</button>' +
+          '<button data-mail="pipe:' + id + '">Present</button>' +
+          '<button data-note="' + p.candidate_id + '|' + p.search_id + '">Interview note</button>' +
+        '</div></div>' +
+    '</div></div>';
+}
+
 function vPipeline(){
+  /* the two filters narrow everything below them, tiles included */
+  const inCo = p => { const se = search(p.search_id) || {};
+    return !Q.pipeCo || String(se.company_id) === String(Q.pipeCo); };
+  const inSe = p => !Q.pipeSe || String(p.search_id) === String(Q.pipeSe);
+  const shown = S.pipeline.filter(p => inCo(p) && inSe(p));
+  const coIds = [...new Set(S.pipeline.map(p => String((search(p.search_id) || {}).company_id)).filter(x => x && x !== 'undefined'))];
+  const seList = S.searches.filter(x => S.pipeline.some(p => String(p.search_id) === String(idOf(x)))
+    && (!Q.pipeCo || String(x.company_id) === String(Q.pipeCo)));
+  const stage = STAGES.indexOf(Q.stage) < 0 ? 'Submitted' : Q.stage;
+  /* whatever is waiting on somebody rides the top, longest wait first */
+  const prank = p => { const st = pipeStatus(p);
+    return (st.hot ? 0 : 1000) - daysBetween(F(p,'since','created_at')); };
+  const rows = shown.filter(p => stageOf(p) === stage)
+    .map(p => ({ p, r: prank(p) })).sort((a,b) => a.r - b.r).map(x => x.p);
+
+  const phone =
+    '<div class="pfil">' +
+      '<select id="pco"><option value="">All clients</option>' +
+        coIds.map(id => '<option value="' + esc(id) + '"' + (String(Q.pipeCo) === id ? ' selected' : '') + '>' +
+          esc(cname(id)) + '</option>').join('') + '</select>' +
+      '<select id="pse"><option value="">All roles</option>' +
+        seList.map(x => '<option value="' + esc(idOf(x)) + '"' + (String(Q.pipeSe) === String(idOf(x)) ? ' selected' : '') + '>' +
+          esc(F(x,'title','role','job_title')) + '</option>').join('') + '</select>' +
+    '</div>' +
+    '<div class="pstage">' + STAGES.map(st => '<button class="' + (st === stage ? 'on' : '') +
+      '" data-pstage="' + st + '"><b>' + shown.filter(p => stageOf(p) === st).length + '</b>' +
+      '<span>' + st + '</span></button>').join('') + '</div>' +
+    '<div class="phead"><h2>' + stage + '</h2><span>' + rows.length +
+      (rows.length === 1 ? ' candidate' : ' candidates') + '</span></div>' +
+    (rows.length ? '<div class="plist">' + rows.map(pipeRow).join('') + '</div>'
+                 : '<div class="tbl"><div class="empty">Nobody sits at ' + stage.toLowerCase() + ' right now.</div></div>');
+
   const cols = STAGES.map(st => {
     const rows = S.pipeline.filter(p => stageOf(p) === st);
     return '<div class="col"><h4><span>' + st + '</span><span>' + rows.length + '</span></h4>' +
@@ -1177,8 +1325,9 @@ function vPipeline(){
           (isReleased(p) ? '<button data-guidemail="' + p.candidate_id + '|' + p.search_id + '">Send guide</button>' : '') +
         '</div></div>').join('') + '</div>';
   }).join('');
-  return head('Pipeline.', '<button class="btn ghost" data-new="pipeline">Submit a candidate</button>') +
-    '<p class="lede" style="margin-bottom:20px">A yellow edge means released. Released is exactly what the client sees in their room, nothing else.</p>' +
+  return head('Pipeline.', '<button class="btn pill" data-new="pipeline"><span class="p">+</span>Submit</button>') +
+    '<div class="pphone">' + phone + '</div>' +
+    '<p class="lede pdesk" style="margin-bottom:20px">A yellow edge means released. Released is exactly what the client sees in their room, nothing else.</p>' +
     '<div class="board">' + cols + '</div>';
 }
 
@@ -3000,8 +3149,26 @@ function wire(){
   const m = $('#main');
   common(m);
   m.querySelectorAll('[data-pipe]').forEach(c => c.onclick = e => {
-    if(e.target.closest('button[data-adv],button[data-rel],button[data-note],button[data-mail]')) return;
+    if(e.target.closest('button[data-adv],button[data-rel],button[data-note],button[data-mail],button[data-guide],button[data-guidemail],button[data-mvstage],button[data-setstage]')) return;
     const p = byId(S.pipeline, c.dataset.pipe); if(p) openSheet('candidate', p.candidate_id);
+  });
+  const pco = m.querySelector('#pco');
+  if(pco) pco.onchange = () => { Q.pipeCo = pco.value; Q.pipeSe = ''; draw(); };
+  const pse = m.querySelector('#pse');
+  if(pse) pse.onchange = () => { Q.pipeSe = pse.value; draw(); };
+  m.querySelectorAll('[data-pstage]').forEach(b => b.onclick = e => { e.stopPropagation();
+    Q.stage = b.dataset.pstage; draw(); });
+  m.querySelectorAll('[data-mvstage]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const w = b.closest('.mv'), was = w.classList.contains('on');
+    document.querySelectorAll('.mv.on').forEach(x => x.classList.remove('on'));
+    if(!was) w.classList.add('on');
+  });
+  m.querySelectorAll('[data-setstage]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const [id, st] = b.dataset.setstage.split('|');
+    const p = byId(S.pipeline, id);
+    if(!p || stageOf(p) === st){ b.closest('.mv').classList.remove('on'); return; }
+    const r = await tryWrite(() => patch('pipeline', idOf(p), { [MAP.pipeline.stage]: dbStage(st) }), 'Moved to ' + st + '.');
+    if(r){ Q.stage = st; await loadAll(); drawNav(); draw(); if(SHEET.kind && SHEET.kind !== 'form') paintSheet(); }
   });
   m.querySelectorAll('[data-task]').forEach(r => r.onclick = e => {
     if(e.target.closest('button')) return;
