@@ -818,6 +818,8 @@ function myNumbers(){
 /* ---------- Today: the home page. every row comes from data, nothing is typed to make it appear. ---------- */
 let SCOPE = 'mine';
 function amAdmin(){ return String(F(ME || {}, 'role')).toLowerCase() === 'admin'; }
+/* who may see campaigns and how a candidate was acquired. mirrors public.sees_campaigns() in the database. */
+function amCampaigns(){ return ['admin','manager','coordinator'].indexOf(String(F(ME || {}, 'role')).toLowerCase()) >= 0; }
 function myScope(){
   const me = meId(), all = SCOPE === 'all' || !me;
   const cos = S.companies.filter(c => all || String(F(c,'owner_id')) === String(me));
@@ -946,7 +948,7 @@ function needsYou(sc){
   });
 
   const seIds = sc.ses.map(x => String(idOf(x)));
-  S.campaigns.filter(x => seIds.indexOf(String(x.search_id)) >= 0 && campNoSpend(x)).forEach(x => {
+  (amCampaigns() ? S.campaigns : []).filter(x => seIds.indexOf(String(x.search_id)) >= 0 && campNoSpend(x)).forEach(x => {
     const d = daysBetween(F(x,'started_on','created_at'));
     if(d < 3) return;
     push(d, 'NO SPEND', d >= 14, esc(campLabel(x)) + ' · ' + esc(sname(x.search_id)),
@@ -1523,7 +1525,7 @@ const INTAKE_CAP = 100;
 const INDUSTRIES = ['Electrical','Construction','Finance','IT','Sales','Operations','Engineering','Logistics','Manufacturing','HR','Marketing','Legal','Healthcare','Other'];
 const ROLETYPES = ['Outside Sales','Inside Sales','Estimating','Project Management','Operations','Engineering','Field and Trades','Warehouse','Accounting and Finance','Administrative','IT','Executive','Other'];
 const SOURCES = ['LinkedIn','Indeed','Referral','Sourced','Direct apply','Career site','Other'];
-let BATCH = { id: null, company_id:'', search_id:'', source:'', role_type:'', campaign:'', campaign_id:'' };
+let BATCH = { id: null, company_id:'', search_id:'', source:'', role_type:'', campaign:'', campaign_id:'', ack:false, ack_role:'' };
 function batchCamp(){ return BATCH.campaign_id ? byId(S.campaigns, BATCH.campaign_id) : null; }
 function batchId(){ if(!BATCH.id) BATCH.id = uuid(); return BATCH.id; }
 function uuid(){ return (crypto.randomUUID ? crypto.randomUUID()
@@ -1550,6 +1552,15 @@ async function stampAll(){
   const row = stampRow();
   for(const x of INTAKE){ if(x.qid && x.status !== 'saved') await queueWrite(x, row); }
 }
+
+/* the role name the thank you email prints. the role is the parent, so it leads. */
+function ackRoleGuess(){
+  if(BATCH.search_id){ const s1 = search(BATCH.search_id); if(s1) return F(s1,'title') || ''; }
+  const bc = batchCamp();
+  if(bc){ const s2 = search(bc.search_id); if(s2) return F(s2,'title') || ''; }
+  return BATCH.role_type || '';
+}
+function ackReady(){ return INTAKE.filter(x => x.status === 'ready' && x.fields && String(x.fields.email || '').indexOf('@') > 0).length; }
 
 function vIntake(){
   const inds = industryTags().length ? industryTags() : INDUSTRIES;
@@ -1602,24 +1613,40 @@ function vIntake(){
     .sort((a,b) => String(F(b,'started_on')).localeCompare(String(F(a,'started_on'))));
   const bc = batchCamp();
   const POOLSRC = ['Career site','Referral','Sourced','Direct apply','Other'];
+  /* the role is the parent. pick it first, then a campaign under it. */
+  const mine = camps.filter(x => !BATCH.search_id || String(x.search_id) === String(BATCH.search_id));
+  const roleField = '<div class="field"><label>The role these applied to</label><select data-bk="search_id">' +
+      '<option value="">No role, into the pool</option>' +
+      S.searches.filter(isOpen).map(s => '<option value="' + idOf(s) + '"' + (String(BATCH.search_id) === String(idOf(s)) ? ' selected' : '') + '>' +
+        esc(F(s,'title')) + ' · ' + esc(cname(s.company_id)) + '</option>').join('') + '</select></div>';
+  const campField = !amCampaigns() ? '' :
+    '<div class="field"><label>Campaign, optional</label><select data-bk="campaign_id">' +
+      '<option value="">No campaign</option>' +
+      mine.map(x => '<option value="' + idOf(x) + '"' + (String(BATCH.campaign_id) === String(idOf(x)) ? ' selected' : '') + '>' +
+        esc(campLabel(x)) + ' · ' + esc(sname(x.search_id)) + '</option>').join('') +
+      '</select></div>';
   const stamp = '<div class="form" style="background:var(--paper);padding:16px;margin-bottom:18px">' +
     '<div class="muted small" style="margin-bottom:10px">Where this batch came from. Set it once, it lands on every candidate below.</div>' +
-    '<div class="field"><label>Campaign</label><select data-bk="campaign_id">' +
-      '<option value="">No campaign, into the pool</option>' +
-      camps.map(x => '<option value="' + idOf(x) + '"' + (String(BATCH.campaign_id) === String(idOf(x)) ? ' selected' : '') + '>' +
-        esc(campLabel(x)) + ' · ' + esc(sname(x.search_id)) + ' · ' + esc(cname((search(x.search_id) || {}).company_id)) + '</option>').join('') +
-      '</select></div>' +
+    (amCampaigns() ? '<div class="two">' + roleField + campField + '</div>' : roleField) +
     (bc
       ? '<div class="stampline" style="margin-bottom:14px">Every one of these lands on <b>' + esc(sname(bc.search_id)) + '</b> at Sourced, tagged <b>' + esc(F(bc,'channel')) + '</b>, and gets matched to the role when you save.' +
         (campNoSpend(bc) ? ' <span class="pill warn">No spend on this campaign yet</span>' : '') + '</div>'
-      : '<div class="two">' +
-          '<div class="field"><label>How they came</label><select data-bk="source">' + opts(POOLSRC, BATCH.source) + '</select></div>' +
-          '<div class="field"><label>Also add them to a role, optional</label><select data-bk="search_id"><option value="">Just the pool</option>' +
-            S.searches.filter(isOpen).map(s => '<option value="' + idOf(s) + '"' + (String(BATCH.search_id) === String(idOf(s)) ? ' selected' : '') + '>' + esc(F(s,'title')) + ' · ' + esc(cname(s.company_id)) + '</option>').join('') + '</select></div>' +
-        '</div>') +
+      : (BATCH.search_id
+          ? '<div class="stampline" style="margin-bottom:14px">Every one of these lands on <b>' + esc(sname(BATCH.search_id)) + '</b> at Sourced and gets matched to the role when you save.</div>'
+          : '')) +
     '<div class="two">' +
+      '<div class="field"><label>How they came</label><select data-bk="source">' + opts(POOLSRC, BATCH.source) + '</select></div>' +
       '<div class="field"><label>Role type</label><select data-bk="role_type">' + opts(ROLETYPES, BATCH.role_type) + '</select></div>' +
-      '<div class="field"><label>&nbsp;</label><button class="btn ghost" data-new="campaign" style="width:100%">New campaign</button></div>' +
+    '</div>' +
+    (amCampaigns() ? '<div class="field"><button class="btn ghost" data-new="campaign" style="width:100%">New campaign</button></div>' : '') +
+    '<div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px">' +
+      '<label class="toggle" style="display:flex;gap:10px;align-items:flex-start">' +
+        '<input type="checkbox" data-ack' + (BATCH.ack ? ' checked' : '') + '>' +
+        '<span><b>Thank them for applying</b><br><small class="muted">One email each when this batch is saved. Anyone already thanked is skipped.</small></span>' +
+      '</label>' +
+      (BATCH.ack ? '<div class="field" style="margin-top:12px"><label>Role the email names</label>' +
+        '<input data-bk="ack_role" value="' + esc(BATCH.ack_role || ackRoleGuess()) + '" placeholder="Outside Sales Representative"></div>' +
+        '<div class="muted small">' + ackReady() + ' in the tray have an email address.</div>' : '') +
     '</div>' +
     '</div>';
 
@@ -1659,6 +1686,7 @@ function intakeRestore(){
       source: F(r0,'source') || '', role_type: F(r0,'role_type') || '', campaign: F(r0,'campaign') || '', campaign_id: '' };
     const hit = BATCH.campaign ? S.campaigns.find(x => campLabel(x) === BATCH.campaign && String(x.search_id) === String(BATCH.search_id)) : null;
     if(hit) BATCH.campaign_id = idOf(hit);
+    BATCH.ack = false; BATCH.ack_role = '';
   }
 }
 function fieldsFrom(p){
@@ -1784,7 +1812,10 @@ async function intakeSaveAll(){
   const live = todo.filter(x => x.status === 'ready');
   const noInd = live.filter(x => !x.fields.industry);
   if(noInd.length && !confirm(noInd.length + ' have no industry tag. Save anyway?')) return;
+  const ackRole = String(BATCH.ack_role || ackRoleGuess()).trim();
+  if(BATCH.ack && !ackRole){ toast('Name the role the thank you email should print.'); return; }
   const b = $('#isaveall'); if(b){ b.disabled = true; b.textContent = 'Saving'; }
+  const acked = [];
   let ok = 0, added = 0;
   for(const x of live){
     const f = x.fields;
@@ -1812,6 +1843,7 @@ async function intakeSaveAll(){
         catch(e){ x.ref = 'no PDF: ' + e.message; }
       }
       await intakeTag(idOf(c), f.industry);
+      if(BATCH.ack && String(f.email || '').indexOf('@') > 0) acked.push(idOf(c));
       if(BATCH.search_id){
         const dup = S.pipeline.some(p => String(p.search_id) === String(BATCH.search_id) && String(p.candidate_id) === String(idOf(c)));
         if(!dup){
@@ -1826,8 +1858,15 @@ async function intakeSaveAll(){
       await queueWrite(x, { status: 'error', error: String(err.message).slice(0, 300) }); }
     draw();
   }
+  let ackNote = '';
+  if(BATCH.ack && acked.length){
+    try{
+      const ar = await fnCall('apply-ack', { ids: acked, role: ackRole, source: BATCH.source || '' });
+      ackNote = ' ' + (ar.sent || 0) + ' thanked' + (ar.skipped ? ', ' + ar.skipped + ' already had one' : '') + '.';
+    }catch(e){ ackNote = ' Thank you emails did not go out. ' + e.message; }
+  }
   await loadAll(); drawNav(); draw();
-  toast(ok + ' of ' + live.length + ' saved.' + (added ? ' ' + added + ' added to the role.' : ''));
+  toast(ok + ' of ' + live.length + ' saved.' + (added ? ' ' + added + ' added to the role.' : '') + ackNote);
   if(added && BATCH.search_id){
     try{ toast('Matching ' + added + ' to the role.'); await fnCall('match-score', { search_id: BATCH.search_id });
       await loadAll(); draw(); toast('Matched.'); }
@@ -2137,10 +2176,11 @@ function sheetSearch(){
       '</div>' +
       (rows.length && !F(s,'must_haves') ? '<p class="muted small" style="margin-top:10px">This role has no must haves written yet, so there is nothing to match against. Edit the job order and list them one per line.</p>' : '');
   }
-  if(T===2) body = campaignsTab(s);
+  if(T===2) body = amCampaigns() ? campaignsTab(s)
+    : '<p class="muted small">Campaign and acquisition detail is limited to the people who run it.</p>';
   if(T===3) body = logList(acts.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,40)
       .map(a => [short(a.created_at) + ' ' + esc(F(a,'kind')), esc(F(a,'body','note'))]));
-  const noSpend = campsOf(idOf(s)).filter(campNoSpend).length;
+  const noSpend = amCampaigns() ? campsOf(idOf(s)).filter(campNoSpend).length : 0;
   shell(esc(F(s,'title','role')) + '.', esc(cname(s.company_id)) + ' · ' + esc(F(s,'location')) +
       (noSpend ? ' · <span class="pill warn">' + noSpend + (noSpend === 1 ? ' campaign' : ' campaigns') + ' with no spend</span>' : ''),
     tabs(['Job order','Pipeline','Campaigns','Activity']) + body);
@@ -3473,8 +3513,14 @@ function wire(){
           const s = search(x.search_id); BATCH.company_id = s ? s.company_id : ''; }
         else { BATCH.campaign = ''; BATCH.source = ''; BATCH.search_id = ''; BATCH.company_id = ''; }
       }
-      if(el.dataset.bk === 'search_id'){ const s = el.value ? search(el.value) : null; BATCH.company_id = s ? s.company_id : ''; }
+      if(el.dataset.bk === 'search_id'){ const s = el.value ? search(el.value) : null; BATCH.company_id = s ? s.company_id : '';
+        const keep = batchCamp(); if(keep && String(keep.search_id) !== String(el.value)){ BATCH.campaign_id = ''; BATCH.campaign = ''; } }
       draw(); await stampAll(); });
+    m.querySelectorAll('[data-bk="ack_role"]').forEach(el => el.oninput = () => { BATCH.ack_role = el.value; });
+    m.querySelectorAll('[data-ack]').forEach(cb => cb.onchange = () => {
+      BATCH.ack = cb.checked;
+      if(BATCH.ack && !BATCH.ack_role) BATCH.ack_role = ackRoleGuess();
+      draw(); });
     const sa = m.querySelector('#isaveall'); if(sa) sa.onclick = intakeSaveAll;
     const ra = m.querySelector('#ireadall'); if(ra) ra.onclick = intakeReadAll;
     const cl = m.querySelector('#iclear'); if(cl) cl.onclick = () => {
