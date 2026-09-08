@@ -81,7 +81,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 <script>
 /* demo: what Maria at Northwind sees. The live layer swaps this for the signed in contact's company. */
 const LIVE = !!(window.LW && LW.anon && !/PASTE/.test(LW.anon));
-const DEMO_ME = {name:'Maria Delgado', company:'Northwind Logistics', email:'maria@northwind.example', kind:'Retained', fee:'28% of first year base', billing:'One third at engagement, one third at shortlist, one third at start', guarantee:'12 months', recruiter:'Derek Germann'};
+const DEMO_ME = {name:'Maria Delgado', company:'Northwind Logistics', email:'maria@northwind.example', kind:'', fee:'', billing:'', guarantee:'', recruiter:'Derek Germann'};
 let ME = LIVE ? {name:'', company:'', email:'', recruiter:'Derek Germann'} : DEMO_ME;
 async function fn(name, body){
   const r = await fetch(`${LW.url}/functions/v1/${name}`, {method:'POST', headers:{'content-type':'application/json', apikey:LW.anon, Authorization:'Bearer '+LW.anon}, body:JSON.stringify(body)});
@@ -133,7 +133,7 @@ function door(){
       <button class="btn" id="go">Send my code</button>`
     :`<div class="hl"><span class="bar"></span><h1>Check your email.</h1></div>
       <p>If ${esc(pendingEmail)} was invited by your recruiter, a six digit code is on its way. Enter it here.</p>
-      <p class="small">No code in a minute? Client room access is set up by your recruiter. Write to <a href="mailto:hello@livework.inc">hello@livework.inc</a> and we will open your room.</p>
+      <p class="small">No code in a minute? Client room access is set up by your recruiter. Write to <a href="mailto:team@livework.inc">team@livework.inc</a> and we will open your room.</p>
       <div class="field"><label for="cd">Code</label><input id="cd" class="code" inputmode="numeric" maxlength="7" placeholder="000000"></div>
       ${err?`<p class="err">${esc(err)}</p>`:''}
       <button class="btn" id="go">Open my room</button>
@@ -187,8 +187,8 @@ function room(){
       <div class="row"><b>Billing</b><span>${ME.billing}</span></div>
       <div class="row"><b>Guarantee</b><span>${ME.guarantee} replacement on every placement</span></div>
       ${LIVE?`<div class="row"><b>Agreement</b><span><a href="engagement.html" target="_blank">Client engagement agreement</a></span></div>`:`<div class="row"><b>Agreement</b><span><a href="#" data-noop>Retained search agreement, signed Aug 12, 2026</a></span></div>`}
-      <div class="row"><b>Your recruiter</b><span>${ME.recruiter} · <a href="mailto:hello@livework.inc">hello@livework.inc</a></span></div>
-    </div></div>`:`<div class="terms"><h3>Your engagement with LIVEWORK.</h3><div class="spec"><div class="row"><b>Your recruiter</b><span>${ME.recruiter} · <a href="mailto:hello@livework.inc">hello@livework.inc</a></span></div></div></div>`}
+      <div class="row"><b>Your recruiter</b><span>${ME.recruiter} · <a href="mailto:team@livework.inc">team@livework.inc</a></span></div>
+    </div></div>`:`<div class="terms"><h3>Your engagement with LIVEWORK.</h3><div class="spec"><div class="row"><b>Your recruiter</b><span>${ME.recruiter} · <a href="mailto:team@livework.inc">team@livework.inc</a></span></div></div></div>`}
   </div></section>`;
   document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const d=$('#d'+b.dataset.view);d.classList.toggle('on');b.textContent=d.classList.contains('on')?'Close':'Profile'});
   const get=k=>{const [si,ci]=k.split('-');return SEARCHES[si].cands[ci]};
