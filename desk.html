@@ -387,6 +387,37 @@ body{background:var(--paper)}
   .board,.pdesk{display:none}
   .pphone{display:block}
 }
+/* match chip and its evidence panel */
+.mch{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);cursor:pointer;background:none;font-family:inherit}
+.mch b{font-size:12px;letter-spacing:0;color:var(--ink)}
+.mch.hi{border-color:var(--yellow);background:var(--yellow)}
+.mch.hi b,.mch.hi span{color:#141210}
+.mev{border-top:1px solid var(--line);margin-top:12px;padding-top:6px}
+.mev .e{display:grid;grid-template-columns:74px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.mev .e:last-child{border-bottom:0}
+.mev .s{font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding-top:3px}
+.mev .s.met{color:#35C98A}
+.mev .s.partial{color:var(--yellow-deep)}
+.mev .s.none{color:var(--stone)}
+.mev .q{color:var(--stone);font-size:12px;margin-top:4px;line-height:1.5}
+.mrow{padding:14px 0;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:0}
+.mrow .mh{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mrow .mh small{display:block;color:var(--stone);font-size:12px;margin-top:3px;text-transform:none;letter-spacing:0}
+.pf .mch,.card .mch{margin-right:8px}
+.cstat{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cstat div{padding:10px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cstat div:nth-child(3n){border-right:0}
+.cstat div:nth-last-child(-n+3){border-bottom:0}
+.cstat b{display:block;font-size:18px;font-weight:700}
+.cstat b.muted{color:var(--stone)}
+.cstat span{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin-top:2px}
+@media (min-width:900px){ .cstat{grid-template-columns:repeat(6,1fr)} .cstat div:nth-child(3n){border-right:1px solid var(--line)} .cstat div:nth-child(6n){border-right:0} .cstat div{border-bottom:0} }
+.stampline{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--stone)}
+.stampline b{color:var(--ink)}
+.rolecheck{display:grid;gap:8px;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;max-height:280px;overflow:auto}
+.rolecheck label{display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer}
+.rolecheck input{width:auto;height:auto;margin:0}
 </style>
 </head>
 <body>
@@ -431,7 +462,8 @@ const MAP = {
                comp_min:'comp_low', comp_max:'comp_high', opened:'opened_at', notes:'notes', owner:'owner_id' },
   candidate: { name:'name', email:'email', phone:'phone', title:'title', location:'location',
                premier:'premier', premier_reason:'premier_reason', premier_by:'premier_by', notes:'summary' },
-  pipeline:  { search:'search_id', candidate:'candidate_id', stage:'stage', released:'released', released_at:'released_at', added_by:'added_by' },
+  pipeline:  { search:'search_id', candidate:'candidate_id', stage:'stage', released:'released', released_at:'released_at', added_by:'added_by', campaign:'campaign_id' },
+  campaign:  { search:'search_id', channel:'channel', name:'name', status:'status', started:'started_on', ended:'ended_on', spend:'spend', note:'spend_note', by:'created_by' },
   activity:  { kind:'type', title:'title', body:'body', outcome:'outcome', company:'company_id', contact:'contact_id',
                candidate:'candidate_id', search:'search_id', staff:'staff_id' },
   task:      { title:'title', due:'due_on', done:'done', company:'company_id', candidate:'candidate_id', search:'search_id',
@@ -538,7 +570,7 @@ async function tryWrite(fn, okMsg){
 const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_tags:[], candidates:[],
   candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
   automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[],
-  pools:[], pool_members:[], intake_queue:[], signature_requests:[] };
+  pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[] };
 let ME = null;
 
 async function loadAll(){
@@ -606,12 +638,12 @@ const sigBar = v => v == null ? '<span class="muted small">Not submitted yet</sp
 <script>
 /* ============================ views ============================ */
 const NAV = [
-  ['today','Today'],['companies','Clients'],['searches','Searches'],['candidates','Candidates'],['intake','Intake'],
+  ['today','Today'],['companies','Clients'],['searches','Roles'],['candidates','Candidates'],['intake','Intake'],
   ['pools','Pools'],['pipeline','Pipeline'],['activity','Activity'],['placements','Placements'],
   ['invoices','Invoices'],['mail','Mail'],['reports','Reports'],['settings','Settings']
 ];
 let VIEW = 'today';
-let Q = { cand:'', co:'', tag:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', stage:'Submitted' };
+let Q = { cand:'', co:'', tag:'', prem:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', stage:'Submitted' };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -913,6 +945,15 @@ function needsYou(sc){
       { k:'doc', l:'Draw up', a:'data-new="agreement" data-co="' + idOf(c) + '"' });
   });
 
+  const seIds = sc.ses.map(x => String(idOf(x)));
+  S.campaigns.filter(x => seIds.indexOf(String(x.search_id)) >= 0 && campNoSpend(x)).forEach(x => {
+    const d = daysBetween(F(x,'started_on','created_at'));
+    if(d < 3) return;
+    push(d, 'NO SPEND', d >= 14, esc(campLabel(x)) + ' · ' + esc(sname(x.search_id)),
+      'Running ' + d + ' days with no cost on it', 'se:' + x.search_id,
+      { k:'spend', l:'Add it', a:'data-camp="' + idOf(x) + '"' });
+  });
+
   sc.tasks.filter(t => F(t,'due_at','due_on') && new Date(F(t,'due_at','due_on')) < new Date(new Date().setHours(0,0,0,0))).forEach(t => {
     const d = daysBetween(F(t,'due_at','due_on'));
     push(d, 'OVERDUE', true, esc(F(t,'title','body')), 'Waiting for action',
@@ -1098,7 +1139,7 @@ function vSearches(){
     if(pl) return daysBetween(start, F(pl,'start_date','created_at')) + ' days to fill';
     return daysBetween(start) + ' days open';
   };
-  return head('Searches.', '<button class="btn pill" data-new="search"><span class="p">+</span>Open a search</button>') +
+  return head('Roles.', '<button class="btn pill" data-new="search"><span class="p">+</span>Open a role</button>') +
     '<div class="tools"><button class="chip ' + (Q.searchTab==='open'?'on':'') + '" data-stab="open">Open ' + open.length + '</button>' +
     '<button class="chip ' + (Q.searchTab==='closed'?'on':'') + '" data-stab="closed">Closed ' + closed.length + '</button></div>' +
     table(['Search','Client','Stage spread','Days','Status'],
@@ -1185,11 +1226,22 @@ function candRow(c){
     followLine(c) + '</div>';
 }
 
+/* the whole parsed resume is searchable, not just the name line, because the
+   pool is only worth having if a phrase from page two can find somebody */
+function candHay(c){
+  if(c.__hay) return c.__hay;
+  const pj = c.profile_json || {};
+  const secs = (pj.sections || []).map(x =>
+    (x.heading || '') + ' ' + (Array.isArray(x.lines) ? x.lines.join(' ') : (x.body || ''))).join(' ');
+  c.__hay = [F(c,'name','full_name'), F(c,'title','headline'), F(c,'location'),
+    F(c,'summary'), (pj.tags || []).join(' '), secs].join(' ').toLowerCase();
+  return c.__hay;
+}
 function vCandidates(){
   const q = Q.cand.toLowerCase();
   const all = S.candidates.filter(c => {
-    const hay = (F(c,'name','full_name') + ' ' + F(c,'title','headline') + ' ' + F(c,'location')).toLowerCase();
-    if(q && !hay.includes(q)) return false;
+    if(q && !candHay(c).includes(q)) return false;
+    if(Q.prem && c[MAP.candidate.premier] !== true) return false;
     if(Q.tag && !tagNames(idOf(c)).includes(Q.tag)) return false;
     return true;
   });
@@ -1198,7 +1250,8 @@ function vCandidates(){
   return head('Candidates.',
       '<button class="btn ghost" data-new="candidate">Add candidate</button>' +
       '<button class="btn" data-v="intake">Import r\u00e9sum\u00e9s</button>') +
-    '<div class="tools"><div class="search">' + SRCH + '<input id="qcand" placeholder="Name, title, location" value="' + esc(Q.cand) + '"></div>' +
+    '<div class="tools"><div class="search">' + SRCH + '<input id="qcand" placeholder="Name, title, or any word in the resume" value="' + esc(Q.cand) + '"></div>' +
+      '<button class="chip ' + (Q.prem?'on':'') + '" data-prem="' + (Q.prem?'':'1') + '">Premier</button>' +
       '<button class="chip ' + (Q.tag?'':'on') + '" data-tag="">All</button>' +
       tags.map(t => '<button class="chip ' + (Q.tag===t?'on':'') + '" data-tag="' + esc(t) + '">' + esc(t) + '</button>').join('') +
     '</div>' +
@@ -1248,6 +1301,101 @@ function pipeStatus(p){
   return { hot: d >= 14, icon: CLOCKI, text: st + ' \u00b7 ' + d + 'd' };
 }
 
+/* ---------- Campaigns ----------
+   A campaign is one paid or sourced push at a role, never the role itself.
+   Applicants that came another way carry no campaign and are counted as
+   the unpaid line, split by where they came from. */
+const MID_ = '\u00b7';
+const CHANNELS = ['Indeed','LinkedIn','ZipRecruiter','Glassdoor','Craigslist','Sourced list','Other'];
+const campsOf = seId => S.campaigns.filter(x => String(x.search_id) === String(seId));
+const campLive = x => String(F(x,'status') || 'live') !== 'ended';
+const campLabel = x => [F(x,'channel'), F(x,'name')].filter(Boolean).join(' ' + '\u00b7' + ' ');
+const campRows = id => S.pipeline.filter(p => String(p.campaign_id) === String(id));
+function campStats(rows){
+  const scored = rows.map(matchOf).filter(n => n !== null);
+  const avg = scored.length ? Math.round(scored.reduce((a,b) => a + b, 0) / scored.length) : null;
+  const strong = scored.filter(n => n >= 70).length;
+  const sub = rows.filter(p => stageIx(p) >= 1).length;
+  const placed = rows.filter(p => stageOf(p) === 'Placed').length;
+  return { n: rows.length, avg, strong, sub, placed };
+}
+function campNoSpend(x){ return F(x,'spend') === '' || F(x,'spend') === null || F(x,'spend') === undefined; }
+function spendPill(x){
+  return campNoSpend(x) ? '<span class="pill warn">No spend entered</span>' : '<span class="pill">' + money(F(x,'spend')) + '</span>';
+}
+function campRow(x){
+  const st = campStats(campRows(idOf(x)));
+  const cps = (!campNoSpend(x) && st.sub) ? money(num(F(x,'spend')) / st.sub) : '';
+  const cpa = (!campNoSpend(x) && st.n) ? money(num(F(x,'spend')) / st.n) : '';
+  return '<div class="mrow"><div class="mh">' +
+      '<div><b>' + esc(campLabel(x) || 'Campaign') + '</b>' +
+        '<small>' + (campLive(x) ? 'Live since ' : 'Ended ' + MID_ + ' ran from ') + day(F(x,'started_on')) +
+        (F(x,'ended_on') ? ' to ' + day(F(x,'ended_on')) : '') + '</small></div>' +
+      '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' + spendPill(x) +
+        '<button class="btn sm ghost" data-camp="' + idOf(x) + '">' + (campNoSpend(x) ? 'Add the spend' : 'Edit') + '</button>' +
+        (campLive(x) ? '<button class="btn sm ghost" data-campend="' + idOf(x) + '">End it</button>' : '') +
+      '</div></div>' +
+    '<div class="cstat">' +
+      '<div><b>' + st.n + '</b><span>Applicants</span></div>' +
+      '<div><b>' + (st.avg === null ? '' : st.avg + '%') + '</b><span>Average match</span></div>' +
+      '<div><b>' + st.strong + '</b><span>Over 70</span></div>' +
+      '<div><b>' + st.sub + '</b><span>Reached submit</span></div>' +
+      '<div><b class="' + (cpa ? '' : 'muted') + '">' + cpa + '</b><span>Per applicant</span></div>' +
+      '<div><b class="' + (cps ? '' : 'muted') + '">' + (cps || '') + '</b><span>Per submitted</span></div>' +
+    '</div></div>';
+}
+function unpaidRows(seId){
+  const rows = S.pipeline.filter(p => String(p.search_id) === String(seId) && !p.campaign_id);
+  const by = {};
+  rows.forEach(p => { const c = cand(p.candidate_id) || {}; const k = F(c,'source') || 'Unknown'; (by[k] = by[k] || []).push(p); });
+  return Object.keys(by).sort().map(k => ({ source: k, rows: by[k] }));
+}
+function campaignsTab(s){
+  const seId = idOf(s);
+  const camps = campsOf(seId).sort((a,b) => String(F(b,'started_on')).localeCompare(String(F(a,'started_on'))));
+  const unpaid = unpaidRows(seId);
+  return (camps.length ? camps.map(campRow).join('')
+      : '<p class="muted small">No paid push on this role yet.</p>') +
+    (unpaid.length ? '<h4 class="micro" style="margin:22px 0 4px">Came another way</h4>' + unpaid.map(u => {
+        const st = campStats(u.rows);
+        return '<div class="mrow"><div class="mh"><div><b>' + esc(u.source) + '</b><small>No spend</small></div></div>' +
+          '<div class="cstat"><div><b>' + st.n + '</b><span>People</span></div>' +
+          '<div><b>' + (st.avg === null ? '' : st.avg + '%') + '</b><span>Average match</span></div>' +
+          '<div><b>' + st.strong + '</b><span>Over 70</span></div>' +
+          '<div><b>' + st.sub + '</b><span>Reached submit</span></div></div></div>';
+      }).join('') : '') +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">' +
+      '<button class="btn" data-new="campaign" data-se="' + seId + '">New campaign</button></div>';
+}
+/* ---------- Match against the role ----------
+   The percent lives on the pipeline row, never on the person. Coverage is
+   counted from the evidence rows so the number can always be opened up. */
+let MOPEN = {};
+function matchOf(p){ const n = F(p,'match_pct'); return (n === 0 || n) ? Number(n) : null; }
+function matchRows(p){ const m = p.match_json; return (m && Array.isArray(m.rows)) ? m.rows : []; }
+function matchCount(p){ const r = matchRows(p); if(!r.length) return '';
+  return r.filter(x => x.status === 'met').length + ' of ' + r.length + ' must haves'; }
+function matchChip(p){ const n = matchOf(p); if(n === null) return '';
+  return '<button class="mch' + (n >= 80 ? ' hi' : '') + '" data-mopen="' + idOf(p) + '">' +
+    '<b>' + n + '%</b><span>' + esc(matchCount(p)) + '</span></button>'; }
+function matchPanel(p){ if(!MOPEN[idOf(p)]) return '';
+  const r = matchRows(p); if(!r.length) return '';
+  const note = (p.match_json && p.match_json.note) ? p.match_json.note : '';
+  return '<div class="mev">' + r.map(x =>
+      '<div class="e"><span class="s ' + esc(x.status) + '">' + esc(x.status) + '</span>' +
+      '<span><b>' + esc(x.req) + '</b>' +
+      (x.evidence ? '<div class="q">' + esc(x.evidence) + '</div>' : '') + '</span></div>').join('') +
+    (note ? '<p class="muted small" style="margin-top:10px">' + esc(note) + '</p>' : '') + '</div>'; }
+async function runMatch(search_id, candidate_id){
+  toast('Reading everyone against the role.');
+  try{
+    const b = candidate_id ? { search_id, candidate_id } : { search_id };
+    const r = await fnCall('match-score', b);
+    await loadAll(); paintSheet(); drawNav(); draw();
+    toast('Matched ' + r.scored + (r.scored === 1 ? ' candidate.' : ' candidates.'));
+  }catch(e){ toast(e.message, true); }
+}
+
 function pipeRow(p){
   const id = idOf(p);
   const se = search(p.search_id) || {};
@@ -1263,6 +1411,7 @@ function pipeRow(p){
     '</div>' +
     '<div class="pf">' +
       '<div class="stx' + (st.hot ? ' hot' : '') + '">' + st.icon + '<span>' + esc(st.text) + '</span></div>' +
+      matchChip(p) +
       '<div class="mv"><button data-mvstage="' + id + '">Move stage' + CHEV + '</button>' +
         '<div class="menu">' +
           STAGES.map(x => '<button' + (x === stageOf(p) ? ' class="on"' : '') +
@@ -1316,6 +1465,7 @@ function vPipeline(){
         '<span class="m">' + esc(sname(p.search_id)) + '</span>' +
         '<span class="m">' + esc(cname((search(p.search_id)||{}).company_id)) + '</span>' +
         '<span class="m" style="margin-top:6px">' + (isReleased(p) ? 'Released to the client' : 'Held') + '</span>' +
+        (matchOf(p) === null ? '' : '<div style="margin-top:8px">' + matchChip(p) + '</div>') +
         '<div class="acts">' +
           (stageIx(p) < 4 ? '<button data-adv="' + idOf(p) + '">Advance</button>' : '') +
           '<button data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button>' +
@@ -1373,7 +1523,8 @@ const INTAKE_CAP = 100;
 const INDUSTRIES = ['Electrical','Construction','Finance','IT','Sales','Operations','Engineering','Logistics','Manufacturing','HR','Marketing','Legal','Healthcare','Other'];
 const ROLETYPES = ['Outside Sales','Inside Sales','Estimating','Project Management','Operations','Engineering','Field and Trades','Warehouse','Accounting and Finance','Administrative','IT','Executive','Other'];
 const SOURCES = ['LinkedIn','Indeed','Referral','Sourced','Direct apply','Career site','Other'];
-let BATCH = { id: null, company_id:'', search_id:'', source:'', role_type:'', campaign:'' };
+let BATCH = { id: null, company_id:'', search_id:'', source:'', role_type:'', campaign:'', campaign_id:'' };
+function batchCamp(){ return BATCH.campaign_id ? byId(S.campaigns, BATCH.campaign_id) : null; }
 function batchId(){ if(!BATCH.id) BATCH.id = uuid(); return BATCH.id; }
 function uuid(){ return (crypto.randomUUID ? crypto.randomUUID()
   : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0;
@@ -1447,19 +1598,29 @@ function vIntake(){
   const cos = S.companies.slice().sort((a,b) => String(F(a,'name')).localeCompare(String(F(b,'name'))));
   const srch = S.searches.filter(s => isOpen(s) && (!BATCH.company_id || String(s.company_id) === String(BATCH.company_id)));
   const opts = (list, val) => '<option value="">Not set</option>' + list.map(n => '<option' + (val === n ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
+  const camps = S.campaigns.filter(campLive).filter(x => { const se = search(x.search_id); return se && isOpen(se); })
+    .sort((a,b) => String(F(b,'started_on')).localeCompare(String(F(a,'started_on'))));
+  const bc = batchCamp();
+  const POOLSRC = ['Career site','Referral','Sourced','Direct apply','Other'];
   const stamp = '<div class="form" style="background:var(--paper);padding:16px;margin-bottom:18px">' +
     '<div class="muted small" style="margin-bottom:10px">Where this batch came from. Set it once, it lands on every candidate below.</div>' +
+    '<div class="field"><label>Campaign</label><select data-bk="campaign_id">' +
+      '<option value="">No campaign, into the pool</option>' +
+      camps.map(x => '<option value="' + idOf(x) + '"' + (String(BATCH.campaign_id) === String(idOf(x)) ? ' selected' : '') + '>' +
+        esc(campLabel(x)) + ' · ' + esc(sname(x.search_id)) + ' · ' + esc(cname((search(x.search_id) || {}).company_id)) + '</option>').join('') +
+      '</select></div>' +
+    (bc
+      ? '<div class="stampline" style="margin-bottom:14px">Every one of these lands on <b>' + esc(sname(bc.search_id)) + '</b> at Sourced, tagged <b>' + esc(F(bc,'channel')) + '</b>, and gets matched to the role when you save.' +
+        (campNoSpend(bc) ? ' <span class="pill warn">No spend on this campaign yet</span>' : '') + '</div>'
+      : '<div class="two">' +
+          '<div class="field"><label>How they came</label><select data-bk="source">' + opts(POOLSRC, BATCH.source) + '</select></div>' +
+          '<div class="field"><label>Also add them to a role, optional</label><select data-bk="search_id"><option value="">Just the pool</option>' +
+            S.searches.filter(isOpen).map(s => '<option value="' + idOf(s) + '"' + (String(BATCH.search_id) === String(idOf(s)) ? ' selected' : '') + '>' + esc(F(s,'title')) + ' · ' + esc(cname(s.company_id)) + '</option>').join('') + '</select></div>' +
+        '</div>') +
     '<div class="two">' +
-      '<div class="field"><label>Client</label><select data-bk="company_id"><option value="">Not set</option>' +
-        cos.map(c => '<option value="' + idOf(c) + '"' + (String(BATCH.company_id) === String(idOf(c)) ? ' selected' : '') + '>' + esc(F(c,'name')) + '</option>').join('') + '</select></div>' +
-      '<div class="field"><label>Search</label><select data-bk="search_id"><option value="">Not set</option>' +
-        srch.map(s => '<option value="' + idOf(s) + '"' + (String(BATCH.search_id) === String(idOf(s)) ? ' selected' : '') + '>' + esc(F(s,'title')) + ' · ' + esc(cname(s.company_id)) + '</option>').join('') + '</select></div>' +
-    '</div>' +
-    '<div class="two">' +
-      '<div class="field"><label>Source</label><select data-bk="source">' + opts(SOURCES, BATCH.source) + '</select></div>' +
       '<div class="field"><label>Role type</label><select data-bk="role_type">' + opts(ROLETYPES, BATCH.role_type) + '</select></div>' +
+      '<div class="field"><label>&nbsp;</label><button class="btn ghost" data-new="campaign" style="width:100%">New campaign</button></div>' +
     '</div>' +
-    '<div class="field"><label>Campaign</label><input data-bk="campaign" value="' + esc(BATCH.campaign) + '" placeholder="Indeed · Outside Sales · September"></div>' +
     '</div>';
 
   return head('Intake.', (held ? '<button class="btn" id="ireadall"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Working' : 'Read ' + held) + '</button> ' : '') +
@@ -1495,7 +1656,9 @@ function intakeRestore(){
   if(rows.length){
     const r0 = rows[rows.length - 1];
     BATCH = { id: F(r0,'batch_id') || null, company_id: r0.company_id || '', search_id: r0.search_id || '',
-      source: F(r0,'source') || '', role_type: F(r0,'role_type') || '', campaign: F(r0,'campaign') || '' };
+      source: F(r0,'source') || '', role_type: F(r0,'role_type') || '', campaign: F(r0,'campaign') || '', campaign_id: '' };
+    const hit = BATCH.campaign ? S.campaigns.find(x => campLabel(x) === BATCH.campaign && String(x.search_id) === String(BATCH.search_id)) : null;
+    if(hit) BATCH.campaign_id = idOf(hit);
   }
 }
 function fieldsFrom(p){
@@ -1622,7 +1785,7 @@ async function intakeSaveAll(){
   const noInd = live.filter(x => !x.fields.industry);
   if(noInd.length && !confirm(noInd.length + ' have no industry tag. Save anyway?')) return;
   const b = $('#isaveall'); if(b){ b.disabled = true; b.textContent = 'Saving'; }
-  let ok = 0;
+  let ok = 0, added = 0;
   for(const x of live){
     const f = x.fields;
     const target = x.existing || (x.same ? x.maybe : null);
@@ -1649,6 +1812,14 @@ async function intakeSaveAll(){
         catch(e){ x.ref = 'no PDF: ' + e.message; }
       }
       await intakeTag(idOf(c), f.industry);
+      if(BATCH.search_id){
+        const dup = S.pipeline.some(p => String(p.search_id) === String(BATCH.search_id) && String(p.candidate_id) === String(idOf(c)));
+        if(!dup){
+          try{ await insert('pipeline', clean({ search_id: BATCH.search_id, candidate_id: idOf(c), stage: dbStage('Sourced'),
+            released: false, added_by: meId(), campaign_id: BATCH.campaign_id || undefined })); added++; }
+          catch(e){ console.warn('pipeline', e.message); }
+        }
+      }
       x.status = 'saved'; ok++;
       await queueWrite(x, { status: 'saved', candidate_id: idOf(c), saved_at: new Date().toISOString() });
     }catch(err){ x.status = 'error'; x.error = 'Did not save. ' + err.message;
@@ -1656,7 +1827,12 @@ async function intakeSaveAll(){
     draw();
   }
   await loadAll(); drawNav(); draw();
-  toast(ok + ' of ' + live.length + ' saved.');
+  toast(ok + ' of ' + live.length + ' saved.' + (added ? ' ' + added + ' added to the role.' : ''));
+  if(added && BATCH.search_id){
+    try{ toast('Matching ' + added + ' to the role.'); await fnCall('match-score', { search_id: BATCH.search_id });
+      await loadAll(); draw(); toast('Matched.'); }
+    catch(e){ toast('Saved, but the match did not run: ' + e.message, true); }
+  }
 }
 /* ---------- Invoices ---------- */
 /* the ladder. days is negative before the due date, positive after. */
@@ -1930,13 +2106,44 @@ function sheetSearch(){
       (F(s,'launch_sent_at')
         ? '<button class="btn ghost" data-launch="' + idOf(s) + '" data-again="1">Send the notice again</button>'
         : '<button class="btn" data-launch="' + idOf(s) + '">Start the search</button>') + '</div>';
-  if(T===1) body = (rows.length ? rows.map(p => '<div class="toggle"><div><b>' + esc(pname(p.candidate_id)) + '</b><small>' + stageOf(p) + ' · ' + (isReleased(p)?'released':'held') + '</small></div>' +
-      '<div style="display:flex;gap:6px"><button class="btn sm ghost" data-adv="' + idOf(p) + '">Advance</button><button class="btn sm ghost" data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button></div></div>').join('')
-      : '<p class="muted small">Nobody submitted yet.</p>') + '<button class="btn" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>';
-  if(T===2) body = logList(acts.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,40)
+  if(T===1){
+    /* the campaign view. best fit rides the top, and every percent opens up. */
+    const ranked = [...rows].sort((a,b) => {
+      const x = matchOf(a), y = matchOf(b);
+      if(x === null && y === null) return 0;
+      if(x === null) return 1;
+      if(y === null) return -1;
+      return y - x;
+    });
+    const scored = rows.filter(p => matchOf(p) !== null).length;
+    body = (ranked.length ? ranked.map(p => {
+        const c = cand(p.candidate_id) || {};
+        const prem = c[MAP.candidate.premier] === true;
+        return '<div class="mrow"><div class="mh">' +
+          '<div><b class="' + (prem ? 'premier' : '') + '" data-cand="' + p.candidate_id + '">' +
+            esc(pname(p.candidate_id)) + '</b>' +
+            '<small>' + stageOf(p) + ' · ' + (isReleased(p) ? 'released' : 'held') +
+            (matchOf(p) === null ? ' · not matched yet' : '') + '</small></div>' +
+          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' + matchChip(p) +
+            '<button class="btn sm ghost" data-adv="' + idOf(p) + '">Advance</button>' +
+            '<button class="btn sm ghost" data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button>' +
+          '</div></div>' + matchPanel(p) + '</div>';
+      }).join('')
+      : '<p class="muted small">Nobody submitted yet.</p>') +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">' +
+        '<button class="btn" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>' +
+        (rows.length ? '<button class="btn ghost" data-runmatch="' + idOf(s) + '">' +
+          (scored ? 'Run the match again' : 'Match everyone to this role') + '</button>' : '') +
+      '</div>' +
+      (rows.length && !F(s,'must_haves') ? '<p class="muted small" style="margin-top:10px">This role has no must haves written yet, so there is nothing to match against. Edit the job order and list them one per line.</p>' : '');
+  }
+  if(T===2) body = campaignsTab(s);
+  if(T===3) body = logList(acts.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,40)
       .map(a => [short(a.created_at) + ' ' + esc(F(a,'kind')), esc(F(a,'body','note'))]));
-  shell(esc(F(s,'title','role')) + '.', esc(cname(s.company_id)) + ' · ' + esc(F(s,'location')),
-    tabs(['Job order','Pipeline','Activity']) + body);
+  const noSpend = campsOf(idOf(s)).filter(campNoSpend).length;
+  shell(esc(F(s,'title','role')) + '.', esc(cname(s.company_id)) + ' · ' + esc(F(s,'location')) +
+      (noSpend ? ' · <span class="pill warn">' + noSpend + (noSpend === 1 ? ' campaign' : ' campaigns') + ' with no spend</span>' : ''),
+    tabs(['Job order','Pipeline','Campaigns','Activity']) + body);
 }
 function sheetCandidate(){
   const c = cand(SHEET.id); if(!c) return closeSheet();
@@ -1963,7 +2170,7 @@ function sheetCandidate(){
         '<button class="btn ghost" data-note="' + idOf(c) + '|">Interview note</button>' +
         '<button class="btn ghost" data-edit="candidate:' + idOf(c) + '">Edit</button>' +
         (F(c,'email') ? '<button class="btn ghost" data-mail="cand:' + idOf(c) + '">Email</button>' : '') +
-        '<button class="btn ghost" data-new="pipeline" data-cand="' + idOf(c) + '">Submit to a search</button></div>';
+        '<button class="btn ghost" data-new="pipeline" data-cand="' + idOf(c) + '">Add to a role</button></div>';
   if(T===1) body = (notes.length ? notes.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).map(n =>
       '<div style="border:1px solid var(--line);padding:16px;border-radius:var(--r)">' +
       '<b>' + esc(F(n,'kind') || 'Interview') + '</b> <span class="muted small">' + day(n.created_at) + (n.search_id ? ' · ' + esc(sname(n.search_id)) : '') + '</span>' +
@@ -2136,10 +2343,19 @@ function form(kind, ctx){
       '<div class="field"><label for="f_phone">Phone</label><input id="f_phone"></div></div>' +
       '<div class="field"><label for="f_loc">Location</label><input id="f_loc"></div>' +
       '<div class="field"><label for="f_notes">Notes</label><textarea id="f_notes"></textarea></div>'],
-    pipeline: ['Submit a candidate.', 'Submitting is internal. Releasing is what the client sees.',
-      '<div class="field"><label for="f_se">Search</label><select id="f_se">' + opts(S.searches.filter(isOpen), s => F(s,'title','role') + ' · ' + cname(s.company_id), ctx.se) + '</select></div>' +
-      '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
-      '<div class="field"><label for="f_stage">Stage</label><select id="f_stage">' + STAGES.slice(0,5).map(s => '<option' + (s==='Submitted'?' selected':'') + '>' + s + '</option>').join('') + '</select></div>' +
+    pipeline: [ctx.cand && !ctx.se ? 'Add to a role.' : 'Submit a candidate.',
+      ctx.cand && !ctx.se ? 'Tick every open role this person should sit on. They land at Sourced, held back, nobody told.' : 'Submitting is internal. Releasing is what the client sees.',
+      (ctx.cand && !ctx.se
+        ? '<div class="field"><label>Open roles</label><div class="rolecheck">' +
+            (S.searches.filter(isOpen).length ? S.searches.filter(isOpen).map(s => {
+              const on = S.pipeline.some(p => String(p.search_id) === String(idOf(s)) && String(p.candidate_id) === String(ctx.cand));
+              return '<label><input type="checkbox" name="f_roles" value="' + idOf(s) + '"' + (on ? ' checked disabled' : '') + '>' +
+                '<span>' + esc(F(s,'title','role')) + ' · ' + esc(cname(s.company_id)) + (on ? ' <span class="muted small">already on it</span>' : '') + '</span></label>';
+            }).join('') : '<span class="muted small">No open roles right now.</span>') + '</div></div>' +
+          '<input type="hidden" id="f_cand" value="' + esc(ctx.cand) + '">'
+        : '<div class="field"><label for="f_se">Role</label><select id="f_se">' + opts(S.searches.filter(isOpen), s => F(s,'title','role') + ' · ' + cname(s.company_id), ctx.se) + '</select></div>' +
+          '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
+          '<div class="field"><label for="f_stage">Stage</label><select id="f_stage">' + STAGES.slice(0,5).map(s => '<option' + (s==='Submitted'?' selected':'') + '>' + s + '</option>').join('') + '</select></div>') +
       '<div class="field"><label><input type="checkbox" id="f_rel" style="height:auto;width:auto;margin-right:8px">Release to the client room now</label></div>'],
     call: ['Log a call.', 'Outcome first. A task keeps it from dying here.',
       '<div class="two"><div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
@@ -2256,6 +2472,14 @@ function form(kind, ctx){
       '<div class="field"><label for="f_days">The link stops working after</label><select id="f_days">' +
         '<option value="14">14 days</option><option value="7">7 days</option><option value="30">30 days</option></select></div>' +
       '<div class="field"><label for="f_note">A line at the top of the email</label><textarea id="f_note" style="min-height:80px">Here is the agreement we talked about. It takes about a minute to sign.</textarea></div>'],
+    campaign: [ctx.camp ? 'Campaign.' : 'New campaign.', ctx.camp ? 'Put the cost on it. Leave it blank and it stays red.' : 'One paid or sourced push at one role. Leads imported under it carry the platform.',
+      '<div class="field"><label for="f_se">Role</label><select id="f_se"' + (ctx.camp ? ' disabled' : '') + '>' + opts(S.searches.filter(isOpen), s => F(s,'title','role') + ' · ' + cname(s.company_id), ctx.se) + '</select></div>' +
+      '<div class="two"><div class="field"><label for="f_chan">Platform</label><select id="f_chan">' + CHANNELS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="f_name">Name, optional</label><input id="f_name" placeholder="September sponsored post"></div></div>' +
+      '<div class="two"><div class="field"><label for="f_start">Started</label><input id="f_start" type="date" value="' + today() + '"></div>' +
+      '<div class="field"><label for="f_end">Ended, if it has</label><input id="f_end" type="date"></div></div>' +
+      '<div class="two"><div class="field"><label for="f_spend">Spend, dollars</label><input id="f_spend" inputmode="decimal" placeholder="Leave blank until the bill comes"></div>' +
+      '<div class="field"><label for="f_snote">Spend note</label><input id="f_snote" placeholder="Invoice 4471, 30 day sponsored"></div></div>'],
     premier: ['Premier.', 'A human call, so it needs a reason.',
       '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
   }[kind];
@@ -2274,6 +2498,12 @@ function form(kind, ctx){
     if(ctx.body) setv('f_body', ctx.body);
   }
   if(kind === 'document') wireDocForm();
+  if(kind === 'campaign' && ctx.camp){
+    const x = byId(S.campaigns, ctx.camp);
+    if(x){ setv('f_se', x.search_id); setv('f_chan', F(x,'channel')); setv('f_name', F(x,'name'));
+      setv('f_start', F(x,'started_on')); setv('f_end', F(x,'ended_on'));
+      setv('f_spend', campNoSpend(x) ? '' : String(F(x,'spend'))); setv('f_snote', F(x,'spend_note')); }
+  }
   if(kind === 'agreement') wireAgreementForm(ctx);
   if(kind === 'sendsign'){
     const w = $('#f_who');
@@ -2654,10 +2884,38 @@ async function save(kind, ctx){
     }
   }
   if(kind === 'pipeline'){
-    if(!val('f_se') || !val('f_cand')) return toast('Pick a search and a candidate.', true);
-    r = await tryWrite(() => insert('pipeline', clean({ [M.pipeline.search]: val('f_se'), [M.pipeline.candidate]: val('f_cand'),
-      [M.pipeline.stage]: dbStage(val('f_stage')), [M.pipeline.released]: val('f_rel'),
-      [M.pipeline.released_at]: val('f_rel') ? new Date().toISOString() : '', [M.pipeline.added_by]: meId() })), 'Submitted.');
+    const boxes = Array.from(document.querySelectorAll('input[name="f_roles"]:checked:not(:disabled)'));
+    if(boxes.length || (ctx.cand && !ctx.se)){
+      if(!boxes.length) return toast('Tick at least one role.', true);
+      let n = 0;
+      for(const b of boxes){
+        const ok = await tryWrite(() => insert('pipeline', clean({ [M.pipeline.search]: b.value, [M.pipeline.candidate]: ctx.cand,
+          [M.pipeline.stage]: dbStage('Sourced'), [M.pipeline.released]: false, [M.pipeline.added_by]: meId() })));
+        if(ok) n++;
+      }
+      r = n ? { n } : null;
+      if(n){ toast('Added to ' + n + (n === 1 ? ' role.' : ' roles.'));
+        closeSheet(); await loadAll(); drawNav(); draw();
+        for(const b of boxes){ try{ await fnCall('match-score', { search_id: b.value, candidate_id: ctx.cand }); }catch(e){} }
+        await loadAll(); draw(); return; }
+    }else{
+      if(!val('f_se') || !val('f_cand')) return toast('Pick a role and a candidate.', true);
+      r = await tryWrite(() => insert('pipeline', clean({ [M.pipeline.search]: val('f_se'), [M.pipeline.candidate]: val('f_cand'),
+        [M.pipeline.stage]: dbStage(val('f_stage')), [M.pipeline.released]: val('f_rel'),
+        [M.pipeline.released_at]: val('f_rel') ? new Date().toISOString() : '', [M.pipeline.added_by]: meId() })), 'Submitted.');
+    }
+  }
+  if(kind === 'campaign'){
+    const seId = ctx.camp ? (byId(S.campaigns, ctx.camp) || {}).search_id : val('f_se');
+    if(!seId) return toast('Pick the role it runs against.', true);
+    const sp = val('f_spend');
+    if(sp !== '' && !(num(sp) >= 0)) return toast('Spend needs to be a number.', true);
+    const row = { [M.campaign.channel]: val('f_chan'), [M.campaign.name]: val('f_name') || null,
+      [M.campaign.started]: val('f_start') || today(), [M.campaign.ended]: val('f_end') || null,
+      [M.campaign.status]: val('f_end') ? 'ended' : 'live',
+      [M.campaign.spend]: sp === '' ? null : num(sp), [M.campaign.note]: val('f_snote') || null };
+    if(ctx.camp) r = await tryWrite(() => patch('campaigns', ctx.camp, row), sp === '' ? 'Saved, still no spend on it.' : 'Spend recorded.');
+    else r = await tryWrite(() => insert('campaigns', Object.assign(row, { [M.campaign.search]: seId, [M.campaign.by]: meId() })), 'Campaign opened.');
   }
   if(kind === 'call'){
     const body = val('f_body') || val('f_out');
@@ -3049,6 +3307,17 @@ function common(root){
   root.querySelectorAll('[data-cand]').forEach(b => { if(b.dataset.new) return;
     b.onclick = e => { e.stopPropagation(); openSheet('candidate', b.dataset.cand); }; });
   root.querySelectorAll('[data-pool]').forEach(b => b.onclick = e => { e.stopPropagation(); openSheet('pool', b.dataset.pool); });
+  root.querySelectorAll('[data-mopen]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const k = b.dataset.mopen; MOPEN[k] = !MOPEN[k]; paintSheet(); draw(); });
+  root.querySelectorAll('[data-runmatch]').forEach(b => b.onclick = e => { e.stopPropagation();
+    runMatch(b.dataset.runmatch); });
+  root.querySelectorAll('[data-camp]').forEach(b => b.onclick = e => { e.stopPropagation();
+    form('campaign', { camp: b.dataset.camp }); });
+  root.querySelectorAll('[data-campend]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const x = byId(S.campaigns, b.dataset.campend); if(!x) return;
+    if(!confirm('End ' + campLabel(x) + '? Applicants already in stay where they are.')) return;
+    const ok = await tryWrite(() => patch('campaigns', idOf(x), { status: 'ended', ended_on: today() }), 'Campaign ended.');
+    if(ok){ await loadAll(); paintSheet(); draw(); } });
   const ab = root.querySelector('#addBtn');
   if(ab) ab.onclick = e => { e.stopPropagation(); ab.parentElement.classList.toggle('on'); };
   root.querySelectorAll('.add .menu button').forEach(b => b.addEventListener('click', () => {
@@ -3198,10 +3467,14 @@ function wire(){
     m.querySelectorAll('[data-isame]').forEach(cb => cb.onchange = () => { const x = INTAKE[+cb.dataset.isame]; if(x) x.same = cb.checked; draw(); });
     m.querySelectorAll('[data-bk]').forEach(el => el.onchange = async () => {
       BATCH[el.dataset.bk] = el.value;
-      if(el.dataset.bk === 'company_id') BATCH.search_id = '';
-      if(el.dataset.bk === 'search_id' && el.value){ const s = search(el.value); if(s && s.company_id) BATCH.company_id = s.company_id; }
+      if(el.dataset.bk === 'campaign_id'){
+        const x = el.value ? byId(S.campaigns, el.value) : null;
+        if(x){ BATCH.search_id = x.search_id; BATCH.source = F(x,'channel'); BATCH.campaign = campLabel(x);
+          const s = search(x.search_id); BATCH.company_id = s ? s.company_id : ''; }
+        else { BATCH.campaign = ''; BATCH.source = ''; BATCH.search_id = ''; BATCH.company_id = ''; }
+      }
+      if(el.dataset.bk === 'search_id'){ const s = el.value ? search(el.value) : null; BATCH.company_id = s ? s.company_id : ''; }
       draw(); await stampAll(); });
-    m.querySelectorAll('[data-bk="campaign"]').forEach(el => el.oninput = () => { BATCH.campaign = el.value; });
     const sa = m.querySelector('#isaveall'); if(sa) sa.onclick = intakeSaveAll;
     const ra = m.querySelector('#ireadall'); if(ra) ra.onclick = intakeReadAll;
     const cl = m.querySelector('#iclear'); if(cl) cl.onclick = () => {
@@ -3241,6 +3514,7 @@ function wire(){
   m.querySelectorAll('[data-stab]').forEach(b => b.onclick = () => { Q.searchTab = b.dataset.stab; draw(); });
   m.querySelectorAll('[data-cotab]').forEach(b => b.onclick = () => { Q.coTab = b.dataset.cotab; draw(); });
   m.querySelectorAll('[data-tag]').forEach(b => b.onclick = () => { Q.tag = b.dataset.tag; draw(); });
+  m.querySelectorAll('[data-prem]').forEach(b => b.onclick = () => { Q.prem = b.dataset.prem; draw(); });
   m.querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
     const k = b.dataset.auto;
     const row = S.automations.filter(x => x.trigger === k || x.name === k)[0];
