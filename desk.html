@@ -1769,12 +1769,17 @@ function sheetSearch(){
       ['Location', esc(F(s,'location'))],
       ['Compensation', [money(F(s,'comp_min')), money(F(s,'comp_max'))].filter(Boolean).join(' to ') || esc(F(s,'comp'))],
       ['Opened', day(F(s,'opened_at','created_at'))],
+      ['Client told', F(s,'launch_sent_at') ? day(F(s,'launch_sent_at')) + ' · ' + esc(F(s,'launch_sent_to'))
+        : '<span class="muted">Not announced yet</span>'],
       ['Days open', daysBetween(F(s,'opened_at','created_at'))],
       ['Fee', esc(F(s,'fee') || '20% of first year base')],
       ['The brief', esc(F(s,'notes','brief','description'))]
     ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>' +
       '<button class="btn ghost" data-edit="search:' + idOf(s) + '">Edit</button>' +
-      '<button class="btn ghost" data-close="' + idOf(s) + '">' + (isOpen(s)?'Close the search':'Reopen') + '</button></div>';
+      '<button class="btn ghost" data-close="' + idOf(s) + '">' + (isOpen(s)?'Close the search':'Reopen') + '</button>' +
+      (F(s,'launch_sent_at')
+        ? '<button class="btn ghost" data-launch="' + idOf(s) + '" data-again="1">Send the notice again</button>'
+        : '<button class="btn" data-launch="' + idOf(s) + '">Start the search</button>') + '</div>';
   if(T===1) body = (rows.length ? rows.map(p => '<div class="toggle"><div><b>' + esc(pname(p.candidate_id)) + '</b><small>' + stageOf(p) + ' · ' + (isReleased(p)?'released':'held') + '</small></div>' +
       '<div style="display:flex;gap:6px"><button class="btn sm ghost" data-adv="' + idOf(p) + '">Advance</button><button class="btn sm ghost" data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button></div></div>').join('')
       : '<p class="muted small">Nobody submitted yet.</p>') + '<button class="btn" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>';
@@ -2655,6 +2660,22 @@ function wireSheet(){
   });
   common(sh);
 }
+/* the search launch notice. One press, and only ever a press. */
+async function startSearch(btn, seId, again){
+  const s = search(seId) || {};
+  const msg = again
+    ? 'Send the launch notice again for ' + (F(s,'title') || 'this search') + '?'
+    : 'Tell the client we have started this search?\n\nThis sets the opened date and emails the notice.';
+  if(!confirm(msg)) return;
+  const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Sending';
+  try{
+    const j = await fnCall('search-launch', { search_id: seId, again: again === true });
+    toast('Announced to ' + j.to + '.');
+    await loadAll(); drawNav(); paintSheet(); draw();
+  }catch(err){ toast('Not sent. ' + err.message, true); }
+  btn.disabled = false; btn.textContent = lbl;
+}
+
 /* ============================ interview guide ============================
    One call to the interview-guide function returns the whole thing. The
    staff copy and the client copy come out of the same payload, so the
@@ -2918,6 +2939,8 @@ function common(root){
     const [c, se] = b.dataset.guidepdf.split('|'); guidePdf(b, c, se, b.dataset.redact === '1'); });
   root.querySelectorAll('[data-guidemail]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [c, se] = b.dataset.guidemail.split('|'); sendGuide(b, c, se); });
+  root.querySelectorAll('[data-launch]').forEach(b => b.onclick = e => { e.stopPropagation();
+    startSearch(b, b.dataset.launch, b.dataset.again === '1'); });
   root.querySelectorAll('[data-logcall]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [c, co] = b.dataset.logcall.split('|'); form('call', { cand: c, co: co }); });
   /* Call and Email write the activity themselves. The tel: or mailto:
