@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIVEWORK · Send the letter</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="lw.css?v=6">
+<script src="lw-config.js?v=3"></script>
+<style>
+  body{background:#E7E3DB;margin:0;font-family:'Manrope',-apple-system,'Segoe UI',Arial,sans-serif;color:#111}
+  .sheet{max-width:820px;margin:0 auto;background:#F4F2ED;min-height:100vh}
+  .band{background:#111;padding:30px 44px;display:flex;align-items:center;justify-content:space-between}
+  .band img{display:block;width:184px;height:46px}
+  .band span{font-size:10px;letter-spacing:2.2px;text-transform:uppercase;color:#8A857D}
+  .pad{padding:52px 44px}
+  .bar{width:34px;height:5px;background:#F2C632}
+  .micro{font-size:11px;letter-spacing:2.4px;text-transform:uppercase;color:#75716A;margin:20px 0 18px}
+  h1{font-size:40px;line-height:1.04;letter-spacing:-1px;font-weight:800;margin:0}
+  .lede{font-size:18px;line-height:1.5;color:#75716A;margin:18px 0 0}
+  .rule{height:1px;background:#D3CEC4;margin:34px 0}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input{flex:1;min-width:240px;height:48px;padding:0 14px;border:1px solid #D3CEC4;background:#fff;
+        font:inherit;font-size:15px;border-radius:2px;color:#111}
+  button{height:48px;padding:0 22px;border:0;font:inherit;font-size:14px;font-weight:600;
+         cursor:pointer;border-radius:2px}
+  .ink{background:#111;color:#fff}
+  .ghost{background:transparent;color:#111;border:1px solid #111}
+  .live{background:#F2C632;color:#111}
+  button:disabled{opacity:.4;cursor:default}
+  .lbl{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#75716A;margin:0 0 10px}
+  .out{margin-top:22px;font-size:15px;line-height:1.6;color:#75716A;white-space:pre-wrap;min-height:24px}
+  .out.bad{color:#F05252}
+  .out.good{color:#111;font-weight:600}
+  .danger{margin-top:44px;padding-top:34px;border-top:1px solid #111}
+  .preview{margin-top:0;border:1px solid #D3CEC4;background:#fff;height:560px;width:100%}
+  @media (max-width:700px){.pad{padding:36px 24px}.band{padding:24px}h1{font-size:29px}}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="band">
+    <img src="livework-mark-email.png" alt="LIVEWORK">
+    <span>The weekly</span>
+  </div>
+
+  <div class="pad">
+    <div class="bar"></div>
+    <p class="micro" id="mIssue">No. 01 · September 2026</p>
+    <h1 id="mHead">Compounding is boring until it is not.</h1>
+    <p class="lede" id="mLede"></p>
+
+    <div class="rule"></div>
+
+    <p class="lbl">Send a test to yourself</p>
+    <div class="row">
+      <input id="te" type="email" placeholder="you@company.com" autocomplete="email">
+      <button class="ghost" id="bTest">Send test</button>
+    </div>
+
+    <p class="lbl" style="margin-top:34px">Check the list first</p>
+    <div class="row">
+      <button class="ghost" id="bCount">Count the list</button>
+      <button class="ghost" id="bPrev">Preview</button>
+    </div>
+
+    <div class="out" id="out"></div>
+    <iframe class="preview" id="pv" style="display:none"></iframe>
+
+    <div class="danger">
+      <p class="lbl">The real thing</p>
+      <div class="row">
+        <button class="live" id="bSend">Send to everyone</button>
+      </div>
+      <p class="out" style="margin-top:14px">This sends to every active subscriber. There is no undo.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const ISSUE = {
+  subject: "Compounding is boring until it is not.",
+  number: "No. 01",
+  dateline: "September 2026",
+  headline: "Compounding is boring until it is not.",
+  lede: "The only edge available to almost everyone, and the one almost nobody holds long enough to collect.",
+  top: ["Anything that grows by a percentage of itself produces almost nothing visible for a long stretch, then produces almost everything in a short one. A penny at one percent a day is up a penny tomorrow and 37 times over in a year. The curve looks flat for most of its life because the gains are small while the base is small. Nothing changes at the knee except your ability to see it."],
+  stats: [{v:"1%",l:"A day"},{v:"365",l:"Days"},{v:"37x",l:"The base"}],
+  body: [
+    "That is what makes the idea so hard to hold. Attention runs on differences you can perceive, and exponential growth is the one shape that hides its own progress until late. Economists have a name for the failure. Exponential growth bias. We linearize, which is why people underestimate their debt and their savings in the same direction, and why the wheat on the chessboard stays trivial for thirty two squares and then takes the kingdom.",
+    "So from inside the flat part, the correct behavior and the incorrect behavior feel identical. Paying into something that is working looks exactly like paying into something that is dead. Most people stop there, and they stop reasonably, because the feedback genuinely has not arrived yet."
+  ],
+  swap: {
+    neutral: "Which is why nearly every durable advantage is a compounding one. A reputation. A body of work. The tacit judgment sitting inside a crew that has done one thing for eleven years. None of it can be bought in a quarter, because what is being bought is iterations, and iterations only come from elapsed time. That is also what makes it safe. Anyone can copy a price this month. Nobody can copy nine years of accumulated judgment this month, even if you hand them the drawing.",
+    companies: "Which is why nearly every durable advantage in a business is a compounding one. A reputation. A customer list. The tacit judgment sitting inside a crew that has done one thing for eleven years. None of it can be bought in a quarter, because what is being bought is iterations, and iterations only come from elapsed time. That is also what makes it safe. Anyone can copy your pricing this month. Nobody can copy nine years of accumulated judgment this month, even if you hand them the drawing.",
+    candidates: "Which is why nearly every durable advantage in a career is a compounding one. A reputation. A body of work. The judgment that comes from doing one thing badly for two years and then well for nine. None of it can be bought in a quarter, because what is being bought is repetitions, and repetitions only come from elapsed time. That is also what makes it safe. Anyone can copy a resume this month. Nobody can copy eleven years of accumulated judgment, even if you hand them the drawing."
+  },
+  question: "What are you eleven months into that you are about to stop?"
+};
+
+const $ = id => document.getElementById(id);
+$('mIssue').textContent = ISSUE.number + ' · ' + ISSUE.dateline;
+$('mHead').textContent = ISSUE.headline;
+$('mLede').textContent = ISSUE.lede;
+$('te').value = localStorage.getItem('lw_letter_to') || '';
+
+function say(t, kind){ const o = $('out'); o.textContent = t; o.className = 'out ' + (kind||''); }
+
+function key(){
+  let k = localStorage.getItem('lw_letter_key');
+  if (!k) {
+    k = (prompt('Letter key') || '').trim();
+    if (k) localStorage.setItem('lw_letter_key', k);
+  }
+  return k;
+}
+
+async function call(payload, btn){
+  const k = key();
+  if (!k) { say('No letter key, nothing sent.', 'bad'); return null; }
+  if (btn) btn.disabled = true;
+  say('Working.');
+  try {
+    const r = await fetch(LW.url + '/functions/v1/letter-send', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        apikey: LW.anon,
+        Authorization: 'Bearer ' + LW.anon,
+        'x-letter-key': k
+      },
+      body: JSON.stringify(payload)
+    });
+    const txt = await r.text();
+    if (r.status === 401) {
+      localStorage.removeItem('lw_letter_key');
+      say('Letter key was wrong. Press again and retype it.', 'bad');
+      return null;
+    }
+    if (!r.ok) { say('Failed. ' + txt, 'bad'); return null; }
+    return JSON.parse(txt);
+  } catch (e) {
+    say('Failed. ' + e.message, 'bad');
+    return null;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+$('bTest').onclick = async () => {
+  const to = $('te').value.trim();
+  if (!to) { say('Put an address in first.', 'bad'); return; }
+  localStorage.setItem('lw_letter_to', to);
+  const d = await call({ issue: ISSUE, test: to, testAudience: 'neutral' }, $('bTest'));
+  if (d) say('Test sent to ' + to + '. Go look at it.', 'good');
+};
+
+$('bCount').onclick = async () => {
+  const d = await call({ issue: ISSUE, dryRun: true }, $('bCount'));
+  if (!d) return;
+  const cut = Object.entries(d.cut || {}).map(([k, v]) => v + ' ' + k).join(' · ');
+  say(d.would_send + ' active on the list. ' + cut, 'good');
+};
+
+$('bPrev').onclick = async () => {
+  const d = await call({ issue: ISSUE, preview: true, testAudience: 'neutral' }, $('bPrev'));
+  if (!d || !d.html) { say('Preview needs the newer function. Send a test instead.', 'bad'); return; }
+  const f = $('pv');
+  f.style.display = 'block';
+  f.srcdoc = d.html;
+  say('');
+};
+
+$('bSend').onclick = async () => {
+  const c = await call({ issue: ISSUE, dryRun: true }, $('bSend'));
+  if (!c) return;
+  if (!confirm('Send ' + ISSUE.number + ' to ' + c.would_send + ' people now. There is no undo.')) {
+    say('Nothing sent.');
+    return;
+  }
+  const d = await call({ issue: ISSUE }, $('bSend'));
+  if (!d) return;
+  say('Sent to ' + d.sent + '.' + ((d.errors && d.errors.length) ? '\n\nErrors: ' + d.errors.join('\n') : ''), 'good');
+};
+</script>
+</body>
+</html>
