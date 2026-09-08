@@ -667,14 +667,15 @@ function drawNav(){
 }
 
 /* phone shell: five tabs, the rest lives behind More */
-const TABS = [['today','Today'],['companies','Clients'],['candidates','Candidates'],['pipeline','Pipeline']];
+const TABS = [['today','Today'],['companies','Clients'],['searches','Roles'],['candidates','Candidates']];
 /* one icon per tab, drawn so no two read the same at thumb size:
-   a roof for Today, a building for Clients, a head for Candidates,
-   three columns for Pipeline, three rules for More */
+   a roof for Today, a building for Clients, a briefcase for Roles,
+   a head for Candidates, three rules for More */
 const ICON = {
   today:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.5 21v-6h5v6"/>',
   companies:'<path d="M3.5 21h17"/><path d="M5.5 21V4.5h8V21"/><path d="M13.5 21V10h5v11"/><path d="M8 8h3M8 12h3M8 16h3M16 14h0M16 17h0"/>',
   candidates:'<circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.4a7.2 7.2 0 0 1 14.4 0"/>',
+  searches:'<rect x="3.2" y="7.4" width="17.6" height="12.4" rx="1.6"/><path d="M9 7.4V5.6a1.6 1.6 0 0 1 1.6-1.6h2.8A1.6 1.6 0 0 1 15 5.6v1.8"/><path d="M3.2 12.6h17.6"/>',
   pipeline:'<rect x="3.4" y="4.6" width="4.6" height="14.8" rx="1"/><rect x="9.7" y="4.6" width="4.6" height="9.6" rx="1"/><rect x="16" y="4.6" width="4.6" height="12.4" rx="1"/>',
   more:'<path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/>'
 };
