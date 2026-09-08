@@ -2797,18 +2797,55 @@ function guideDoc(j){
     '<span>' + esc(m.ref || '') + ' · ' + esc(when) + '</span></div></footer>' +
     '</body></html>';
 }
-function openGuide(j){
-  const w = window.open('', '_blank');
-  if(!w) return toast('Allow pop ups on this site to see the guide.', true);
-  w.document.open(); w.document.write(guideDoc(j)); w.document.close();
+function guideWait(name){
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1"><title>Writing the guide</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">' +
+    '<style>*{box-sizing:border-box;margin:0;padding:0}' +
+    'body{background:#FAF8F5;color:#111;font:400 16px/1.55 Manrope,Arial,sans-serif}' +
+    '.w{max-width:880px;margin:0 auto;padding:0 40px}' +
+    '.band{background:#000;padding:26px 0}.band .w{display:flex;align-items:center;justify-content:space-between}' +
+    '.band b{color:#fff;font:800 20px/1 Manrope,Arial,sans-serif}.band b i{color:#F2C632;font-style:normal}' +
+    '.m{color:#fff;opacity:.72;font:600 11px/1 Manrope,Arial,sans-serif;letter-spacing:.22em;text-transform:uppercase}' +
+    'h1{font:800 clamp(38px,6vw,64px)/1 Manrope,Arial,sans-serif;letter-spacing:-.03em;margin:80px 0 16px}' +
+    'p{color:#6E6961;max-width:52ch}' +
+    '.bar{height:5px;background:#E7E1D8;margin-top:40px;overflow:hidden}' +
+    '.bar i{display:block;height:5px;width:34%;background:#F2C632;animation:s 1.5s ease-in-out infinite}' +
+    '@keyframes s{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}</style></head><body>' +
+    '<div class="band"><div class="w"><b>LIVE<i> | </i>WORK</b><span class="m">Interview guide</span></div></div>' +
+    '<div class="w"><h1>Writing.</h1><p>Reading the file for ' + esc(name || 'this candidate') +
+    ', the brief, and every screen note on record, then writing the questions against them. Half a minute, near enough.</p>' +
+    '<div class="bar"><i></i></div></div></body></html>';
+}
+function guideFail(msg){
+  return '<!doctype html><html><head><meta charset="utf-8"><title>No guide</title>' +
+    '<style>body{background:#FAF8F5;color:#111;font:400 16px/1.6 Arial,sans-serif;padding:60px 40px}' +
+    'h1{font-size:34px;margin:0 0 12px}p{color:#6E6961}</style></head><body>' +
+    '<h1>No guide.</h1><p>' + esc(msg) + '</p><p>Close this and try again from the desk.</p></body></html>';
+}
+function writeInto(w, doc){ w.document.open(); w.document.write(doc); w.document.close(); }
+function openGuide(j, w){
+  const t = w || window.open('', '_blank');
+  if(!t) return toast('Allow pop ups on this site to see the guide.', true);
+  writeInto(t, guideDoc(j));
 }
 async function buildGuide(btn, candId, seId, pipeId){
-  const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Writing';
+  /* the tab opens on the click, so the pop up blocker never sees it as
+     a background open and there is something to watch while it writes */
+  const w = window.open('', '_blank');
+  if(w) writeInto(w, guideWait(pname(candId)));
+  const lbl = btn.textContent; btn.disabled = true;
+  let n = 0; btn.textContent = 'Writing';
+  const tick = setInterval(() => { n++; btn.textContent = 'Writing ' + n + 's'; }, 1000);
   try{
     const j = await fnCall('interview-guide', { candidate_id: candId, search_id: seId || null, pipeline_id: pipeId || null });
-    openGuide(j);
+    openGuide(j, w);
     toast('Guide ready. It is on the candidate file now.');
-  }catch(err){ toast('No guide. ' + err.message, true); }
+  }catch(err){
+    if(w) writeInto(w, guideFail(err.message));
+    toast('No guide. ' + err.message, true);
+  }
+  clearInterval(tick);
   btn.disabled = false; btn.textContent = lbl;
 }
 /* the recruiter PDF. The read and the probes are in this one. */
