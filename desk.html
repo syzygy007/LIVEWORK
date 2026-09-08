@@ -643,7 +643,7 @@ const NAV = [
   ['invoices','Invoices'],['mail','Mail'],['reports','Reports'],['settings','Settings']
 ];
 let VIEW = 'today';
-let Q = { cand:'', co:'', tag:'', prem:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', stage:'Submitted' };
+let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', stage:'Submitted' };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -1134,8 +1134,12 @@ function vCompanies(){
 
 /* ---------- Searches ---------- */
 function vSearches(){
-  const open = S.searches.filter(isOpen), closed = S.searches.filter(s => !isOpen(s));
-  const list = Q.searchTab === 'open' ? open : closed;
+  const q = Q.se.trim().toLowerCase();
+  /* one field, three haystacks: the role, the client, the place */
+  const seHay = s => (F(s,'title','role','job_title') + ' ' + cname(s.company_id) + ' ' + F(s,'location')).toLowerCase();
+  const all = q ? S.searches.filter(s => seHay(s).includes(q)) : S.searches;
+  const open = all.filter(isOpen), closed = all.filter(s => !isOpen(s));
+  const list = q ? all : (Q.searchTab === 'open' ? open : closed);
   const fill = s => {
     const pl = S.placements.filter(p => String(p.search_id)===String(idOf(s)))[0];
     const start = F(s,'opened_at','created_at');
@@ -1143,8 +1147,11 @@ function vSearches(){
     return daysBetween(start) + ' days open';
   };
   return head('Roles.', '<button class="btn pill" data-new="search"><span class="p">+</span>Open a role</button>') +
-    '<div class="tools"><button class="chip ' + (Q.searchTab==='open'?'on':'') + '" data-stab="open">Open ' + open.length + '</button>' +
-    '<button class="chip ' + (Q.searchTab==='closed'?'on':'') + '" data-stab="closed">Closed ' + closed.length + '</button></div>' +
+    '<div class="tools"><div class="search">' + SRCH + '<input id="qse" placeholder="Role, client, or location" value="' + esc(Q.se) + '"></div>' +
+      (q ? '' :
+        '<button class="chip ' + (Q.searchTab==='open'?'on':'') + '" data-stab="open">Open ' + open.length + '</button>' +
+        '<button class="chip ' + (Q.searchTab==='closed'?'on':'') + '" data-stab="closed">Closed ' + closed.length + '</button>') +
+    '</div>' +
     table(['Search','Client','Stage spread','Days','Status'],
       list.map(s => {
         const rows = S.pipeline.filter(p => String(p.search_id)===String(idOf(s)));
@@ -1155,7 +1162,9 @@ function vSearches(){
           '<span class="muted small">' + spread + '</span>' +
           '<span class="muted small">' + fill(s) + '</span>' +
           '<span class="st ' + (isOpen(s)?'open':'placed') + '">' + (isOpen(s)?'Open':'Closed') + '</span></div>';
-      }), '2fr 1.2fr 160px 130px 110px');
+      }), '2fr 1.2fr 160px 130px 110px') +
+    (list.length ? '' : '<div class="tbl"><div class="empty">' +
+      (q ? 'Nothing matches that.' : Q.searchTab === 'open' ? 'No open roles right now.' : 'No closed roles yet.') + '</div></div>');
 }
 
 /* ---------- Candidates ---------- */
@@ -3578,6 +3587,9 @@ function wire(){
   const qo = document.getElementById('qco');
   if(qo) qo.oninput = () => { Q.co = qo.value; const p = qo.selectionStart; draw();
     const n = document.getElementById('qco'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
+  const qs = document.getElementById('qse');
+  if(qs) qs.oninput = () => { Q.se = qs.value; const p = qs.selectionStart; draw();
+    const n = document.getElementById('qse'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
 }
 $('#veil').onclick = closeSheet;
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet(); });
