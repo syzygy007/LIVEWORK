@@ -81,7 +81,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 <script>
 /* demo: what Maria at Northwind sees. The live layer swaps this for the signed in contact's company. */
 const LIVE = !!(window.LW && LW.anon && !/PASTE/.test(LW.anon));
-const DEMO_ME = {name:'Maria Delgado', company:'Northwind Logistics', email:'maria@northwind.example', kind:'', fee:'', billing:'', guarantee:'', recruiter:'Derek Germann'};
+const DEMO_ME = {name:'Maria Delgado', company:'Northwind Logistics', email:'maria@northwind.example', kind:'', fee:'', billing:'', guarantee:'', recruiter:'your LIVEWORK recruiter'};
 let ME = LIVE ? {name:'', company:'', email:'', recruiter:'Derek Germann'} : DEMO_ME;
 async function fn(name, body){
   const r = await fetch(`${LW.url}/functions/v1/${name}`, {method:'POST', headers:{'content-type':'application/json', apikey:LW.anon, Authorization:'Bearer '+LW.anon}, body:JSON.stringify(body)});
@@ -112,10 +112,10 @@ function clearSession(){try{localStorage.removeItem(SESSION_KEY)}catch(e){}}
 const STAGES=['Released','Interview','Offer','Placed'];
 let SEARCHES=[
   {title:'Director of Fleet Operations', location:'Irvine, CA', comp:'$165k to $185k', opened:'Aug 14, 2026', status:'Open', cands:[
-    {name:'Elena Vasquez', title:'Regional Operations Manager', location:'Orange County, CA', stage:1, why:'Ran a 60 truck fleet across three sites with full P&L. She is looking for a director seat and named Irvine as her preferred location. Available in 30 days.', fit:['Fleet operations, 9 years','Multi site leadership','P&L ownership','Available in 30 days'], feedback:'You advanced Elena on Aug 26. Interview set for Sep 9, 10:00 AM.', resume:'vasquez-resume.pdf'},
+    {name:'John Smith', title:'Regional Operations Manager', location:'Orange County, CA', stage:1, why:'Ran a 60 truck fleet across three sites with full P&L. He is looking for a director seat and named Irvine as his preferred location. Available in 30 days.', fit:['Fleet operations, 9 years','Multi site leadership','P&L ownership','Available in 30 days'], feedback:'You advanced John on Aug 26. Interview set for Sep 9, 10:00 AM.', resume:'vasquez-resume.pdf'},
   ]},
   {title:'Warehouse Manager, Night Shift', location:'Santa Fe Springs, CA', comp:'$95k to $110k', opened:'Aug 20, 2026', status:'Open', cands:[
-    {name:'Dana Whitfield', title:'Warehouse Manager', location:'Norwalk, CA', stage:0, why:'Runs a night operation today, 40 people. Open to a lateral move for a stronger culture, which is exactly what you described.', fit:['Night shift today','40 direct reports','WMS and RF scanning','12 minute commute'], feedback:'', resume:'whitfield-resume.pdf'},
+    {name:'Jane Doe', title:'Warehouse Manager', location:'Norwalk, CA', stage:0, why:'Runs a night operation today, 40 people. Open to a lateral move for a stronger culture, which is exactly what you described.', fit:['Night shift today','40 direct reports','WMS and RF scanning','12 minute commute'], feedback:'', resume:'whitfield-resume.pdf'},
   ]},
 ];
 const $=s=>document.querySelector(s);
@@ -168,7 +168,7 @@ function room(){
     <div class="hl"><span class="bar"></span><h1>${esc(ME.company)}. ${SEARCHES.length?`${SEARCHES.length===1?'One search':SEARCHES.length+' searches'}, ${SEARCHES.reduce((n,s)=>n+s.cands.length,0)} to look at.`:'Nothing released yet.'}</h1></div>
     <p class="lede">${SEARCHES.length?`Everyone here has been screened by ${esc(ME.recruiter)} and released to you. Open a profile, then advance, pass, or ask for a time. You get an email as each search moves.`:`This is where your searches live. When ${esc(ME.recruiter)} releases a candidate you get an email, and they appear here with a profile, the fit, and three buttons: advance, ask for a time, pass.`}</p>
     ${SEARCHES.map((s,si)=>`<section class="srch">
-      <header><div><h2>${esc(s.title)}</h2><p class="meta">${esc(s.location)} · ${esc(s.comp)} · opened ${s.opened}</p></div>
+      <header><div><h2>${esc(s.title)}</h2><p class="meta">${esc(s.location)} · <span class="comp">${esc(s.comp)}</span> · opened ${s.opened}</p></div>
       <div class="ladder">${STAGES.map((k,i)=>`<span class="${s.cands.some(c=>c.stage>=i)?'on':''}">${k}</span>`).join('')}</div></header>
       <div class="cands">${s.cands.length?s.cands.map((c,ci)=>`<article class="cand" id="c${si}-${ci}">
         <div><b>${esc(c.name)}</b><span class="t">${esc(c.title)} · ${esc(c.location)}</span></div>
