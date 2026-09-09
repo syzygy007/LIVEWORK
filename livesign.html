@@ -30,7 +30,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .ls-hero h1 i{font-style:normal;color:var(--yellow)}
 .ls-hero .lede{margin:0 0 10px;font-size:clamp(22px,3vw,34px);font-weight:500;letter-spacing:-.02em;line-height:1.15}
 .ls-hero .sub{margin:0;color:var(--stone);font-size:16px}
-.ls-card2{border:1px solid var(--line);background:var(--white);padding:44px 32px 28px;display:grid;gap:14px;justify-items:center;text-align:center}
+.ls-card2{border:1px solid var(--line);background:var(--white);padding:40px 32px 32px;display:grid;gap:14px;justify-items:center;text-align:center}
 .ls-card2.over{border-color:var(--ink)}
 .ls-card2 svg{width:60px;height:70px;fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round;margin-bottom:6px}
 .ls-card2 .up{display:inline-flex;align-items:center;justify-content:center;gap:12px;width:100%;height:60px;border:1px solid var(--line);border-radius:var(--r);background:#000;color:#fff;font:600 13px/1 var(--font);letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
@@ -124,10 +124,9 @@ body{padding-bottom:env(safe-area-inset-bottom)}
       </div>
       <div class="ls-card2" id="drop" style="display:none">
         <input type="file" id="file" accept="application/pdf,.pdf">
-        <svg viewBox="0 0 60 70"><path d="M6 2h32l16 16v50H6z"/><path d="M38 2v16h16"/><text x="30" y="48" text-anchor="middle" font-size="15" font-weight="600" fill="currentColor" stroke="none" style="fill:var(--ink)">PDF</text></svg>
-        <button class="up" id="pick">Upload PDF <b>&rarr;</b></button>
-        <div class="or">or drag and drop</div>
-        <hr><div class="spec">PDF · up to 12 MB</div>
+        <button class="btn" id="pick" style="width:100%;height:56px">Choose a PDF</button>
+        <div class="or">or drop one here</div>
+        <div class="spec">Up to 12 MB</div>
       </div>
     </div>
   </div>
