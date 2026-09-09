@@ -30,6 +30,7 @@ body{background:var(--paper)}
 .rail nav button.on{color:#000;background:var(--yellow)}
 .rail nav button .n{font-size:12px;font-weight:600;opacity:.7}
 .rail nav button.on .n{opacity:1}
+.rail nav button.tool{margin-top:10px;border-top:1px solid var(--panel-line, #282828);border-radius:0;padding-top:10px;height:50px}
 .rail .me{flex:none;margin-top:0;font-size:13px;color:var(--panel-dim);line-height:1.4;padding-top:20px;border-top:1px solid var(--panel-line);display:grid;gap:12px}
 .rail .me .who b{display:block;color:var(--panel-ink)}
 .rail .me a{color:var(--panel-dim);font-size:12px;font-weight:600}
@@ -666,6 +667,9 @@ function drawNav(){
     '<button data-v="' + k + '" class="' + (VIEW===k?'on':'') + '">' + l +
     '<span class="n">' + (counts(k)||'') + '</span></button>').join('');
   document.querySelectorAll('#nav button').forEach(b => b.onclick = () => go(b.dataset.v));
+  /* tools: pages that live outside the desk */
+  $('#nav').insertAdjacentHTML('beforeend', '<button data-tool="livesign.html" class="tool">Livesign<span class="n">sign a PDF</span></button>');
+  document.querySelectorAll('#nav button[data-tool]').forEach(b => b.onclick = () => { location.href = b.dataset.tool; });
   drawTabs();
 }
 
