@@ -423,8 +423,10 @@ body{background:var(--paper)}
 .rolecheck input{width:auto;height:auto;margin:0}
 
 /* ---------- help ---------- */
-.hbtn{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:19;height:46px;padding:0 18px 0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--yellow);color:#000;font:600 15px/1 var(--font);display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.hbtn{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:30;height:46px;padding:0 18px 0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--yellow);color:#000;font:600 15px/1 var(--font);display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .hbtn svg{width:18px;height:18px;fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (min-width:901px){.lw-install{left:250px;right:auto;transform:none}}
+@media (max-width:900px){body:has(.lw-install) .hbtn{bottom:calc(150px + env(safe-area-inset-bottom))}}
 @media (max-width:900px){.hbtn{bottom:calc(74px + env(safe-area-inset-bottom));right:14px;height:42px;padding:0 14px 0 12px;font-size:14px}}
 .hpanel{position:fixed;right:22px;bottom:calc(80px + env(safe-area-inset-bottom));width:min(400px,calc(100% - 28px));height:min(560px,calc(100vh - 120px));z-index:22;background:var(--white);border:1px solid var(--line);box-shadow:0 18px 48px rgba(0,0,0,.22);display:none;grid-template-rows:auto 1fr auto;overflow:hidden}
 .hpanel.on{display:grid}

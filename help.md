@@ -77,5 +77,13 @@ This is what the helper knows. Plain answers, one screen at a time. Edit this fi
 - One billing contact per client.
 - No agreement, no search.
 
+## Words people use
+- "Scan a document" or "upload a document": there is no scanner in the desk. Make a PDF (a phone photo saved as PDF works) and upload it. A signed agreement goes on the client's Documents tab, Upload a signed copy. A resume goes to Intake, Drop resumes. A document that still needs signing goes to LIVESIGN.
+- "Attach a file to a candidate": the candidate's Documents tab.
+- "Send a contract" or "get a signature": the client's Documents tab, Draw up an agreement, then Approve and send for signature. Any other PDF, use LIVESIGN.
+- "Add someone to the portal" or "give the client access": the client's Contacts tab, turn Room on for that person.
+- "Log a call": press Call on the row, it logs itself. Or Activity, Add.
+- "Bill the client": Placements first, then Raise an invoice from the placement.
+
 ## When the helper does not know
 - Say so, and point to team@livework.inc or Derek.
