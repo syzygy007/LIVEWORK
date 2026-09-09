@@ -288,6 +288,7 @@ body{background:var(--paper)}
   padding:5px 12px;border-radius:999px;white-space:nowrap;flex:none}
 .clist .ch .pill.warn{background:var(--s-due);color:#fff}
 .tbl .r .muted.warn{color:var(--s-due,#b4552a);font-weight:700}
+.tbl .r select.rolesel{font:inherit;font-size:13px;font-weight:600;padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);color:var(--ink);max-width:140px}
 .agwrap{margin-bottom:14px}
 .agnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap}
 .agnav .btn{padding:4px 10px;font-size:12px;width:auto}
@@ -642,7 +643,7 @@ const sigBar = v => v == null ? '<span class="muted small">Not submitted yet</sp
 const NAV = [
   ['today','Today'],['companies','Clients'],['searches','Roles'],['candidates','Candidates'],['intake','Intake'],
   ['pools','Pools'],['pipeline','Pipeline'],['activity','Activity'],['placements','Placements'],
-  ['invoices','Invoices'],['mail','Mail'],['reports','Reports'],['settings','Settings']
+  ['invoices','Invoices'],['mail','Mail'],['reports','Reports'],['people','People'],['settings','Settings']
 ];
 let VIEW = 'today';
 let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', stage:'Submitted' };
@@ -661,7 +662,7 @@ function counts(k){
 }
 function drawNav(){
   drawSkin();
-  $('#nav').innerHTML = NAV.map(([k,l]) =>
+  $('#nav').innerHTML = NAV.filter(([k]) => k !== 'people' || isAdmin()).map(([k,l]) =>
     '<button data-v="' + k + '" class="' + (VIEW===k?'on':'') + '">' + l +
     '<span class="n">' + (counts(k)||'') + '</span></button>').join('');
   document.querySelectorAll('#nav button').forEach(b => b.onclick = () => go(b.dataset.v));
@@ -738,7 +739,7 @@ function draw(){
   m.innerHTML = ({
     today: vToday, companies: vCompanies, searches: vSearches, candidates: vCandidates, intake: vIntake,
     pools: vPools, pipeline: vPipeline, activity: vActivity, placements: vPlacements,
-    invoices: vInvoices, mail: vMail, reports: vReports, settings: vSettings
+    invoices: vInvoices, mail: vMail, reports: vReports, people: vPeople, settings: vSettings
   }[VIEW])();
   wire();
   labelCells(m);
@@ -820,9 +821,9 @@ function myNumbers(){
 
 /* ---------- Today: the home page. every row comes from data, nothing is typed to make it appear. ---------- */
 let SCOPE = 'mine';
-function amAdmin(){ return String(F(ME || {}, 'role')).toLowerCase() === 'admin'; }
+function amAdmin(){ return ['admin','owner'].indexOf(String(F(ME || {}, 'role')).toLowerCase()) >= 0; }
 /* who may see campaigns and how a candidate was acquired. mirrors public.sees_campaigns() in the database. */
-function amCampaigns(){ return ['admin','manager','coordinator'].indexOf(String(F(ME || {}, 'role')).toLowerCase()) >= 0; }
+function amCampaigns(){ return ['owner','admin','manager','coordinator'].indexOf(String(F(ME || {}, 'role')).toLowerCase()) >= 0; }
 function myScope(){
   const me = meId(), all = SCOPE === 'all' || !me;
   const cos = S.companies.filter(c => all || String(F(c,'owner_id')) === String(me));
@@ -1137,6 +1138,16 @@ function vCompanies(){
 /* ---------- Searches ---------- */
 /* both names ride every role, so nobody has to ask who is on it */
 const activeStaff = () => S.staff.filter(x => x.active !== false);
+/* three tiers. owner is the super user, sits above admin and is not
+   listed to admins. everyone else is delivery. */
+const ROLES = ['owner','admin','recruiter','coordinator'];
+const meRow = () => byId(S.staff, meId()) || {};
+const roleOf = x => String(F(x,'role') || 'recruiter').toLowerCase();
+const isOwner = () => roleOf(meRow()) === 'owner';
+const isAdmin = () => isOwner() || roleOf(meRow()) === 'admin';
+/* everyone is listed. an admin simply cannot change an owner, or themselves. */
+const canSetRole = who => isOwner() ? String(idOf(who)) !== String(meId())
+  : isAdmin() && roleOf(who) !== 'owner' && String(idOf(who)) !== String(meId());
 const whoName = id => { const x = byId(S.staff, id); return x ? F(x,'name','email') : 'Unassigned'; };
 const usd = n => (n < 0 ? '(' : '') + '$' + Math.abs(Math.round(Number(n)||0)).toLocaleString() + (n < 0 ? ')' : '');
 
@@ -2066,6 +2077,62 @@ function vReports(){
       team.map(t => '<div class="r" style="grid-template-columns:2fr 100px 100px 150px 120px">' +
         '<b>' + esc(t.name) + '</b><span>' + t.calls + '</span><span>' + t.visits + '</span><span>' + t.notes + '</span><span>' + t.placed + '</span></div>'),
       '2fr 100px 100px 150px 120px');
+}
+
+/* ---------- People ----------
+   Who is in the system and what they can reach. An owner sees
+   everyone. An admin sees everyone but the owner, and cannot hand
+   out the owner tier. Nobody demotes themselves by accident. ---------- */
+function vPeople(){
+  if(!isAdmin()) return head('People.', '') +
+    '<div class="tbl"><div class="empty">This screen is for admins.</div></div>';
+
+  const list = S.staff.slice().sort((a,b) =>
+    ROLES.indexOf(roleOf(a)) - ROLES.indexOf(roleOf(b)) ||
+    String(F(a,'name','email')).localeCompare(String(F(b,'name','email'))));
+
+  const openAM  = id => S.searches.filter(x => isOpen(x) && String(x.am_id) === String(id)).length;
+  const openRec = id => S.searches.filter(x => isOpen(x) && String(x.recruiter_id) === String(id)).length;
+  const ytd = id => (S.lw_payable || []).filter(x => String(x.staff_id) === String(id) &&
+    String(x.plan_year) === String(new Date().getFullYear()));
+  const grantable = who => ROLES.filter(r => r !== 'owner' || isOwner())
+    .map(r => '<option value="' + r + '"' + (roleOf(who) === r ? ' selected' : '') + '>' +
+      r.charAt(0).toUpperCase() + r.slice(1) + '</option>').join('');
+
+  const rows = list.map(x => {
+    const id = idOf(x), self = String(id) === String(meId());
+    const lines = ytd(id);
+    const fees = lines.reduce((t,l) => t + Number(l.fee_net || 0), 0);
+    const comm = lines.reduce((t,l) => t + Number(l.commission || 0), 0);
+    return '<div class="r" style="grid-template-columns:1.4fr 1.7fr 150px 90px 80px 80px 110px 110px">' +
+      '<div><b>' + esc(F(x,'name','email')) + '</b>' + (self ? '<br><span class="muted small">You</span>' : '') + '</div>' +
+      '<span class="muted">' + esc(F(x,'email')) + '</span>' +
+      (canSetRole(x) ? '<select class="rolesel" data-staff="' + id + '">' + grantable(x) + '</select>'
+                     : '<span class="chip" title="' + (self ? 'You cannot change your own role' : 'Only an owner can change an owner') + '">' +
+                       esc(roleOf(x)) + '</span>') +
+      '<span class="st ' + (x.active === false ? 'placed' : 'open') + '">' + (x.active === false ? 'Off' : 'Active') + '</span>' +
+      '<span class="muted small">' + openAM(id) + '</span>' +
+      '<span class="muted small">' + openRec(id) + '</span>' +
+      '<span class="muted small">' + usd(fees) + '</span>' +
+      '<b>' + usd(comm) + '</b></div>';
+  });
+
+  const unstaffed = S.searches.filter(x => isOpen(x) && (!x.am_id || !x.recruiter_id)).length;
+
+  return head('People.', '') +
+    (unstaffed ? '<div class="sec"><h2>' + unstaffed + ' open ' + (unstaffed === 1 ? 'role is' : 'roles are') +
+      ' missing a name.</h2><span class="muted small">A role with no AM or no Recruiter is invisible to everyone but an admin.</span></div>' : '') +
+    '<div class="sec"><h2>Who is in the system.</h2><span class="muted small">' +
+      (isOwner() ? 'You can change anyone but yourself.' : 'Owner accounts are visible but locked.') + '</span></div>' +
+    table(['Person','Email','Role','Status','As AM','As Rec','Net fees YTD','Commission YTD'], rows,
+      '1.4fr 1.7fr 150px 90px 80px 80px 110px 110px', { empty: 'Nobody yet.' }) +
+    '<div class="sec"><h2>What each tier reaches.</h2></div>' +
+    '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
+      '<div class="row"><b>Owner</b><span>Everything. Only another owner can change an owner</span></div>' +
+      '<div class="row"><b>Admin</b><span>Every role and every commission line. Can change anyone except an owner, and cannot grant the owner tier</span></div>' +
+      '<div class="row"><b>Recruiter</b><span>Only roles where they are the AM or the Recruiter, and only their own commission</span></div>' +
+      '<div class="row"><b>Coordinator</b><span>Same reach as a recruiter. No commission credit unless named on a role</span></div>' +
+    '</div>';
 }
 
 /* ---------- Settings ---------- */
@@ -3540,6 +3607,14 @@ function common(root){
 function wire(){
   const m = $('#main');
   common(m);
+  m.querySelectorAll('select.rolesel').forEach(sel => sel.onchange = async () => {
+    const was = S.staff.find(x => String(idOf(x)) === String(sel.dataset.staff));
+    const prev = was ? roleOf(was) : '';
+    const ok = await tryWrite(() => patch('staff', sel.dataset.staff, { role: sel.value }),
+      'Role changed to ' + sel.value + '.');
+    if(!ok){ sel.value = prev; return; }
+    await loadAll(); drawNav(); draw();
+  });
   m.querySelectorAll('[data-pipe]').forEach(c => c.onclick = e => {
     if(e.target.closest('button[data-adv],button[data-rel],button[data-note],button[data-mail],button[data-guide],button[data-guidemail],button[data-mvstage],button[data-setstage]')) return;
     const p = byId(S.pipeline, c.dataset.pipe); if(p) openSheet('candidate', p.candidate_id);
