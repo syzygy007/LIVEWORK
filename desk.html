@@ -287,6 +287,7 @@ body{background:var(--paper)}
 .clist .ch .pill{font-size:12px;font-weight:600;background:var(--wall);color:var(--ink);
   padding:5px 12px;border-radius:999px;white-space:nowrap;flex:none}
 .clist .ch .pill.warn{background:var(--s-due);color:#fff}
+.tbl .r .muted.warn{color:var(--s-due,#b4552a);font-weight:700}
 .agwrap{margin-bottom:14px}
 .agnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap}
 .agnav .btn{padding:4px 10px;font-size:12px;width:auto}
@@ -459,7 +460,8 @@ const MAP = {
                legal:'legal_name', address:'address', notice:'notice_email' },
   contact:   { company:'company_id', name:'name', email:'email', title:'title', phone:'phone', room:'room_access', billing:'is_billing' },
   search:    { company:'company_id', title:'title', location:'location', kind:'engagement_type', status:'status',
-               comp_min:'comp_low', comp_max:'comp_high', opened:'opened_at', notes:'notes', owner:'owner_id' },
+               comp_min:'comp_low', comp_max:'comp_high', opened:'opened_at', notes:'notes', owner:'owner_id',
+               am:'am_id', recruiter:'recruiter_id', ad:'ad_spend' },
   candidate: { name:'name', email:'email', phone:'phone', title:'title', location:'location',
                premier:'premier', premier_reason:'premier_reason', premier_by:'premier_by', notes:'summary' },
   pipeline:  { search:'search_id', candidate:'candidate_id', stage:'stage', released:'released', released_at:'released_at', added_by:'added_by', campaign:'campaign_id' },
@@ -570,7 +572,7 @@ async function tryWrite(fn, okMsg){
 const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_tags:[], candidates:[],
   candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
   automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[],
-  pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[] };
+  pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[] };
 let ME = null;
 
 async function loadAll(){
@@ -1133,6 +1135,11 @@ function vCompanies(){
 }
 
 /* ---------- Searches ---------- */
+/* both names ride every role, so nobody has to ask who is on it */
+const activeStaff = () => S.staff.filter(x => x.active !== false);
+const whoName = id => { const x = byId(S.staff, id); return x ? F(x,'name','email') : 'Unassigned'; };
+const usd = n => (n < 0 ? '(' : '') + '$' + Math.abs(Math.round(Number(n)||0)).toLocaleString() + (n < 0 ? ')' : '');
+
 function vSearches(){
   const q = Q.se.trim().toLowerCase();
   /* one field, three haystacks: the role, the client, the place */
@@ -1152,17 +1159,18 @@ function vSearches(){
         '<button class="chip ' + (Q.searchTab==='open'?'on':'') + '" data-stab="open">Open ' + open.length + '</button>' +
         '<button class="chip ' + (Q.searchTab==='closed'?'on':'') + '" data-stab="closed">Closed ' + closed.length + '</button>') +
     '</div>' +
-    table(['Search','Client','Stage spread','Days','Status'],
+    table(['Search','Client','AM','Recruiter','Days','Status'],
       list.map(s => {
         const rows = S.pipeline.filter(p => String(p.search_id)===String(idOf(s)));
         const spread = STAGES.slice(0,5).map(st => rows.filter(p => stageOf(p)===st).length).join(' / ');
-        return '<div class="r" style="grid-template-columns:2fr 1.2fr 160px 130px 110px" data-se="' + idOf(s) + '">' +
-          '<div><b>' + esc(F(s,'title','role','job_title')) + '</b><br><span class="muted small">' + esc(F(s,'location')) + '</span></div>' +
+        return '<div class="r" style="grid-template-columns:1.8fr 1.1fr 1fr 1fr 120px 100px" data-se="' + idOf(s) + '">' +
+          '<div><b>' + esc(F(s,'title','role','job_title')) + '</b><br><span class="muted small">' + esc(F(s,'location')) + ' · ' + spread + '</span></div>' +
           '<span class="muted">' + esc(cname(s.company_id)) + '</span>' +
-          '<span class="muted small">' + spread + '</span>' +
+          '<span class="muted small' + (s.am_id ? '' : ' warn') + '">' + esc(whoName(s.am_id)) + '</span>' +
+          '<span class="muted small' + (s.recruiter_id ? '' : ' warn') + '">' + esc(whoName(s.recruiter_id)) + '</span>' +
           '<span class="muted small">' + fill(s) + '</span>' +
           '<span class="st ' + (isOpen(s)?'open':'placed') + '">' + (isOpen(s)?'Open':'Closed') + '</span></div>';
-      }), '2fr 1.2fr 160px 130px 110px') +
+      }), '1.8fr 1.1fr 1fr 1fr 120px 100px') +
     (list.length ? '' : '<div class="tbl"><div class="empty">' +
       (q ? 'Nothing matches that.' : Q.searchTab === 'open' ? 'No open roles right now.' : 'No closed roles yet.') + '</div></div>');
 }
@@ -1986,7 +1994,66 @@ function vReports(){
       notes: S.interview_notes.filter(n => String(n.staff_id)===String(idOf(st))).length,
       placed: S.placements.filter(p => String(F(p,'staff_id','owner_id'))===String(idOf(st))).length };
   });
+  /* ---- Open searches. Both names on every row, filtered to who is looking. ---- */
+  const meS = String(meId());
+  const admin = /admin|owner/i.test(String(F(byId(S.staff, meS) || {}, 'role')));
+  const mine = S.searches.filter(isOpen).filter(x =>
+    admin || String(x.am_id) === meS || String(x.recruiter_id) === meS);
+  const dayRows = mine.sort((a,b) => String(F(a,'opened_at')) < String(F(b,'opened_at')) ? -1 : 1).map(s => {
+    const rows = S.pipeline.filter(p => String(p.search_id) === String(idOf(s)));
+    const sub = rows.filter(p => stageIx(p) >= STAGES.indexOf('Submitted') && stageOf(p) !== 'Passed').length;
+    const int = rows.filter(p => stageIx(p) >= STAGES.indexOf('Interview') && stageOf(p) !== 'Passed').length;
+    return '<div class="r" style="grid-template-columns:1.7fr 1.1fr 1fr 1fr 110px 80px 70px 70px" data-se="' + idOf(s) + '">' +
+      '<b>' + esc(F(s,'title','role')) + '</b>' +
+      '<span class="muted">' + esc(cname(s.company_id)) + '</span>' +
+      '<span class="muted small">' + esc(whoName(s.am_id)) + '</span>' +
+      '<span class="muted small">' + esc(whoName(s.recruiter_id)) + '</span>' +
+      '<span class="st open">' + esc(F(s,'status','stage') || 'open') + '</span>' +
+      '<span class="muted small">' + daysBetween(F(s,'opened_at','created_at')) + '</span>' +
+      '<span class="muted small">' + sub + '</span><span class="muted small">' + int + '</span></div>';
+  });
+
+  /* ---- Commission payable. The ladder and the holdback come from the view. ---- */
+  const P = (S.lw_payable || []).filter(x => admin || String(x.staff_id) === meS);
+  const due = [];
+  P.forEach(x => {
+    if(Number(x.advance_amt) > 0) due.push({ who: x.staff_name, role: x.role, what: x.search_title,
+      co: x.company, net: x.fee_net, amt: Number(x.advance_amt),
+      why: 'Collected · 75%', when: x.advance_due });
+    due.push({ who: x.staff_name, role: x.role, what: x.search_title, co: x.company, net: x.fee_net,
+      amt: Number(x.release_amt), when: x.release_due,
+      why: x.client_proven ? 'Guarantee expired · 25%' : 'First deal · held to guarantee' });
+  });
+  const today_ = today();
+  const nowDue = due.filter(d => d.when && String(d.when) <= today_);
+  const later  = due.filter(d => !d.when || String(d.when) > today_);
+  const byPerson = {};
+  nowDue.forEach(d => byPerson[d.who || 'Unassigned'] = (byPerson[d.who || 'Unassigned'] || 0) + d.amt);
+  const payRows = nowDue.map(d =>
+    '<div class="r" style="grid-template-columns:1.2fr .8fr 1.5fr 1.1fr 110px 1.2fr 110px">' +
+      '<b>' + esc(d.who || 'Unassigned') + '</b>' +
+      '<span class="muted small">' + (d.role === 'am' ? 'AM' : 'Recruiter') + '</span>' +
+      '<span>' + esc(d.what || '') + '</span>' +
+      '<span class="muted">' + esc(d.co || '') + '</span>' +
+      '<span class="muted small">' + usd(d.net) + '</span>' +
+      '<span class="muted small">' + esc(d.why) + '</span>' +
+      '<b>' + usd(d.amt) + '</b></div>')
+    .concat(Object.keys(byPerson).sort().map(k =>
+      '<div class="r" style="grid-template-columns:1.2fr .8fr 1.5fr 1.1fr 110px 1.2fr 110px">' +
+        '<b>' + esc(k) + '</b><span class="muted small"></span>' +
+        '<span class="muted">To payroll</span><span></span><span></span><span></span>' +
+        '<b>' + usd(byPerson[k]) + '</b></div>'));
+
   return head('Reports.', '') +
+    '<div class="sec"><h2>' + (admin ? 'Open searches.' : 'My open searches.') + '</h2>' +
+      '<span class="muted small">Both names on every role, so nobody has to ask who is on it.</span></div>' +
+    table(['Search','Client','AM','Recruiter','Status','Days','Sub','Int'], dayRows,
+      '1.7fr 1.1fr 1fr 1fr 110px 80px 70px 70px', { empty: 'No open roles with your name on them.' }) +
+    '<div class="sec"><h2>Commission payable.</h2>' +
+      '<span class="muted small">Earned on collection and on the guarantee running out. ' +
+      later.length + ' not due yet.</span></div>' +
+    table(['Person','Side','Search','Client','Net fee','Trigger','This run'], payRows,
+      '1.2fr .8fr 1.5fr 1.1fr 110px 1.2fr 110px', { empty: 'Nothing payable this run.' }) +
     '<div class="sec"><h2>Funnel.</h2></div><div class="bars">' + funnel + '</div>' +
     '<div class="sec"><h2>Fill rate by client.</h2></div>' +
     table(['Client','Searches','Filled','Rate'],
@@ -2337,7 +2404,8 @@ function prefill(kind, r){
     setv('f_room', r[MAP.contact.room] === true); setv('f_bill', r[MAP.contact.billing] === true); }
   if(kind === 'search'){ setv('f_co', r.company_id); setv('f_title', F(r,'title','role')); setv('f_loc', F(r,'location'));
     setv('f_kind', F(r,'kind','engagement_type')); setv('f_stat', String(F(r,'status') || 'open').toLowerCase());
-    setv('f_min', F(r,'comp_min','comp_low')); setv('f_max', F(r,'comp_max','comp_high')); setv('f_notes', F(r,'notes')); }
+    setv('f_min', F(r,'comp_min','comp_low')); setv('f_max', F(r,'comp_max','comp_high')); setv('f_notes', F(r,'notes'));
+    setv('f_am', r.am_id || ''); setv('f_rec', r.recruiter_id || ''); setv('f_ad', r.ad_spend != null ? String(r.ad_spend) : ''); }
   if(kind === 'candidate'){ setv('f_name', F(r,'name','full_name')); setv('f_title', F(r,'title','headline'));
     setv('f_email', F(r,'email')); setv('f_phone', F(r,'phone')); setv('f_loc', F(r,'location')); setv('f_notes', F(r,'notes','summary')); }
   if(kind === 'note'){ setv('f_cand', r.candidate_id); setv('f_se', r.search_id); setv('f_kind', F(r,'kind'));
@@ -2380,6 +2448,9 @@ function form(kind, ctx){
       '<div class="two"><div class="field"><label for="f_loc">Location</label><input id="f_loc"></div>' +
       '<div class="field"><label for="f_kind">Engagement</label><select id="f_kind"><option>Contingent</option><option>Retained</option></select></div></div>' +
       '<div class="field"><label for="f_stat">Status</label><select id="f_stat"><option value="open">Open</option><option value="on_hold">On hold</option><option value="filled">Filled</option><option value="cancelled">Cancelled</option></select></div>' +
+      '<div class="two"><div class="field"><label for="f_am">Account Manager</label><select id="f_am">' + opts(activeStaff(), st => F(st,'name','email'), ctx.am) + '</select></div>' +
+      '<div class="field"><label for="f_rec">Recruiter</label><select id="f_rec">' + opts(activeStaff(), st => F(st,'name','email'), ctx.rec) + '</select></div></div>' +
+      '<div class="field"><label for="f_ad">Advertising on this role, dollars</label><input id="f_ad" inputmode="decimal" placeholder="Deducted from the fee before commission"></div>' +
       '<div class="two"><div class="field"><label for="f_min">Comp low</label><input id="f_min" inputmode="numeric"></div>' +
       '<div class="field"><label for="f_max">Comp high</label><input id="f_max" inputmode="numeric"></div></div>' +
       '<div class="field"><label for="f_notes">The brief</label><textarea id="f_notes" placeholder="What good looks like, who they report to, why the seat is open."></textarea></div>'],
@@ -2917,6 +2988,8 @@ async function save(kind, ctx){
       [M.search.location]: val('f_loc'), [M.search.kind]: val('f_kind'), [M.search.status]: val('f_stat') || 'open',
       [M.search.comp_min]: val('f_min') ? num(val('f_min')) : '', [M.search.comp_max]: val('f_max') ? num(val('f_max')) : '',
       [M.search.opened]: ctx.edit ? undefined : today(), [M.search.notes]: val('f_notes'),
+      [M.search.am]: val('f_am'), [M.search.recruiter]: val('f_rec'),
+      [M.search.ad]: val('f_ad') ? num(val('f_ad')) : '',
       [M.search.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Search updated.' : 'Search opened.');
   }
   if(kind === 'candidate'){
