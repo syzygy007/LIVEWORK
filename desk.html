@@ -421,6 +421,26 @@ body{background:var(--paper)}
 .rolecheck{display:grid;gap:8px;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;max-height:280px;overflow:auto}
 .rolecheck label{display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer}
 .rolecheck input{width:auto;height:auto;margin:0}
+
+/* ---------- help ---------- */
+.hbtn{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:19;height:46px;padding:0 18px 0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--yellow);color:#000;font:600 15px/1 var(--font);display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.hbtn svg{width:18px;height:18px;fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:900px){.hbtn{bottom:calc(74px + env(safe-area-inset-bottom));right:14px;height:42px;padding:0 14px 0 12px;font-size:14px}}
+.hpanel{position:fixed;right:22px;bottom:calc(80px + env(safe-area-inset-bottom));width:min(400px,calc(100% - 28px));height:min(560px,calc(100vh - 120px));z-index:22;background:var(--white);border:1px solid var(--line);box-shadow:0 18px 48px rgba(0,0,0,.22);display:none;grid-template-rows:auto 1fr auto;overflow:hidden}
+.hpanel.on{display:grid}
+@media (max-width:900px){.hpanel{right:0;left:0;bottom:0;width:100%;height:min(78vh,640px);border-left:0;border-right:0}}
+.hhead{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel);color:var(--panel-ink)}
+.hhead b{font-size:15px;letter-spacing:-.01em}.hhead .micro{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.7}
+.hhead a{color:var(--panel-ink);font-size:13px;cursor:pointer;text-decoration:underline}
+.hlog{overflow:auto;padding:16px 18px;display:grid;gap:12px;align-content:start;font-size:14px;line-height:1.5}
+.hmsg{max-width:88%;padding:10px 14px;border-radius:14px;white-space:pre-wrap}
+.hmsg.me{justify-self:end;background:var(--yellow);color:#000;border-bottom-right-radius:4px}
+.hmsg.bot{justify-self:start;background:var(--paper);color:var(--ink);border-bottom-left-radius:4px}
+.hmsg.wait{color:var(--stone)}
+.hask{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.hask input{flex:1;min-width:0;height:44px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);color:var(--ink);font:400 15px var(--font)}
+.hask button{height:44px;padding:0 16px;border:0;border-radius:var(--r);background:var(--solid);color:var(--solid-ink);font:600 14px var(--font);cursor:pointer}
+.hask button[disabled]{opacity:.4}
 </style>
 </head>
 <body>
@@ -447,6 +467,13 @@ body{background:var(--paper)}
 <div class="veil" id="veil"></div>
 <aside class="sheet" id="sheet"></aside>
 <div class="toast" id="toast"></div>
+<button class="hbtn" id="helpBtn" aria-label="Help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8"/><path d="M12 17h0"/></svg>Help</button>
+<div class="hpanel" id="helpPanel" role="dialog" aria-label="Help">
+  <div class="hhead"><div><div class="micro">Ask the desk</div><b>How do I...</b></div><a id="helpClose">Close</a></div>
+  <div class="hlog" id="helpLog"><div class="hmsg bot">Ask me how to do anything on the desk. Where invoices go, how to release a candidate, how to draw up an agreement, how LIVESIGN works.</div></div>
+  <div class="hask"><input id="helpQ" placeholder="How do I..." autocomplete="off"><button id="helpGo">Ask</button></div>
+</div>
+
 
 <script>
 /* ============================================================
@@ -3762,6 +3789,30 @@ LWAuth.gate(document.getElementById('gate'), async function(staff){
   try{ intakeRestore(); }catch(e){ console.warn('tray', e.message); }
   drawNav(); draw();
 });
+
+/* ---------- help: answers from help.md through desk-help, nothing stored ---------- */
+(function(){
+  const P = $('#helpPanel'), L = $('#helpLog'), Qi = $('#helpQ'), G = $('#helpGo');
+  if(!P) return;
+  let hist = [], busy = false;
+  const add = (cls, t) => { const d = document.createElement('div'); d.className = 'hmsg ' + cls; d.textContent = t; L.appendChild(d); L.scrollTop = L.scrollHeight; return d; };
+  const open = on => { P.classList.toggle('on', on); if(on) setTimeout(() => Qi.focus(), 50); };
+  $('#helpBtn').onclick = () => open(!P.classList.contains('on'));
+  $('#helpClose').onclick = () => open(false);
+  async function ask(){
+    const q = Qi.value.trim(); if(!q || busy) return;
+    Qi.value = ''; busy = true; G.disabled = true;
+    add('me', q); const w = add('bot wait', 'Thinking');
+    try{
+      const viewName = (NAV.find(([k]) => k === VIEW) || [VIEW, VIEW])[1];
+      const r = await fnCall('desk-help', { q, view: viewName, history: hist.slice(-8) });
+      w.className = 'hmsg bot'; w.textContent = r.text || 'No answer came back.';
+      hist.push({ role: 'user', text: q }, { role: 'assistant', text: w.textContent });
+    }catch(e){ w.className = 'hmsg bot'; w.textContent = 'That did not go through: ' + e.message; }
+    busy = false; G.disabled = false; Qi.focus();
+  }
+  G.onclick = ask; Qi.onkeydown = e => { if(e.key === 'Enter') ask(); };
+})();
 </script>
 </body>
 </html>
