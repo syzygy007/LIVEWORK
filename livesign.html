@@ -271,7 +271,7 @@ $('#sign').onclick = async () => {
   const b = $('#sign'); b.disabled = true; b.textContent = 'Signing';
   try{
     const s = await LWAuth.ensure(); if(!s) throw new Error('Signed out. Reload and sign in again.');
-    const r = await fetch(LW.url + '/functions/v1/livesign', { method: 'POST',
+    const r = await fetch(LW.url + '/functions/v1/live-sign', { method: 'POST',
       headers: { 'content-type': 'application/json', apikey: LW.anon, Authorization: 'Bearer ' + s.access_token },
       body: JSON.stringify({ pdf: b64(BUF), filename: FILE, name: $('#name').value.trim(), title: $('#title2').value.trim(),
         email: $('#email').value.trim(), consent: true, sig: signature(),
