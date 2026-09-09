@@ -42,6 +42,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .ls-page .n{position:absolute;top:8px;right:8px;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--stone);background:var(--paper);padding:2px 6px;pointer-events:none}
 .ls-f{position:absolute;border:2px solid var(--yellow-deep);background:rgba(242,198,50,.18);display:flex;align-items:center;justify-content:center;font:600 11px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;color:#000;cursor:default}
 .ls-f.date,.ls-f.name{background:rgba(242,198,50,.25)}
+.ls-f{cursor:move;touch-action:none}
+.ls-f .rz{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;border-radius:50%;background:var(--yellow-deep);border:2px solid #fff;cursor:nwse-resize;touch-action:none}
 .ls-f img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .ls-f .x{position:absolute;top:-12px;right:-12px;width:24px;height:24px;border-radius:50%;background:#000;color:#fff;font-size:13px;line-height:24px;text-align:center;cursor:pointer}
 .ls-card{border:1px solid var(--line);background:var(--white);padding:22px;display:grid;gap:14px;position:sticky;top:120px}
@@ -74,7 +76,19 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 </div></header>
 
 <main class="wrap">
-  <div id="gate"></div>
+  <div id="gate">
+    <div class="ls-head">
+      <div class="micro">Livesign</div>
+      <h1>Sign anything.</h1>
+      <p>Upload a PDF, tap where it needs your signature, sign with your finger. It emails you the signed copy. Nothing is kept.</p>
+    </div>
+    <div class="ls-row" id="pickdoor" style="margin-bottom:64px">
+      <button class="btn" id="asclient">I am a client</button>
+      <button class="btn ghost" id="asstaff">I work at LIVEWORK</button>
+    </div>
+    <div id="cdoor" class="ls-card" style="display:none;max-width:520px;position:static;margin-bottom:64px"></div>
+    <div id="sdoor"></div>
+  </div>
 
   <div id="app" style="display:none">
     <div class="ls-head">
@@ -137,20 +151,58 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.mjs';
 const $ = s => document.querySelector(s);
 const say = (t, bad) => { const e = $('#msg'); e.textContent = t || ''; e.className = 'ls-msg' + (t && bad ? ' bad' : ''); };
 
-/* ---------- staff gate ---------- */
-let STAFF = null;
-LWAuth.gate($('#gate'), st => {
-  STAFF = st; $('#gate').style.display = 'none'; $('#app').style.display = '';
-  $('#who').textContent = st.name || st.email || 'LIVESIGN';
-  if(st.name) $('#name').value = st.name;
-  if(st.email) $('#email').value = st.email;
-  if(st.role === 'admin') $('#title2').value = 'President';
+/* ---------- two doors: client (room code) or staff (desk sign in) ---------- */
+let AUTH = null;   /* {kind:'staff'} or {kind:'room', token} */
+const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function roomSession(){ try{ const r = JSON.parse(localStorage.getItem('lw_room_session') || 'null'); if(r && r.token && new Date(r.expires_at) > new Date()) return r; }catch(e){} return null; }
+async function fnAnon(name, body){
+  const r = await fetch(LW.url + '/functions/v1/' + name, { method: 'POST', headers: { 'content-type': 'application/json', apikey: LW.anon, Authorization: 'Bearer ' + LW.anon }, body: JSON.stringify(body) });
+  return r.json().catch(() => ({ ok: false }));
+}
+function ready(kind, who, name, email, title){
+  AUTH = kind === 'staff' ? { kind } : { kind, token: who.token };
+  $('#gate').style.display = 'none'; $('#app').style.display = '';
+  $('#who').textContent = name || email || 'LIVESIGN';
+  if(name) $('#name').value = name; if(email) $('#email').value = email; if(title) $('#title2').value = title;
   fit();
-});
+}
+function staffDoor(){
+  $('#pickdoor').style.display = 'none'; $('#cdoor').style.display = 'none';
+  LWAuth.gate($('#sdoor'), st => ready('staff', null, st.name, st.email, st.role === 'admin' ? 'President' : ''));
+}
+let cstep = 0, cemail = '', cerr = '';
+function clientDoor(){
+  $('#pickdoor').style.display = 'none'; const d = $('#cdoor'); d.style.display = '';
+  d.innerHTML = cstep === 0
+    ? '<h2>Your work email.</h2><p class="ls-note">Use the email your recruiter invited. We send a six digit code, no password.</p><div class="field"><label for="cem">Work email</label><input id="cem" type="email" inputmode="email" value="' + esc(cemail) + '"></div>' + (cerr ? '<div class="ls-msg bad">' + esc(cerr) + '</div>' : '') + '<button class="btn" id="cgo">Send my code</button><p class="ls-note">Not a client yet? <a href="index.html#contact">Start a conversation</a>.</p>'
+    : '<h2>Check your email.</h2><p class="ls-note">If ' + esc(cemail) + ' was invited by your recruiter, a six digit code is on its way.</p><div class="field"><label for="ccd">Code</label><input id="ccd" inputmode="numeric" maxlength="7" placeholder="000000"></div>' + (cerr ? '<div class="ls-msg bad">' + esc(cerr) + '</div>' : '') + '<button class="btn" id="cgo">Open</button><p class="ls-note"><a href="#" id="cback">Use a different email</a></p>';
+  const go = $('#cgo');
+  go.onclick = async () => {
+    cerr = '';
+    if(cstep === 0){
+      cemail = ($('#cem').value || '').trim().toLowerCase();
+      if(!cemail.includes('@')){ cerr = 'Enter your work email.'; return clientDoor(); }
+      go.disabled = true; go.textContent = 'Sending'; await fnAnon('room-code', { email: cemail });
+      cstep = 1; clientDoor(); $('#ccd').focus();
+    }else{
+      const code = ($('#ccd').value || '').replace(/\D/g, '');
+      if(code.length !== 6){ cerr = 'The code is six digits.'; return clientDoor(); }
+      go.disabled = true; go.textContent = 'Opening';
+      const r = await fnAnon('room-verify', { email: cemail, code });
+      if(!r.ok){ cerr = { wrong: 'That code did not match. Try again.', expired: 'That code expired. Ask for a new one.', locked: 'Too many tries. Ask for a new code.' }[r.reason] || 'We could not sign you in. Check the email and try again.'; return clientDoor(); }
+      try{ localStorage.setItem('lw_room_session', JSON.stringify(r)); }catch(e){}
+      ready('room', r, r.contact && r.contact.name, (r.contact && r.contact.email) || cemail, '');
+    }
+  };
+  const em = $('#cem'); if(em){ em.focus(); em.onkeydown = e => { if(e.key === 'Enter') go.click(); }; }
+  const cd = $('#ccd'); if(cd) cd.onkeydown = e => { if(e.key === 'Enter') go.click(); };
+  const b = $('#cback'); if(b) b.onclick = e => { e.preventDefault(); cstep = 0; cerr = ''; clientDoor(); };
+}
+$('#asclient').onclick = clientDoor; $('#asstaff').onclick = staffDoor;
 
 /* ---------- the document ---------- */
 let BUF = null, FILE = '', PAGES = [], FIELDS = [], MODE = 'sig';
-const SIZE = { sig: [0.28, 0.07], date: [0.16, 0.026], name: [0.28, 0.026] };   /* fraction of page width and height */
+const SIZE = { sig: [0.2, 0.045], date: [0.12, 0.022], name: [0.2, 0.022] };   /* fraction of page width and height */
 
 $('#pick').onclick = () => $('#file').click();
 $('#file').onchange = e => { if(e.target.files[0]) openPdf(e.target.files[0]); };
@@ -178,9 +230,24 @@ async function openPdf(f){
     const n = document.createElement('span'); n.className = 'n'; n.textContent = 'PAGE ' + p + ' OF ' + pdf.numPages; box.appendChild(n);
     box.addEventListener('click', ev => place(ev, box, p));
     host.appendChild(box); PAGES.push(box);
+    /* fillable form: read its own signature, name and date fields and drop boxes on them */
+    try{
+      const ann = await page.getAnnotations();
+      for(const a of ann){
+        if(a.subtype !== 'Widget' || !a.rect) continue;
+        const nm = String(a.fieldName || '') + ' ' + String(a.alternativeText || '');
+        const kind = a.fieldType === 'Sig' || /sig/i.test(nm) ? 'sig' : /date/i.test(nm) ? 'date' : /\bname\b|signer|print/i.test(nm) ? 'name' : '';
+        if(!kind) continue;
+        const [x1, y1, x2, y2] = a.rect;
+        const f = { page: p, kind, x: Math.min(x1, x2) / v1.width, y: 1 - Math.max(y1, y2) / v1.height, w: Math.abs(x2 - x1) / v1.width, h: Math.abs(y2 - y1) / v1.height, id: Math.random().toString(36).slice(2), auto: true };
+        if(f.w < 0.03 || f.h < 0.008) continue;
+        FIELDS.push(f); draw(f, box);
+      }
+    }catch(e){}
   }
+  if(FIELDS.length) $('#sub').textContent = 'Found the fields on this form. Remove any you do not need, tap to add more, then sign once below.';
   $('#h1').textContent = FILE.replace(/\.pdf$/i, '') + '.';
-  $('#sub').textContent = 'Tap the page where each signature goes. Then sign once below.';
+  if(!FIELDS.length) $('#sub').textContent = 'Tap the page where each signature goes. Then sign once below.';
   drop.style.display = 'none'; $('#work').style.display = '';
   count(); fit();
 }
@@ -206,7 +273,22 @@ function draw(f, pg){
   if(f.kind === 'sig' && inked){ d.textContent = ''; const i = new Image(); i.src = cv.toDataURL('image/png'); d.appendChild(i); }
   const x = document.createElement('span'); x.className = 'x'; x.textContent = 'x';
   x.onclick = e => { e.stopPropagation(); FIELDS = FIELDS.filter(q => q.id !== f.id); d.remove(); count(); };
-  d.appendChild(x); pg.appendChild(d);
+  const rz = document.createElement('span'); rz.className = 'rz';
+  d.appendChild(x); d.appendChild(rz); pg.appendChild(d);
+  /* drag to move, corner to resize, all in page fractions */
+  let st = null;
+  const down = (e, mode) => { e.stopPropagation(); e.preventDefault(); const r = pg.getBoundingClientRect();
+    st = { mode, r, sx: e.clientX, sy: e.clientY, x: f.x, y: f.y, w: f.w, h: f.h, moved: false }; e.target.setPointerCapture(e.pointerId); };
+  d.addEventListener('pointerdown', e => { if(e.target === x) return; down(e, e.target === rz ? 'rz' : 'mv'); });
+  const move = e => { if(!st) return; const dx = (e.clientX - st.sx) / st.r.width, dy = (e.clientY - st.sy) / st.r.height;
+    if(Math.abs(e.clientX - st.sx) + Math.abs(e.clientY - st.sy) > 3) st.moved = true;
+    if(st.mode === 'mv'){ f.x = Math.max(0, Math.min(1 - f.w, st.x + dx)); f.y = Math.max(0, Math.min(1 - f.h, st.y + dy)); }
+    else { f.w = Math.max(0.04, Math.min(1 - f.x, st.w + dx)); f.h = Math.max(0.01, Math.min(1 - f.y, st.h + dy)); }
+    d.style.left = (f.x * 100) + '%'; d.style.top = (f.y * 100) + '%'; d.style.width = (f.w * 100) + '%'; d.style.height = (f.h * 100) + '%'; };
+  d.addEventListener('pointermove', move); rz.addEventListener('pointermove', move);
+  const up = () => { st = null; };
+  ['pointerup','pointercancel'].forEach(k => { d.addEventListener(k, up); rz.addEventListener(k, up); });
+  d.addEventListener('click', e => e.stopPropagation());
 }
 function count(){
   const s = FIELDS.filter(f => f.kind === 'sig').length, o = FIELDS.length - s;
@@ -270,10 +352,12 @@ $('#sign').onclick = async () => {
   if(BUF.byteLength > 12 * 1024 * 1024) return say('That PDF is over 12MB. Compress it first.', true);
   const b = $('#sign'); b.disabled = true; b.textContent = 'Signing';
   try{
-    const s = await LWAuth.ensure(); if(!s) throw new Error('Signed out. Reload and sign in again.');
+    let bearer = LW.anon, room_token = '';
+    if(AUTH && AUTH.kind === 'room'){ room_token = AUTH.token; }
+    else { const s = await LWAuth.ensure(); if(!s) throw new Error('Signed out. Reload and sign in again.'); bearer = s.access_token; }
     const r = await fetch(LW.url + '/functions/v1/live-sign', { method: 'POST',
-      headers: { 'content-type': 'application/json', apikey: LW.anon, Authorization: 'Bearer ' + s.access_token },
-      body: JSON.stringify({ pdf: b64(BUF), filename: FILE, name: $('#name').value.trim(), title: $('#title2').value.trim(),
+      headers: { 'content-type': 'application/json', apikey: LW.anon, Authorization: 'Bearer ' + bearer },
+      body: JSON.stringify({ room_token, pdf: b64(BUF), filename: FILE, name: $('#name').value.trim(), title: $('#title2').value.trim(),
         email: $('#email').value.trim(), consent: true, sig: signature(),
         fields: FIELDS.map(f => ({ page: f.page, kind: f.kind, x: f.x, y: f.y, w: f.w, h: f.h })) }) });
     const d = await r.json().catch(() => ({ ok: false, error: 'no answer from the server' }));
@@ -288,6 +372,12 @@ $('#sign').onclick = async () => {
     $('#done').style.display = ''; window.scrollTo({ top: 0, behavior: 'smooth' });
   }catch(e){ b.disabled = false; b.textContent = 'Sign and send'; say(e.message, true); }
 };
+/* boot last, after every declaration above exists */
+(async () => {
+  const rs = roomSession();
+  if(rs) return ready('room', rs, rs.contact && rs.contact.name, rs.contact && rs.contact.email, '');
+  if(await LWAuth.ensure()) staffDoor();
+})();
 </script>
 </body>
 </html>
