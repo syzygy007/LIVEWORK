@@ -454,6 +454,23 @@ body{background:var(--paper)}
 .acc .go[disabled]{opacity:.35;cursor:default}
 .acc .foot{font-size:12px;color:var(--stone);line-height:1.5}
 @media (max-width:600px){.acc-in{padding:24px 18px 20px}.acc h1{font-size:34px}.acc-doc{max-height:40vh}}
+.agdot{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--stone);margin-top:4px;white-space:nowrap}
+a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-decoration:underline}
+.accpop{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}
+.accpop-in{width:min(680px,100%);max-height:90vh;overflow:auto;background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:28px 28px 20px;color:var(--ink)}
+.accpop-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:8px}
+.accpop-head h2{font-size:30px;letter-spacing:-.03em;margin:4px 0 0}
+.accpop .micro{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);font-weight:600;display:flex;align-items:center;gap:6px}
+.accpop .micro i{width:8px;height:8px;border-radius:50%;display:inline-block}.accpop .micro i.ok{background:#1DB954}.accpop .micro i.old{background:var(--yellow)}
+.accx{cursor:pointer;font-size:13px;text-decoration:underline;color:var(--stone);white-space:nowrap}
+.accrec{border-top:1px solid var(--line);padding:16px 0 8px;margin-top:8px}
+.accrow{display:grid;grid-template-columns:200px 1fr;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.45}
+.accrow span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--stone);font-weight:600;padding-top:2px}
+.accrow b{font-weight:500;word-break:break-all}
+.accfoot{font-size:13px;color:var(--stone);padding-top:14px}.accfoot a{color:var(--ink);cursor:pointer;text-decoration:underline}
+@media (max-width:600px){.accrow{grid-template-columns:1fr;gap:2px}.accpop-in{padding:20px 16px}}
+.agdot i{width:8px;height:8px;border-radius:50%;flex:none;display:inline-block}
+.agdot i.ok{background:#1DB954}.agdot i.old{background:var(--yellow)}.agdot i.no{background:var(--line)}
 /* ---------- help ---------- */
 .hbtn{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:30;height:46px;padding:0 18px 0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--yellow);color:#000;font:600 15px/1 var(--font);display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .hbtn svg{width:18px;height:18px;fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -635,7 +652,7 @@ async function tryWrite(fn, okMsg){
 const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_tags:[], candidates:[],
   candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
   automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[], interview_guides:[],
-  pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[] };
+  pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[], desk_acceptances:[] };
 let ME = null;
 
 async function loadAll(){
@@ -2181,7 +2198,7 @@ function vPeople(){
     const fees = lines.reduce((t,l) => t + Number(l.fee_net || 0), 0);
     const comm = lines.reduce((t,l) => t + Number(l.commission || 0), 0);
     return '<div class="r" style="grid-template-columns:1.4fr 1.7fr 150px 90px 80px 80px 110px 110px">' +
-      '<div><b>' + esc(F(x,'name','email')) + '</b>' + (self ? '<br><span class="muted small">You</span>' : '') + '</div>' +
+      '<div><b>' + esc(F(x,'name','email')) + '</b>' + (self ? '<br><span class="muted small">You</span>' : '') + '<br>' + accDot(F(x,'email')) + '</div>' +
       '<span class="muted">' + esc(F(x,'email')) + '</span>' +
       (canSetRole(x) ? '<select class="rolesel" data-staff="' + id + '">' + grantable(x) + '</select>'
                      : '<span class="chip" title="' + (self ? 'You cannot change your own role' : 'Only an owner can change an owner') + '">' +
@@ -3924,6 +3941,63 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet();
 
 /* ---------- desk access agreement: nobody enters before accepting ---------- */
 const ACC_FILE = 'desk-agreement.txt';
+let ACC_CUR = '';
+/* the dot on People: green on the current text, amber on an older version, grey if never */
+function accRows(email){
+  const em = String(email || '').toLowerCase();
+  return (S.desk_acceptances || []).filter(a => String(a.email || '').toLowerCase() === em)
+    .sort((a,b) => new Date(b.accepted_at) - new Date(a.accepted_at));
+}
+const accWhen = d => new Date(d).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', second:'2-digit', timeZoneName:'short' });
+function accDot(email){
+  const rows = accRows(email);
+  if(!rows.length) return '<span class="agdot"><i class="no"></i>Agreement not accepted</span>';
+  const a = rows[0], cur = !ACC_CUR || a.text_hash === ACC_CUR;
+  return '<a class="agdot" data-acc="' + esc(String(email || '').toLowerCase()) + '" title="Open the acceptance record"><i class="' + (cur ? 'ok' : 'old') + '"></i>' +
+    (cur ? 'Agreement accepted ' : 'Older version accepted ') + esc(accWhen(a.accepted_at)) + '</a>';
+}
+/* the record behind the dot. everything a court asks for, in one card */
+function accSheet(email){
+  const rows = accRows(email);
+  const staff = S.staff.find(x => String(F(x,'email')).toLowerCase() === String(email).toLowerCase()) || {};
+  const row = (k, v) => '<div class="accrow"><span>' + k + '</span><b>' + (v == null || v === '' ? '<i class="muted">not recorded</i>' : esc(v)) + '</b></div>';
+  const one = (a, i) => {
+    const cur = !ACC_CUR || a.text_hash === ACC_CUR;
+    return '<div class="accrec">' +
+      '<div class="micro">' + (i === 0 ? 'Current record' : 'Earlier record') + ' · <i class="' + (cur ? 'ok' : 'old') + '"></i> ' + (cur ? 'current agreement text' : 'older agreement text') + '</div>' +
+      row('Signer', a.full_name) +
+      row('Account', a.email) +
+      row('Accepted', accWhen(a.accepted_at)) +
+      row('Network address', a.ip) +
+      row('Device', a.agent) +
+      row('Agreement version', a.version) +
+      row('Document fingerprint (SHA-256)', a.text_hash) +
+      row('Method', 'Electronic acceptance: full agreement displayed, consent box ticked, legal name typed, button pressed while signed in with a verified email code') +
+      row('Record ID', a.id) +
+      '</div>';
+  };
+  const v = document.createElement('div'); v.className = 'accpop';
+  v.innerHTML = '<div class="accpop-in">' +
+    '<div class="accpop-head"><div><div class="micro">Desk access agreement</div><h2>' + esc(F(staff,'name','email') || email) + '</h2></div>' +
+    '<a class="accx" title="Close">Close</a></div>' +
+    (rows.length ? rows.map(one).join('') : '<div class="accrec"><div class="muted">No acceptance on record for ' + esc(email) + '. They will see the agreement the next time they sign in.</div></div>') +
+    '<div class="accfoot"><a href="' + ACC_FILE + '" target="_blank" rel="noopener">Open the agreement text</a>' +
+    (rows.length ? ' · <a data-acccsv="' + esc(email) + '">Download this record</a>' : '') + '</div>' +
+    '</div>';
+  document.body.appendChild(v);
+  const close = () => v.remove();
+  v.onclick = e => { if(e.target === v) close(); };
+  v.querySelector('.accx').onclick = close;
+  const dl = v.querySelector('[data-acccsv]');
+  if(dl) dl.onclick = () => {
+    const keys = ['id','email','full_name','accepted_at','ip','agent','version','text_hash','staff_id'];
+    const csv = [keys.join(',')].concat(rows.map(a => keys.map(k => '"' + String(a[k] == null ? '' : a[k]).replace(/"/g,'""') + '"').join(','))).join('\n');
+    const b = new Blob([csv], { type:'text/csv' }); const u = URL.createObjectURL(b);
+    const t = document.createElement('a'); t.href = u; t.download = 'desk-agreement-' + String(email).replace(/[^a-z0-9]+/gi,'-') + '.csv';
+    document.body.appendChild(t); t.click(); t.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+  };
+}
+document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('[data-acc]'); if(a){ e.preventDefault(); e.stopPropagation(); accSheet(a.dataset.acc); } }, true);
 async function sha256(text){
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
@@ -3951,6 +4025,7 @@ async function acceptGate(staff){
   if(!r.ok) throw new Error('The desk agreement could not be loaded.');
   const text = await r.text();
   const ver = accVersion(text), hash = await sha256(text);
+  ACC_CUR = hash;
   const have = await rest('desk_acceptances?select=id&email=eq.' + encodeURIComponent(email) + '&text_hash=eq.' + hash + '&limit=1').catch(() => []);
   if(Array.isArray(have) && have.length) return;
   const gate = document.getElementById('gate');
