@@ -617,7 +617,7 @@ async function tryWrite(fn, okMsg){
 /* ---------- store ---------- */
 const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_tags:[], candidates:[],
   candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
-  automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[],
+  automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[], interview_guides:[],
   pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[] };
 let ME = null;
 
@@ -2388,6 +2388,7 @@ function sheetCandidate(){
   const notes = S.interview_notes.filter(n => String(n.candidate_id)===String(idOf(c)));
   const acts = S.activity.filter(a => String(a.candidate_id)===String(idOf(c)));
   const docs = S.documents.filter(d => String(d.candidate_id)===String(idOf(c)));
+  const guides = S.interview_guides.filter(g => String(g.candidate_id)===String(idOf(c)));
   const prem = c[MAP.candidate.premier] === true;
   const T = SHEET.tab;
   let body = '';
@@ -2429,8 +2430,10 @@ function sheetCandidate(){
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
         '<button class="btn ghost" data-prof="' + idOf(c) + '">Branded profile PDF</button>' +
         '<button class="btn ghost" data-prof="' + idOf(c) + '" data-redact="1">Client copy, no contact info</button>' +
-        '<button class="btn ghost" data-guidepdf="' + idOf(c) + '|' + ((rows[0] || {}).search_id || '') + '">Interview guide PDF</button>' +
-        '<button class="btn ghost" data-guidemail="' + idOf(c) + '|' + ((rows[0] || {}).search_id || '') + '">Send the guide to the client</button>' +
+        (guides.length
+          ? '<button class="btn ink" data-guidepdf="' + idOf(c) + '|' + ((rows[0] || {}).search_id || '') + '">Interview Guide PDF</button>' +
+            '<button class="btn ghost" data-guidemail="' + idOf(c) + '|' + ((rows[0] || {}).search_id || '') + '">Send the guide to the client</button>'
+          : '<button class="btn" data-guide="' + idOf(c) + '|' + ((rows[0] || {}).search_id || '') + '|' + ((rows[0] || {}).id || '') + '">Generate Interview Guide</button>') +
       '</div>';
   shell(esc(F(c,'name','full_name')) + '.', esc(F(c,'title','headline')) + (F(c,'location') ? ' · ' + esc(F(c,'location')) : ''),
     tabs(['Profile','Notes','History','Activity','Documents']) + body);
@@ -3609,6 +3612,7 @@ async function buildGuide(btn, candId, seId, pipeId){
     const j = await fnCall('interview-guide', { candidate_id: candId, search_id: seId || null, pipeline_id: pipeId || null });
     openGuide(j, w);
     toast('Guide ready. It is on the candidate file now.');
+    try{ await loadAll(); if(SHEET) paintSheet(); }catch(e){}
   }catch(err){
     if(w) writeInto(w, guideFail(err.message));
     toast('No guide. ' + err.message, true);
