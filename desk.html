@@ -511,6 +511,14 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 .hask input{flex:1;min-width:0;height:44px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);color:var(--ink);font:400 15px var(--font)}
 .hask button{height:44px;padding:0 16px;border:0;border-radius:var(--r);background:var(--solid);color:var(--solid-ink);font:600 14px var(--font);cursor:pointer}
 .hask button[disabled]{opacity:.4}
+.xamt{font-size:34px;font-weight:800;letter-spacing:-.03em;height:64px}
+.xdrop{padding:22px 18px}
+.clist .ch b .xco{font-weight:500;color:var(--stone);letter-spacing:0;font-size:16px;margin-left:6px}
+.clist .ch .pill.ok{background:var(--s-paid,#35C98A);color:#fff}
+.clist .xnote{color:var(--ink);font-size:15px;line-height:1.45;margin-top:8px}
+.clist .xa a.yes{background:var(--yellow,#F2C632);border-color:var(--yellow,#F2C632);color:#111}
+.clist .c.xr{cursor:pointer}
+@media (max-width:900px){ .xamt{font-size:40px;height:72px} }
 </style>
 </head>
 <body>
@@ -578,7 +586,10 @@ const MAP = {
                guarantee_ends:'guarantee_ends', status:'status' },
   invoice:   { company:'company_id', placement:'placement_id', amount:'amount', status:'status',
                issued:'issued_at', due:'due_at', description:'description', po:'po_number' },
-  automation:{ name:'name', trigger:'trigger', enabled:'enabled' }
+  automation:{ name:'name', trigger:'trigger', enabled:'enabled' },
+  expense:   { staff:'staff_id', company:'company_id', search:'search_id', kind:'kind', amount:'amount', spent:'spent_on',
+               category:'category', merchant:'merchant', note:'note', receipt:'receipt_path', status:'status',
+               approved_by:'approved_by', approved_at:'approved_at', reason:'rejected_reason' }
 };
 const STAGES = ['Sourced','Submitted','Interview','Offer','Placed','Passed'];
 const DBSTAGE = { Sourced:'sourced', Submitted:'submitted', Interview:'client_interview', Offer:'offer', Placed:'placed', Passed:'passed' };
@@ -671,7 +682,7 @@ async function tryWrite(fn, okMsg){
 const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_tags:[], candidates:[],
   candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
   automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[], interview_guides:[],
-  pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[], desk_acceptances:[] };
+  pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[], desk_acceptances:[], expenses:[] };
 let ME = null;
 
 async function loadAll(){
@@ -748,7 +759,7 @@ const sigBar = v => v == null ? '<span class="muted small">Not submitted yet</sp
 const NAV = [
   ['today','Today'],['companies','Clients'],['searches','Roles'],['candidates','Candidates'],['intake','Intake'],
   ['pools','Pools'],['pipeline','Pipeline'],['activity','Activity'],['placements','Placements'],
-  ['invoices','Invoices'],['mail','Mail'],['reports','Reports'],['people','People'],['settings','Settings']
+  ['invoices','Invoices'],['expenses','Expenses'],['mail','Mail'],['reports','Reports'],['people','People'],['settings','Settings']
 ];
 let VIEW = 'today';
 let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', stage:'Submitted' };
@@ -762,6 +773,7 @@ function counts(k){
   if(k==='pipeline') return S.pipeline.filter(p => stageOf(p)!=='Placed' && stageOf(p)!=='Passed').length;
   if(k==='placements') return S.placements.length;
   if(k==='invoices') return S.invoices.filter(i => String(F(i,'status')).toLowerCase()!=='paid').length;
+  if(k==='expenses') return exBadge();
   if(k==='pools') return S.pools.length;
   return '';
 }
@@ -847,7 +859,7 @@ function draw(){
   m.innerHTML = ({
     today: vToday, companies: vCompanies, searches: vSearches, candidates: vCandidates, intake: vIntake,
     pools: vPools, pipeline: vPipeline, activity: vActivity, placements: vPlacements,
-    invoices: vInvoices, mail: vMail, reports: vReports, people: vPeople, settings: vSettings
+    invoices: vInvoices, expenses: vExpenses, mail: vMail, reports: vReports, people: vPeople, settings: vSettings
   }[VIEW])();
   wire();
   labelCells(m);
@@ -871,7 +883,11 @@ const RICON = {
   done:'<path d="M5 12.5l4.4 4.4L19 7.6"/>',
   nudge:'<path d="M4.6 12h13"/><path d="M12.6 6.8 17.8 12l-5.2 5.2"/>',
   write:'<path d="M4.6 19.4h3.2L18.3 8.9a1.7 1.7 0 0 0 0-2.4l-.8-.8a1.7 1.7 0 0 0-2.4 0L4.6 16.2Z"/>',
-  call:'<path d="M6.2 4.6h3l1.5 3.7-2 1.4a10.4 10.4 0 0 0 5.6 5.6l1.4-2 3.7 1.5v3a1.6 1.6 0 0 1-1.8 1.6C11.3 18.9 5.1 12.7 4.6 6.4a1.6 1.6 0 0 1 1.6-1.8Z"/>'
+  call:'<path d="M6.2 4.6h3l1.5 3.7-2 1.4a10.4 10.4 0 0 0 5.6 5.6l1.4-2 3.7 1.5v3a1.6 1.6 0 0 1-1.8 1.6C11.3 18.9 5.1 12.7 4.6 6.4a1.6 1.6 0 0 1 1.6-1.8Z"/>',
+  doc:'<path d="M7 3.5h7l4 4V20.5H7Z"/><path d="M14 3.5v4h4"/><path d="M9.5 12h5M9.5 15.5h5"/>',
+  spend:'<path d="M12 4v16"/><path d="M15.5 7.5H10.3a2.3 2.3 0 0 0 0 4.6h3.4a2.3 2.3 0 0 1 0 4.6H8.5"/>',
+  ok:'<path d="M5 12.5l4.4 4.4L19 7.6"/>',
+  receipt:'<path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4Z"/><path d="M9 8h6M9 11.5h6M9 15h4"/>'
 };
 const up = t => String(t).charAt(0).toUpperCase() + String(t).slice(1);
 const SRCH = '<svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.2"/><path d="m15.4 15.4 4 4"/></svg>';
@@ -1066,6 +1082,21 @@ function needsYou(sc){
     push(d, 'NO SPEND', d >= 14, esc(campLabel(x)) + ' · ' + esc(sname(x.search_id)),
       'Running ' + d + ' days with no cost on it', 'se:' + x.search_id,
       { k:'spend', l:'Add it', a:'data-camp="' + idOf(x) + '"' });
+  });
+
+  /* money asked for and money owed a receipt */
+  if(amAdmin()) S.expenses.filter(x => exStatus(x) === 'requested').forEach(x => {
+    const d = daysBetween(F(x,'created_at'));
+    push(d, 'ASKING', d >= 3, exMoney(x) + ' \u00b7 ' + esc(cname(x.company_id)),
+      esc(exWho(x)) + ' wants to spend it' + (F(x,'merchant') ? ' at ' + esc(F(x,'merchant')) : '') + (F(x,'note') ? '. ' + esc(F(x,'note')) : ''),
+      'ex:' + idOf(x), { k:'ok', l:'Approve', a:'data-exok="' + idOf(x) + '"' });
+  });
+  S.expenses.filter(x => String(x.staff_id) === String(meId()) && exStatus(x) === 'approved' && x.kind === 'request' && !F(x,'receipt_path')).forEach(x => {
+    const d = daysBetween(F(x,'approved_at','created_at'));
+    if(d < 1) return;
+    push(d, 'NO RECEIPT', d >= 7, exMoney(x) + ' \u00b7 ' + esc(cname(x.company_id)),
+      'Approved, the receipt is still owed', 'ex:' + idOf(x),
+      { k:'receipt', l:'Attach', a:'data-ex="' + idOf(x) + '"' });
   });
 
   sc.tasks.filter(t => F(t,'due_at','due_on') && new Date(F(t,'due_at','due_on')) < new Date(new Date().setHours(0,0,0,0))).forEach(t => {
@@ -2082,6 +2113,82 @@ function vInvoices(){
     '<p class="muted small" style="margin-top:16px">Invoices are issued by GERMANN INC dba LIVEWORK. Numbering runs from 1001.</p>';
 }
 
+/* ------------------------------------------------------------
+   Expenses. Company card spend, every dollar on a client.
+   A receipt is spend that happened. A request is spend that
+   wants a yes first. No reimbursement, no mileage.
+   ------------------------------------------------------------ */
+const XCATS = ['Meals','Travel','Lodging','Entertainment','Supplies','Software','Other'];
+const XST = { requested:'Asking', submitted:'Logged', approved:'Approved', rejected:'Rejected' };
+const exStatus = x => String(F(x,'status') || 'submitted').toLowerCase();
+const exMoney = x => F(x,'amount') != null && F(x,'amount') !== '' ? '$' + num(F(x,'amount')).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'No amount';
+const exWho = x => ownerName(x.staff_id);
+const exCounts = x => exStatus(x) === 'approved' || exStatus(x) === 'submitted';
+const exMonth = x => String(F(x,'spent_on','created_at')).slice(0,7) === today().slice(0,7);
+function exBadge(){
+  if(amAdmin()) return S.expenses.filter(x => exStatus(x) === 'requested').length;
+  return S.expenses.filter(x => String(x.staff_id) === String(meId()) && exStatus(x) === 'approved' && x.kind === 'request' && !F(x,'receipt_path')).length;
+}
+/* spend on a client: what the card paid, and what the campaigns cost */
+const exOnCo = coId => S.expenses.filter(x => String(x.company_id) === String(coId) && exCounts(x));
+const exSum = list => list.reduce((n, x) => n + num(F(x,'amount')), 0);
+function campSpendOnCo(coId){
+  const seIds = S.searches.filter(s => String(s.company_id) === String(coId)).map(s => String(idOf(s)));
+  return S.campaigns.filter(x => seIds.indexOf(String(x.search_id)) >= 0).reduce((n, x) => n + num(F(x,'spend')), 0);
+}
+function exRow(x){
+  const st = exStatus(x), me = String(x.staff_id) === String(meId());
+  const pill = st === 'requested' ? '<span class="pill warn">Asking</span>'
+    : st === 'rejected' ? '<span class="pill">Rejected</span>'
+    : st === 'approved' ? '<span class="pill ok">Approved</span>' : '<span class="pill">Logged</span>';
+  const line = [F(x,'merchant'), F(x,'category'), short(F(x,'spent_on','created_at')), exWho(x)].filter(Boolean).map(esc).join(' \u00b7 ');
+  const owed = st !== 'rejected' && !F(x,'receipt_path');
+  return '<div class="c xr" data-ex="' + idOf(x) + '">' +
+    '<div class="ch"><b>' + exMoney(x) + ' <span class="xco">' + esc(cname(x.company_id)) + '</span></b>' + pill + '</div>' +
+    '<div class="m">' + line + (x.search_id ? ' \u00b7 ' + esc(sname(x.search_id)) : '') + '</div>' +
+    (F(x,'note') ? '<div class="t xnote">' + esc(F(x,'note')) + '</div>' : '') +
+    (st === 'rejected' && F(x,'rejected_reason') ? '<div class="t"><span class="muted warn">Rejected:</span> ' + esc(F(x,'rejected_reason')) + '</div>' : '') +
+    '<div class="a xa">' +
+      (F(x,'receipt_path') ? '<a data-exopen="' + idOf(x) + '">' + RICON_A('receipt') + 'Receipt</a>' : (owed && me ? '<a data-ex="' + idOf(x) + '">' + RICON_A('receipt') + 'Attach receipt</a>' : '')) +
+      (amAdmin() && (st === 'requested' || st === 'submitted') ? '<a class="yes" data-exok="' + idOf(x) + '">' + RICON_A('ok') + 'Approve</a><a data-exno="' + idOf(x) + '">Reject</a>' : '') +
+      ((me || amAdmin()) && st !== 'approved' ? '<a data-ex="' + idOf(x) + '">' + OPENI + 'Edit</a>' : '') +
+    '</div></div>';
+}
+const RICON_A = k => '<svg viewBox="0 0 24 24" aria-hidden="true">' + RICON[k] + '</svg>';
+function vExpenses(){
+  const q = String(Q.ex || '').toLowerCase();
+  const all = amAdmin() && Q.exScope === 'all';
+  const mine = S.expenses.filter(x => all || String(x.staff_id) === String(meId()));
+  const hay = x => [exMoney(x), cname(x.company_id), F(x,'merchant'), F(x,'category'), F(x,'note'), exWho(x), x.search_id ? sname(x.search_id) : ''].join(' ').toLowerCase();
+  const found = mine.filter(x => !q || hay(x).includes(q));
+  const tab = Q.exTab || 'all';
+  const list = found.filter(x => tab === 'all' || (tab === 'asking' ? exStatus(x) === 'requested' : exStatus(x) === tab))
+    .sort((a,b) => String(F(b,'spent_on','created_at')).localeCompare(String(F(a,'spent_on','created_at'))) || String(F(b,'created_at')).localeCompare(String(F(a,'created_at'))));
+  const month = mine.filter(x => exCounts(x) && exMonth(x));
+  const asking = (amAdmin() ? S.expenses : mine).filter(x => exStatus(x) === 'requested');
+  const cos = {}; month.forEach(x => { cos[String(x.company_id)] = (cos[String(x.company_id)] || 0) + num(F(x,'amount')); });
+  const top = Object.keys(cos).sort((a,b) => cos[b] - cos[a])[0];
+  const chip = (k, l, n) => '<button class="chip ' + (tab === k ? 'on' : '') + '" data-extab="' + k + '">' + l + (n ? ' ' + n : '') + '</button>';
+  return head('Expenses.',
+      '<button class="btn pill" data-new="expense"><span class="p">+</span>Log an expense</button>' +
+      '<button class="btn pill ghost" data-exreq="1">Ask first</button>') +
+    (amAdmin() ? '<div class="tools">' +
+      '<button class="chip ' + (!all ? 'on' : '') + '" data-exscope="mine">Mine</button>' +
+      '<button class="chip ' + (all ? 'on' : '') + '" data-exscope="all">Everyone</button></div>' : '') +
+    '<div class="stats">' +
+      '<div class="stat y"><b>' + money(exSum(month)) + '</b><span>This month</span></div>' +
+      '<div class="stat flag' + (asking.length ? '' : ' zero') + '"><b>' + asking.length + '</b><span>Asking for a yes</span></div>' +
+      '<div class="stat"><b>' + Object.keys(cos).length + '</b><span>Clients with spend</span></div>' +
+      '<div class="stat"><b>' + (top ? esc(cname(top)) : 'No one yet') + '</b><span>Most spent on</span></div>' +
+    '</div>' +
+    '<div class="tools"><div class="search">' + SRCH + '<input id="qex" placeholder="Search the notes, the client, the place" value="' + esc(Q.ex || '') + '"></div>' +
+      chip('all', 'All', found.length) + chip('asking', 'Asking', found.filter(x => exStatus(x) === 'requested').length) +
+      chip('submitted', 'Logged') + chip('approved', 'Approved') + chip('rejected', 'Rejected') + '</div>' +
+    (list.length ? '<div class="clist">' + list.slice(0, 200).map(exRow).join('') + '</div>'
+      : '<div class="empty">' + (q ? 'Nothing matches that.' : 'Nothing on the card yet. Snap a receipt.') + '</div>') +
+    '<p class="muted small" style="margin-top:16px">Company card spend. Every expense names a client, so spend shows next to fees on the account. Ask first when you want a yes before you spend.</p>';
+}
+
 /* ---------- Mail ---------- */
 function vMail(){
   const on = k => { const a = S.automations.filter(x => x.trigger === k || x.name === k)[0]; return a && a[MAP.automation.enabled] === true; };
@@ -2410,12 +2517,24 @@ function sheetCompany(){
       '<button class="btn" data-new="search" data-co="' + idOf(c) + '">Open a search</button>';
   if(T===3) body = logList(acts.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,40)
       .map(a => [short(a.created_at) + ' ' + esc(F(a,'kind')), esc(F(a,'body','note'))]));
-  if(T===4) body = spec([
+  if(T===4){
+    const fees = inv.reduce((n,i) => n + num(F(i,'amount')), 0);
+    const te = exOnCo(idOf(c)), teSum = exSum(te), camp = campSpendOnCo(idOf(c));
+    const spend = teSum + camp;
+    body = spec([
       ['Placements', pl.length],
-      ['Fees billed', money(inv.reduce((n,i) => n + num(F(i,'amount')), 0))],
-      ['Outstanding', money(inv.filter(i => String(F(i,'status')).toLowerCase()!=='paid').reduce((n,i) => n + num(F(i,'amount')), 0))]
+      ['Fees billed', money(fees)],
+      ['Outstanding', money(inv.filter(i => String(F(i,'status')).toLowerCase()!=='paid').reduce((n,i) => n + num(F(i,'amount')), 0))],
+      ['Campaign spend', camp ? money(camp) : '<span class="muted">None</span>'],
+      ['T&amp;E on the card', teSum ? money(teSum) : '<span class="muted">None</span>'],
+      ['Spend, all in', spend ? money(spend) : '<span class="muted">None</span>'],
+      ['Margin', fees || spend ? '<b>' + (fees - spend < 0 ? '\u2212' : '') + money(Math.abs(fees - spend)) + '</b>' + (fees ? ' <span class="muted small">' + Math.round(100 * (fees - spend) / fees) + '% of fees</span>' : '') : '<span class="muted">Nothing yet</span>']
     ]) + (inv.length ? logList(inv.map(i => [esc(F(i,'invoice_no','number') || 'Draft'), money(F(i,'amount')) + ' · ' + esc(F(i,'status') || 'draft')])) : '') +
-    '<button class="btn ghost" data-new="invoice" data-co="' + idOf(c) + '">Raise an invoice</button>';
+    (te.length ? '<div class="sec" style="margin-top:22px"><h2>On the card.</h2><span class="muted">' + te.length + (te.length === 1 ? ' expense' : ' expenses') + ' on this client.</span></div>' +
+      '<div class="clist">' + te.slice().sort((a,b) => String(F(b,'spent_on','created_at')).localeCompare(String(F(a,'spent_on','created_at')))).slice(0, 30).map(exRow).join('') + '</div>' : '') +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn ghost" data-new="invoice" data-co="' + idOf(c) + '">Raise an invoice</button>' +
+    '<button class="btn ghost" data-new="expense" data-co="' + idOf(c) + '">Log an expense here</button></div>';
+  }
   if(T===5) body = gateBanner(idOf(c)) +
     (docs.length
       ? '<div class="clist">' + docs.slice().sort((a,b) => String(F(b,'created_at')).localeCompare(String(F(a,'created_at')))).map(docRow).join('') + '</div>'
@@ -2621,7 +2740,7 @@ function wireMailForm(ctx){
 }
 
 /* ---------- editing: the same form, prefilled, saving with a patch ---------- */
-const EDIT_TABLE = { company:'companies', contact:'contacts', search:'searches', candidate:'candidates', note:'interview_notes' };
+const EDIT_TABLE = { company:'companies', contact:'contacts', search:'searches', candidate:'candidates', note:'interview_notes', expense:'expenses' };
 function editRow(kind, id){
   const t = EDIT_TABLE[kind]; if(!t) return null;
   return byId(S[t], id) || null;
@@ -2642,6 +2761,10 @@ function prefill(kind, r){
     SK.must = skSplit(r.must_haves); SK.nice = skSplit(r.nice_to_haves); skPaint(); }
   if(kind === 'candidate'){ setv('f_name', F(r,'name','full_name')); setv('f_title', F(r,'title','headline'));
     setv('f_email', F(r,'email')); setv('f_phone', F(r,'phone')); setv('f_loc', F(r,'location')); setv('f_notes', F(r,'notes','summary')); }
+  if(kind === 'expense'){ setv('f_amt', F(r,'amount') != null && F(r,'amount') !== '' ? String(F(r,'amount')) : ''); setv('f_co', r.company_id);
+    setv('f_cat', F(r,'category') || 'Other'); setv('f_date', F(r,'spent_on') || today()); setv('f_merch', F(r,'merchant'));
+    setv('f_se', r.search_id || ''); setv('f_note', F(r,'note'));
+    const t = document.getElementById('xdropt'); if(t && F(r,'receipt_path')) t.textContent = 'Receipt on file. Drop another to replace it.'; }
   if(kind === 'note'){ setv('f_cand', r.candidate_id); setv('f_se', r.search_id); setv('f_kind', F(r,'kind'));
     setv('f_strong', F(r,'strong_at')); setv('f_conc', F(r,'concerns')); setv('f_comp', F(r,'compensation','comp'));
     setv('f_avail', F(r,'availability')); setv('f_next', F(r,'next_step')); }
@@ -2842,6 +2965,18 @@ function form(kind, ctx){
       '<div class="field"><label for="f_end">Ended, if it has</label><input id="f_end" type="date"></div></div>' +
       '<div class="two"><div class="field"><label for="f_spend">Spend, dollars</label><input id="f_spend" inputmode="decimal" placeholder="Leave blank until the bill comes"></div>' +
       '<div class="field"><label for="f_snote">Spend note</label><input id="f_snote" placeholder="Invoice 4471, 30 day sponsored"></div></div>'],
+    expense: [ctx.req ? 'Ask first.' : ctx.edit ? 'Expense.' : 'Log an expense.',
+      ctx.req ? 'Say the dollars and the client. It shows on Today until it gets a yes.' : 'Snap the receipt, type the dollars, name the client. Done.',
+      (ctx.req ? '' : '<div class="field"><div class="bdrop xdrop" id="xdrop"><b id="xdropt">Snap or drop the receipt</b>' +
+        '<span class="muted small" id="xdrops">Photo or PDF. On a phone this opens the camera.</span>' +
+        '<input id="xfile" type="file" accept="image/*,application/pdf" style="display:none"></div></div>') +
+      '<div class="field"><label for="f_amt">Dollars</label><input id="f_amt" class="xamt" inputmode="decimal" placeholder="0.00"></div>' +
+      '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
+      '<div class="two"><div class="field"><label for="f_cat">What kind</label><select id="f_cat">' + XCATS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="f_date">When</label><input id="f_date" type="date" value="' + today() + '"></div></div>' +
+      '<div class="two"><div class="field"><label for="f_merch">Where</label><input id="f_merch" placeholder="Uber, Delta, the restaurant"></div>' +
+      '<div class="field"><label for="f_se">Role, if one</label><select id="f_se">' + opts(S.searches.filter(isOpen), s => F(s,'title','role') + ' \u00b7 ' + cname(s.company_id), ctx.se) + '</select></div></div>' +
+      '<div class="field"><label for="f_note">In your words</label><textarea id="f_note" placeholder="Lunch with the hiring manager about the fleet role."></textarea></div>'],
     premier: ['Premier.', 'A human call, so it needs a reason.',
       '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
   }[kind];
@@ -2849,7 +2984,7 @@ function form(kind, ctx){
   const editing = ctx.edit ? editRow(kind, ctx.edit) : null;
   shell(editing ? 'Edit.' : F_[0], editing ? 'Change what is wrong and save it.' : F_[1],
     '<div class="form">' + F_[2] + '<button class="btn" id="fsave">' +
-      (kind === 'mail' ? 'Send' : kind === 'agreement' ? 'Create it' : editing ? 'Save changes' : 'Save') + '</button></div>');
+      (kind === 'mail' ? 'Send' : kind === 'agreement' ? 'Create it' : kind === 'expense' && ctx.req ? 'Ask for it' : editing ? 'Save changes' : 'Save') + '</button></div>');
   if(editing) prefill(kind, editing);
   const first = $('#sheet').querySelector('input,select,textarea'); if(first) first.focus();
   $('#fsave').onclick = () => save(kind, ctx);
@@ -2861,6 +2996,7 @@ function form(kind, ctx){
     if(ctx.body) setv('f_body', ctx.body);
   }
   if(kind === 'document') wireDocForm();
+  if(kind === 'expense') wireExpenseForm(ctx);
   if(kind === 'campaign' && ctx.camp){
     const x = byId(S.campaigns, ctx.camp);
     if(x){ setv('f_se', x.search_id); setv('f_chan', F(x,'channel')); setv('f_name', F(x,'name'));
@@ -3021,6 +3157,37 @@ function wireDocForm(){
   const only = () => { if(row) row.style.display = (k && k.value === 'retained') ? '' : 'none'; };
   if(k) k.onchange = only;
   only();
+}
+let XFILE = null;
+function wireExpenseForm(ctx){
+  XFILE = null;
+  const z = document.getElementById('xdrop'), inp = document.getElementById('xfile');
+  const amt = document.getElementById('f_amt');
+  if(amt && !amt.value && !(ctx && ctx.edit)) setTimeout(() => amt.focus(), 50);
+  if(!z || !inp) return;
+  const say = (t, s2) => { document.getElementById('xdropt').textContent = t;
+    if(s2 != null) document.getElementById('xdrops').textContent = s2; };
+  const take = f => {
+    if(!f) return;
+    if(!/^image\//i.test(f.type) && !/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)) return toast('A photo or a PDF.', true);
+    if(f.size > 20000000) return toast('That file is over 20MB.', true);
+    XFILE = f;
+    say(f.name, Math.round(f.size / 1024) + 'KB, ready to save.');
+  };
+  z.onclick = () => inp.click();
+  inp.onchange = () => take(inp.files[0]);
+  z.ondragover = e => { e.preventDefault(); z.style.borderColor = 'var(--yellow,#F2C632)'; };
+  z.ondragleave = () => { z.style.borderColor = ''; };
+  z.ondrop = e => { e.preventDefault(); z.style.borderColor = ''; take(e.dataTransfer.files[0]); };
+}
+async function receiptUrl(x){
+  await alive();
+  const r = await fetch(LW.url + '/storage/v1/object/sign/receipts/' + F(x,'receipt_path'), {
+    method:'POST', headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/json' },
+    body: JSON.stringify({ expiresIn: 3600 }) });
+  const j = await r.json().catch(() => null);
+  if(!r.ok || !j || !j.signedURL) throw new Error((j && j.message) || 'That receipt would not open.');
+  return LW.url + '/storage/v1' + j.signedURL;
 }
 /* the review screen. every value shown is the value that will print,
    read straight off the client and the search, and anything typed here
@@ -3301,6 +3468,36 @@ async function save(kind, ctx){
     }), ctx, sg ? 'Signed document on file.' : 'Document saved, still unsigned.');
     if(r) await insert('activity', clean({ [M.activity.kind]: 'note', [M.activity.title]: (sg ? 'Signed ' : 'Added ') + dockLabel(kd),
       [M.activity.company]: val('f_co'), [M.activity.staff]: meId() }));
+  }
+  if(kind === 'expense'){
+    if(!val('f_co')) return toast('Name the client. Every dollar lands on an account.', true);
+    const amt = val('f_amt');
+    if(!ctx.req && !(num(amt) > 0)) return toast('Type the dollars.', true);
+    if(amt !== '' && !(num(amt) >= 0)) return toast('Dollars need to be a number.', true);
+    const was = ctx.edit ? byId(S.expenses, ctx.edit) : null;
+    let path = was ? (F(was,'receipt_path') || '') : '';
+    if(XFILE){
+      try{
+        await alive();
+        const safe = XFILE.name.replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60);
+        path = 'staff/' + (meId() || 'x') + '/' + Date.now() + '-' + safe;
+        const up = await fetch(LW.url + '/storage/v1/object/receipts/' + path, { method:'POST',
+          headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type': XFILE.type || 'application/octet-stream', 'x-upsert':'true' }, body: XFILE });
+        if(!up.ok) throw new Error((await up.text()).slice(0, 140));
+      }catch(err){ console.error(err); return toast('The receipt did not upload. ' + err.message, true); }
+    }
+    let status = was ? exStatus(was) : (ctx.req ? 'requested' : 'submitted');
+    if(was && status === 'requested' && path) status = 'submitted';
+    if(was && status === 'rejected') status = was.kind === 'request' && !path ? 'requested' : 'submitted';
+    const row = { [M.expense.company]: val('f_co'), [M.expense.search]: val('f_se') || null,
+      [M.expense.kind]: was ? (was.kind || 'receipt') : (ctx.req ? 'request' : 'receipt'),
+      [M.expense.amount]: amt === '' ? null : num(amt), [M.expense.spent]: val('f_date') || today(),
+      [M.expense.category]: val('f_cat') || 'Other', [M.expense.merchant]: val('f_merch') || null,
+      [M.expense.note]: val('f_note') || null, [M.expense.receipt]: path || null, [M.expense.status]: status };
+    if(was && status !== 'rejected') row[M.expense.reason] = null;
+    if(!was) row[M.expense.staff] = meId();
+    r = await put('expenses', row, ctx, ctx.req ? 'Asked. It sits on Today until it gets a yes.' : was ? 'Saved.' : 'On the card, on the client.');
+    XFILE = null;
   }
   if(kind === 'contact'){
     r = await put('contacts', { [M.contact.company]: val('f_co'), [M.contact.name]: val('f_name'),
@@ -3766,6 +3963,24 @@ function common(root){
     runMatch(b.dataset.runmatch); });
   root.querySelectorAll('[data-camp]').forEach(b => b.onclick = e => { e.stopPropagation();
     form('campaign', { camp: b.dataset.camp }); });
+  root.querySelectorAll('[data-ex]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const x = byId(S.expenses, b.dataset.ex); if(!x) return;
+    if(exStatus(x) === 'approved' && !amAdmin() && F(x,'receipt_path')) return;
+    form('expense', { edit: b.dataset.ex }); });
+  root.querySelectorAll('[data-exreq]').forEach(b => b.onclick = e => { e.stopPropagation(); form('expense', { req: true }); });
+  root.querySelectorAll('[data-exopen]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const x = byId(S.expenses, b.dataset.exopen); if(!x) return;
+    try{ openUrl(await receiptUrl(x)); }catch(err){ toast(err.message, true); } });
+  root.querySelectorAll('[data-exok]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const x = byId(S.expenses, b.dataset.exok); if(!x) return;
+    const ok = await tryWrite(() => patch('expenses', idOf(x), { status:'approved', approved_by: meId(), approved_at: new Date().toISOString(), rejected_reason: null }),
+      'Approved. ' + exMoney(x) + ' on ' + cname(x.company_id) + '.');
+    if(ok){ await loadAll(); drawNav(); draw(); if(SHEET.kind && SHEET.kind !== 'form') paintSheet(); } });
+  root.querySelectorAll('[data-exno]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const x = byId(S.expenses, b.dataset.exno); if(!x) return;
+    const why = prompt('Why not? One line, it goes back to ' + exWho(x) + '.'); if(why === null) return;
+    const ok = await tryWrite(() => patch('expenses', idOf(x), { status:'rejected', rejected_reason: why || null, approved_by: meId(), approved_at: new Date().toISOString() }), 'Sent back.');
+    if(ok){ await loadAll(); drawNav(); draw(); if(SHEET.kind && SHEET.kind !== 'form') paintSheet(); } });
   root.querySelectorAll('[data-campend]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const x = byId(S.campaigns, b.dataset.campend); if(!x) return;
     if(!confirm('End ' + campLabel(x) + '? Applicants already in stay where they are.')) return;
@@ -3981,6 +4196,11 @@ function wire(){
     b.disabled = false; b.textContent = lbl; });
   m.querySelectorAll('[data-stab]').forEach(b => b.onclick = () => { Q.searchTab = b.dataset.stab; draw(); });
   m.querySelectorAll('[data-cotab]').forEach(b => b.onclick = () => { Q.coTab = b.dataset.cotab; draw(); });
+  m.querySelectorAll('[data-extab]').forEach(b => b.onclick = () => { Q.exTab = b.dataset.extab; draw(); });
+  m.querySelectorAll('[data-exscope]').forEach(b => b.onclick = () => { Q.exScope = b.dataset.exscope; draw(); });
+  const qx = document.getElementById('qex');
+  if(qx) qx.oninput = () => { Q.ex = qx.value; const p = qx.selectionStart; draw();
+    const n = document.getElementById('qex'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
   m.querySelectorAll('[data-tag]').forEach(b => b.onclick = () => { Q.tag = b.dataset.tag; draw(); });
   m.querySelectorAll('[data-prem]').forEach(b => b.onclick = () => { Q.prem = b.dataset.prem; draw(); });
   m.querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
