@@ -3248,11 +3248,46 @@ function xPaint(){
   const tile = (inner, rm, label) => '<div class="xth">' + inner + '<button type="button" class="xrm" ' + rm + ' aria-label="Remove">&times;</button>' + (label ? '<span>' + esc(label) + '</span>' : '') + '</div>';
   t.innerHTML =
     XKEEP.map((p, i) => tile(isPdfName(p) ? '<i>PDF</i>' : '<i>' + RICON_A('receipt') + '</i>', 'data-xkeep="' + i + '"', 'On file')).join('') +
-    XFILES.map((f, i) => tile(/^image\//i.test(f.type) ? '<img src="' + f.url + '" alt="">' : '<i>PDF</i>', 'data-xnew="' + i + '"', Math.round(f.size / 1024) + 'KB')).join('');
+    XFILES.map((f, i) => tile(/^image\//i.test(f.type) ? '<img src="' + f.url + '" alt="">' : '<i>PDF</i>', 'data-xnew="' + i + '"', f.reading ? 'Reading' : f.read ? f.read : Math.round(f.size / 1024) + 'KB')).join('');
   t.querySelectorAll('[data-xkeep]').forEach(b => b.onclick = e => { e.stopPropagation(); XKEEP.splice(Number(b.dataset.xkeep), 1); xPaint(); });
   t.querySelectorAll('[data-xnew]').forEach(b => b.onclick = e => { e.stopPropagation();
     const i = Number(b.dataset.xnew); try{ URL.revokeObjectURL(XFILES[i].url); }catch(err){} XFILES.splice(i, 1); xPaint(); });
   const b = document.getElementById('xdrop'); if(b) b.classList.toggle('has', XKEEP.length + XFILES.length > 0);
+}
+/* the reader: shrink the photo, send it, fill whatever is still empty */
+async function xShrink(f){
+  if(!/^image\//i.test(f.type)) return null;
+  const url = URL.createObjectURL(f);
+  try{
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+    const max = 1600, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.82).split(',')[1];
+  }finally{ try{ URL.revokeObjectURL(url); }catch(e){} }
+}
+const b64 = f => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = no; r.readAsDataURL(f); });
+async function xRead(entry){
+  try{
+    const isPdf = /pdf$/i.test(entry.type) || isPdfName(entry.name);
+    if(isPdf && entry.size > 4000000) throw new Error('too big to read');
+    const image = isPdf ? await b64(entry.file) : await xShrink(entry.file);
+    if(!image) throw new Error('not an image');
+    const j = await fnCall('receipt-read', { image, media_type: isPdf ? 'application/pdf' : 'image/jpeg' });
+    if(XFILES.indexOf(entry) < 0) return;
+    const fill = (id, v) => { const e = document.getElementById(id); if(!e || v == null || v === '') return false;
+      if(e.tagName === 'SELECT'){ if(e.value && e.value !== 'Other') return false; e.value = v; return true; }
+      if(e.value.trim()) return false; e.value = String(v); return true; };
+    const got = [];
+    if(fill('f_amt', j.amount)) got.push('$' + num(j.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+    if(fill('f_merch', j.merchant)) got.push(j.merchant);
+    if(j.date) { const d = document.getElementById('f_date'); if(d && d.value === today()) { d.value = j.date; got.push(short(j.date)); } }
+    fill('f_cat', j.category);
+    entry.reading = false; entry.read = j.amount != null ? 'Read it' : 'No total';
+    xPaint();
+    if(got.length) toast('Read it: ' + got.join(' \u00b7 ') + '. Check it, then save.');
+    else if(j.amount == null) toast('Could not find a total on that one. Type the dollars.', true);
+  }catch(err){ console.warn('receipt-read', err.message); entry.reading = false; entry.read = 'Not read'; xPaint(); }
 }
 function wireExpenseForm(ctx){
   XFILES = []; XKEEP = ctx && ctx.edit ? exPaths(byId(S.expenses, ctx.edit) || {}) : [];
@@ -3265,7 +3300,9 @@ function wireExpenseForm(ctx){
       if(!/^image\//i.test(f.type) && !/pdf$/i.test(f.type) && !isPdfName(f.name)) return toast('A photo or a PDF.', true);
       if(f.size > 20000000) return toast(f.name + ' is over 20MB.', true);
       let url = ''; try{ url = URL.createObjectURL(f); }catch(err){}
-      XFILES.push({ file: f, name: f.name, type: f.type, size: f.size, url });
+      const entry = { file: f, name: f.name, type: f.type, size: f.size, url, reading: true };
+      XFILES.push(entry);
+      xRead(entry);
     });
     xPaint();
   };
