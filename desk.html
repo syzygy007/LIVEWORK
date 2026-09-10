@@ -336,6 +336,11 @@ body{background:var(--paper)}
    with one verb menu per row instead of a strip of buttons. */
 .pphone{display:none}
 .pfil{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.pfil .search{grid-column:1 / -1;width:100%;height:50px}
+@media (min-width:901px){
+  .pfil{grid-template-columns:240px 300px minmax(220px,380px);align-items:center;margin-bottom:22px}
+  .pfil .search{grid-column:auto}
+}
 .pfil select{-webkit-appearance:none;appearance:none;width:100%;height:50px;padding:0 36px 0 15px;
   border:1px solid var(--line);border-radius:var(--r);background-color:var(--white);color:var(--ink);
   font:600 15px/1 Manrope,Arial,sans-serif;cursor:pointer;text-overflow:ellipsis;
@@ -784,7 +789,7 @@ const pname = id => F(cand(id) || {}, 'name','full_name') || 'Candidate';
 const stageOf = p => { const s = String(F(p,'stage','status') || '').toLowerCase(); return DISPLAYSTAGE[s] || 'Sourced'; };
 const stageIx = p => Math.max(0, STAGES.indexOf(stageOf(p)));
 const isReleased = p => p[MAP.pipeline.released] === true || p.release === true || p.released_at != null;
-const isOpen = s => String(F(s,'status') || 'open').toLowerCase() !== 'closed';
+const isOpen = s => ['open','on_hold'].indexOf(String(F(s,'status') || 'open').toLowerCase()) >= 0;
 const tagNames = cid => S.candidate_tags.filter(t => String(t.candidate_id) === String(cid))
   .map(t => { const tag = byId(S.tags, t.tag_id); return tag ? F(tag,'name','label') : ''; }).filter(Boolean);
 const rowsFor = cid => S.pipeline.filter(p => String(p.candidate_id) === String(cid));
@@ -825,7 +830,7 @@ const NAV = [
   ['invoices','Invoices'],['expenses','Expenses'],['mail','Mail'],['reports','Reports'],['people','People'],['settings','Settings']
 ];
 let VIEW = 'today';
-let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', stage:'Submitted' };
+let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted' };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -1671,7 +1676,9 @@ function vPipeline(){
   const inCo = p => { const se = search(p.search_id) || {};
     return !Q.pipeCo || String(se.company_id) === String(Q.pipeCo); };
   const inSe = p => !Q.pipeSe || String(p.search_id) === String(Q.pipeSe);
-  const shown = S.pipeline.filter(p => inCo(p) && inSe(p));
+  const pq = Q.pipeQ.trim().toLowerCase();
+  const inQ = p => !pq || (pname(p.candidate_id) + ' ' + sname(p.search_id) + ' ' + cname((search(p.search_id)||{}).company_id)).toLowerCase().includes(pq);
+  const shown = S.pipeline.filter(p => inCo(p) && inSe(p) && inQ(p));
   const coIds = [...new Set(S.pipeline.map(p => String((search(p.search_id) || {}).company_id)).filter(x => x && x !== 'undefined'))];
   const seList = S.searches.filter(x => S.pipeline.some(p => String(p.search_id) === String(idOf(x)))
     && (!Q.pipeCo || String(x.company_id) === String(Q.pipeCo)));
@@ -1682,7 +1689,8 @@ function vPipeline(){
   const rows = shown.filter(p => stageOf(p) === stage)
     .map(p => ({ p, r: prank(p) })).sort((a,b) => a.r - b.r).map(x => x.p);
 
-  const phone =
+  /* the filter bar sits above both layouts, so the board narrows the same way the phone does */
+  const fil =
     '<div class="pfil">' +
       '<select id="pco"><option value="">All clients</option>' +
         coIds.map(id => '<option value="' + esc(id) + '"' + (String(Q.pipeCo) === id ? ' selected' : '') + '>' +
@@ -1690,7 +1698,10 @@ function vPipeline(){
       '<select id="pse"><option value="">All roles</option>' +
         seList.map(x => '<option value="' + esc(idOf(x)) + '"' + (String(Q.pipeSe) === String(idOf(x)) ? ' selected' : '') + '>' +
           esc(F(x,'title','role','job_title')) + '</option>').join('') + '</select>' +
-    '</div>' +
+      '<div class="search">' + SRCH + '<input id="pq" placeholder="Candidate name" value="' + esc(Q.pipeQ) + '"></div>' +
+    '</div>';
+
+  const phone =
     '<div class="pstage">' + STAGES.map(st => '<button class="' + (st === stage ? 'on' : '') +
       '" data-pstage="' + st + '"><b>' + shown.filter(p => stageOf(p) === st).length + '</b>' +
       '<span>' + st + '</span></button>').join('') + '</div>' +
@@ -1700,7 +1711,7 @@ function vPipeline(){
                  : '<div class="tbl"><div class="empty">Nobody sits at ' + stage.toLowerCase() + ' right now.</div></div>');
 
   const cols = STAGES.map(st => {
-    const rows = S.pipeline.filter(p => stageOf(p) === st);
+    const rows = shown.filter(p => stageOf(p) === st);
     return '<div class="col"><h4><span>' + st + '</span><span>' + rows.length + '</span></h4>' +
       rows.map(p => '<div class="card ' + (isReleased(p)?'rel':'') + '" data-pipe="' + idOf(p) + '">' +
         '<b>' + esc(pname(p.candidate_id)) + '</b>' +
@@ -1718,6 +1729,7 @@ function vPipeline(){
         '</div></div>').join('') + '</div>';
   }).join('');
   return head('Pipeline.', '<button class="btn pill" data-new="pipeline"><span class="p">+</span>Submit</button>') +
+    fil +
     '<div class="pphone">' + phone + '</div>' +
     '<p class="lede pdesk" style="margin-bottom:20px">A yellow edge means released. Released is exactly what the client sees in their room, nothing else.</p>' +
     '<div class="board">' + cols + '</div>';
@@ -1803,7 +1815,10 @@ function ackRoleGuess(){
 function ackReady(){ return INTAKE.filter(x => x.status === 'ready' && x.fields && String(x.fields.email || '').indexOf('@') > 0).length; }
 
 function vIntake(){
-  const inds = industryTags().length ? industryTags() : INDUSTRIES;
+  /* the whole default list, plus any industry tag already on file, and the field takes typing too */
+  const inds = INDUSTRIES.filter(n => n !== 'Other');
+  industryTags().forEach(n => { if(!inds.some(x => x.toLowerCase() === String(n).toLowerCase())) inds.push(n); });
+  inds.push('Other');
   const ready = INTAKE.filter(x => x.status === 'ready').length;
   const held = INTAKE.filter(x => x.status === 'held').length;
   const busy = INTAKE.some(x => x.status === 'reading' || x.status === 'uploading');
@@ -1838,8 +1853,7 @@ function vIntake(){
         '<div class="two">' + inp('name','Name') + inp('title','Current title') + '</div>' +
         '<div class="two">' + inp('email','Email') + inp('phone','Phone') + '</div>' +
         '<div class="two">' + inp('location','Location','City, ST') +
-          '<div class="field"><label>Industry</label><select data-ik="industry" data-ii="' + i + '"' + dis + '>' +
-            '<option value="">Pick one</option>' + inds.map(n => '<option' + (f.industry === n ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></div></div>' +
+          '<div class="field"><label>Industry</label><input data-ik="industry" data-ii="' + i + '" list="indlist" placeholder="Pick one or type it" value="' + esc(f.industry || '') + '"' + dis + '></div></div>' +
         '<div class="field"><label>Summary</label><textarea data-ik="summary" data-ii="' + i + '"' + dis + '>' + esc(f.summary || '') + '</textarea></div>' +
         (x.maybe && x.status !== 'saved' ? '<label class="toggle" style="margin-top:4px"><input type="checkbox" data-isame="' + i + '"' + (x.same ? ' checked' : '') + '><span>Same person as ' + esc(pname(idOf(x.maybe))) + ', fill their record instead of making a new one</span></label>' : '') +
         (x.parsed && x.parsed.tags && x.parsed.tags.length ? '<div class="muted small">Skills read: ' + esc(x.parsed.tags.join(', ')) + '</div>' : '') +
@@ -1893,6 +1907,7 @@ function vIntake(){
   return head('Intake.', (held ? '<button class="btn" id="ireadall"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Working' : 'Read ' + held) + '</button> ' : '') +
       (ready ? '<button class="btn" id="isaveall">Save all ' + ready + '</button> ' : '') +
       (done ? '<button class="btn ghost" id="iclear">Clear ' + done + ' saved</button>' : '')) +
+    '<datalist id="indlist">' + inds.map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>' +
     stamp +
     '<div id="idrop" style="border:2px dashed var(--line);padding:28px;text-align:center;cursor:pointer;background:var(--paper);margin-bottom:18px">' +
       '<b>Drop up to a hundred resume PDFs here, or click to pick them</b><br>' +
@@ -2978,7 +2993,10 @@ function form(kind, ctx){
       '<div class="field"><label for="f_toe">Or type an address</label><input id="f_toe" type="email" placeholder="someone@company.com"></div></div>' +
       '<div class="field"><label for="f_subj">Subject</label><input id="f_subj"></div>' +
       '<div class="field"><label for="f_body">Message</label><textarea id="f_body" style="min-height:220px"></textarea></div>' +
-      (mailPdf(ctx) ? '<div class="field"><label><input type="checkbox" id="f_att" checked style="height:auto;width:auto;margin-right:8px">Attach the branded profile, client copy with no contact details</label></div>' : '') +
+      (mailPdf(ctx) ? '<div class="field"><label for="f_att">Attach</label><select id="f_att">' +
+        '<option value="client">Client copy of the profile, no contact details</option>' +
+        '<option value="full">Full profile, with contact details</option>' +
+        '<option value="">Nothing</option></select></div>' : '') +
       (mailAdv(ctx) ? '<div class="field"><label><input type="checkbox" id="f_advance" checked style="height:auto;width:auto;margin-right:8px">Move this candidate to Submitted when it sends</label></div>' : '')],
     document: ['Add a document.', 'The signed agreement, an NDA, anything the account should carry.',
       '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
@@ -3785,17 +3803,26 @@ async function save(kind, ctx){
     if(!val('f_subj')) return toast('It needs a subject.', true);
     if(!val('f_body').trim()) return toast('It needs a message.', true);
     const c = ctx.cand ? cand(ctx.cand) : null;
-    const att = $('#f_att') && $('#f_att').checked ? mailPdf(ctx) : null;
+    const attMode = $('#f_att') ? $('#f_att').value : '';
+    const att = attMode ? mailPdf(ctx) : null;
     const adoc = ctx.attach ? byId(S.documents, ctx.attach) : null;
     const b = $('#fsave'); if(b){ b.disabled = true; b.textContent = 'Sending'; }
     try{
+      /* the stored branded profile carries the contact block. The client copy is rendered fresh with it redacted, same bucket, under branded/client/ */
+      let attPath = att ? F(att,'branded_resume_path') : undefined;
+      if(att && attMode === 'client'){
+        if(b) b.textContent = 'Making the client copy';
+        const pj = await fnCall('profile-pdf', { candidate_id: idOf(att), redact: true });
+        attPath = (pj && pj.path) || String(attPath).replace('branded/', 'branded/client/');
+        if(b) b.textContent = 'Sending';
+      }
       const j = await fnCall('mail-send', clean({
         to_email: to, to_name: toName, subject: val('f_subj'), body: val('f_body'),
         template: val('f_tpl') || 'note',
         candidate_id: ctx.cand || undefined, company_id: ctx.co || undefined,
         search_id: ctx.se || undefined, pipeline_id: ctx.pipe || undefined,
         advance: $('#f_advance') ? $('#f_advance').checked : false,
-        attach_path: att ? F(att,'branded_resume_path') : (adoc ? F(adoc,'storage_path') : undefined),
+        attach_path: att ? attPath : (adoc ? F(adoc,'storage_path') : undefined),
         attach_name: att ? String(F(att,'name')).replace(/[^A-Za-z0-9]+/g,'-').toLowerCase() + '-livework.pdf'
           : (adoc ? String(F(adoc,'title')).replace(/[^A-Za-z0-9]+/g,'-').toLowerCase() + '-livework.pdf' : undefined)
       }));
@@ -3849,7 +3876,11 @@ function wireSheet(){
   });
   sh.querySelectorAll('[data-close]').forEach(b => b.onclick = async () => {
     const s = search(b.dataset.close);
-    const r = await tryWrite(() => patch('searches', idOf(s), { [MAP.search.status]: isOpen(s) ? 'closed' : 'open' }), 'Status changed.');
+    /* searches.status only takes open, on_hold, filled or cancelled. A search with a placement closes as filled, the rest as cancelled. */
+    const filled = S.placements.some(p => String(p.search_id) === String(idOf(s)));
+    const next = isOpen(s) ? (filled ? 'filled' : 'cancelled') : 'open';
+    if(isOpen(s) && !confirm('Close ' + F(s,'title','role','job_title') + '? It leaves the open list and the client room.')) return;
+    const r = await tryWrite(() => patch('searches', idOf(s), { [MAP.search.status]: next }), next === 'open' ? 'Reopened.' : (filled ? 'Closed as filled.' : 'Closed.'));
     if(r){ await loadAll(); drawNav(); paintSheet(); draw(); }
   });
   sh.querySelectorAll('[data-pooladd]').forEach(b => b.onclick = async () => {
@@ -4246,6 +4277,9 @@ function wire(){
   if(pco) pco.onchange = () => { Q.pipeCo = pco.value; Q.pipeSe = ''; draw(); };
   const pse = m.querySelector('#pse');
   if(pse) pse.onchange = () => { Q.pipeSe = pse.value; draw(); };
+  const pq = m.querySelector('#pq');
+  if(pq) pq.oninput = () => { Q.pipeQ = pq.value; const c = pq.selectionStart; draw();
+    const n = document.getElementById('pq'); if(n){ n.focus(); n.setSelectionRange(c,c); } };
   m.querySelectorAll('[data-pstage]').forEach(b => b.onclick = e => { e.stopPropagation();
     Q.stage = b.dataset.pstage; draw(); });
   m.querySelectorAll('[data-mvstage]').forEach(b => b.onclick = e => { e.stopPropagation();
