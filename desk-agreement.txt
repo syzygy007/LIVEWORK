@@ -1,0 +1,189 @@
+LIVEWORK
+Desk Access, Confidentiality and Proprietary Rights Agreement
+Version 2026.09.09
+
+CONFIDENTIAL · AUTHORIZED ACCESS ONLY
+
+This Desk Access, Confidentiality and Proprietary Rights Agreement (the "Agreement") governs access to the nonpublic systems, technology, information and tools made available by Germann Inc., a California corporation, doing business as LIVEWORK ("LIVEWORK").
+
+By accepting this Agreement, you ("Authorized User") acknowledge that access to the LIVEWORK Desk is provided only on the conditions below.
+
+1. CONDITION OF ACCESS
+
+The LIVEWORK Desk and the systems, tools and information accessible through it are private, nonpublic resources.
+
+Access is granted solely for authorized LIVEWORK business. It is personal to you, may not be transferred or shared, and may be restricted or revoked by LIVEWORK at any time.
+
+You may not access the Desk unless you agree to this Agreement.
+
+2. CONFIDENTIAL INFORMATION
+
+"Confidential Information" means all nonpublic information that you access, receive, observe or learn through LIVEWORK or the Desk, regardless of form.
+
+Confidential Information includes, without limitation:
+- clients, prospects, searches, engagements, pricing, fees and commercial terms;
+- candidates, applicants, resumes, profiles, compensation, communications and assessments;
+- financial, strategic, operational, personnel and business information;
+- documents, templates, communications, reports and internal materials;
+- data, databases, schemas, taxonomies, structures and derived information;
+- software, code, architecture and technical configurations;
+- features, functionality, interfaces, screens and product designs;
+- prompts, instructions, context structures and AI configurations;
+- workflows, processes, sequences and operating methods;
+- automations, agents, orchestration and routing;
+- ingestion, extraction, parsing, normalization, enrichment and processing methods;
+- classification, matching, ranking, scoring and decision logic;
+- APIs, integrations, connectors, middleware and vendor configurations;
+- output structures, document generation methods and reporting systems;
+- testing methods, benchmarks and system performance information;
+- unreleased functionality, experiments and product roadmaps; and
+- other methods, processes, techniques or know how that are not publicly available.
+
+Information may be Confidential Information even if individual components are publicly available. LIVEWORK's confidential selection, configuration, combination, sequencing, integration or application of those components remains protected.
+
+Information does not lose its confidential character because it has been processed, summarized, transformed, generated, extracted or reformatted by software, automation or artificial intelligence.
+
+3. PROPRIETARY SYSTEMS
+
+The "Proprietary Systems" include the LIVEWORK Desk and LIVEWORK's nonpublic software, systems, workflows, tools, automation, processes and technology.
+
+The Proprietary Systems include not only what appears on screen, but also their underlying and observable organization, workflows, logic, instructions, methods, configurations and operation.
+
+Some Proprietary Systems may incorporate commercially available or third party technology. The use of third party technology does not make LIVEWORK's proprietary software, configurations, prompts, workflows, integrations, processes, arrangements, implementations or methods public or transferable.
+
+4. PERMITTED USE
+
+You may access and use Confidential Information and the Proprietary Systems only:
+- for legitimate LIVEWORK business;
+- within the scope of the access LIVEWORK has authorized; and
+- for the purpose for which the information or system was provided.
+
+You will use reasonable care to protect Confidential Information and will immediately notify LIVEWORK of any suspected unauthorized access, disclosure, loss or misuse.
+
+5. PROHIBITED USE
+
+Except where expressly authorized by LIVEWORK for legitimate business purposes, you may not:
+- disclose Confidential Information to any unauthorized person;
+- share your account, credentials or access;
+- photograph, screenshot, screen record or otherwise record the Desk;
+- copy, download, export or retain Confidential Information outside approved systems;
+- demonstrate, publish or describe nonpublic features of the Desk to a third party;
+- reproduce LIVEWORK screens, workflows, processes, automation or functionality;
+- use LIVEWORK Confidential Information to develop, improve, evaluate, advise, benchmark or specify another product or service;
+- reverse engineer, decompile, disassemble or attempt to derive source code;
+- attempt to discover or extract nonpublic prompts, instructions, logic, architecture, endpoints or configurations;
+- scrape, crawl, probe or programmatically access the Desk except through functionality expressly provided by LIVEWORK;
+- circumvent permissions, authentication, technical restrictions or security controls;
+- access information or functionality outside your authorized role; or
+- use Confidential Information for your own commercial benefit or for the benefit of another person or organization.
+
+Nothing in this Section prevents activities expressly authorized by LIVEWORK as part of your work.
+
+6. ARTIFICIAL INTELLIGENCE AND EXTERNAL SYSTEMS
+
+Unless specifically approved by LIVEWORK, you may not enter, upload, transmit, expose or otherwise provide Confidential Information to an external:
+- artificial intelligence or machine learning service;
+- chatbot or large language model service;
+- code generation or code analysis service;
+- transcription or meeting recording service;
+- automation service;
+- browser extension;
+- file sharing service;
+- data processing service; or
+- other third party application.
+
+This restriction includes client and candidate information, LIVEWORK data, code, documents, prompts, instructions, screenshots, Desk outputs, workflow descriptions and information derived from the Proprietary Systems.
+
+LIVEWORK approved AI, automation and technology may be used within the authorization provided by LIVEWORK.
+
+7. TRADE SECRETS
+
+Certain Confidential Information may constitute trade secrets under applicable state or federal law.
+
+Nothing about your access gives you ownership of any LIVEWORK trade secret or authorization to use a trade secret outside the purposes for which access was provided.
+
+Obligations regarding trade secrets continue for as long as the information remains legally protected as a trade secret.
+
+8. OWNERSHIP
+
+As between you and LIVEWORK, LIVEWORK and its licensors retain all rights in the Proprietary Systems and all intellectual property owned or developed by LIVEWORK, including applicable copyrights, trade secrets, patents, trademarks and other proprietary rights.
+
+Your access does not transfer ownership of any LIVEWORK intellectual property.
+
+Except for the limited authorization to use the Desk for approved LIVEWORK business, no license or other rights are granted to you by implication, estoppel or otherwise.
+
+All LIVEWORK names, marks, branding, product names, interfaces, documentation and original materials remain the property of LIVEWORK or their applicable owners.
+
+9. IDEAS, FEEDBACK AND WORK PRODUCT
+
+Feedback or suggestions you voluntarily provide concerning the Desk or LIVEWORK systems may be used by LIVEWORK without restriction or obligation to you.
+
+Ownership of inventions, software, materials or other work product created by you in connection with services performed for LIVEWORK will be governed by any applicable employment, consulting, intercompany, intellectual property or other agreement governing that work.
+
+Nothing in this Agreement transfers intellectual property owned by you or another party before access to the Desk.
+
+10. THIRD PARTY INFORMATION
+
+You may not introduce into the Desk or use for LIVEWORK any confidential information, trade secrets, software or other proprietary materials belonging to another employer, former employer or third party unless their use is properly authorized.
+
+11. SECURITY AND AUDIT
+
+You will use only authorized accounts, authentication methods, systems and services.
+
+To protect its systems, information and users, LIVEWORK may maintain records relating to authentication, access, system activity, document activity, security events and data transfers, subject to applicable law.
+
+You should not assume that activity within LIVEWORK systems is anonymous.
+
+12. RETURN, DELETION AND TERMINATION OF ACCESS
+
+Upon request, or when your authorization to access the Desk ends, you will:
+- immediately discontinue access;
+- return LIVEWORK property;
+- delete unauthorized copies of Confidential Information within your possession or control; and
+- cease all further use of LIVEWORK Confidential Information.
+
+Your confidentiality obligations survive termination of access.
+
+13. PROTECTED RIGHTS
+
+Nothing in this Agreement prohibits any communication or activity protected by applicable law.
+
+Nothing prevents you from reporting a suspected violation of law to a government agency or law enforcement authority, communicating with or participating in an investigation by a government agency, making a legally protected whistleblower disclosure, or otherwise exercising a legally protected right.
+
+You do not need LIVEWORK's authorization to make a legally protected report or disclosure.
+
+Under 18 U.S.C. § 1833(b), an individual may have immunity from federal and state trade secret liability for specified confidential disclosures of trade secrets to a government official or attorney made solely to report or investigate a suspected violation of law, and for specified disclosures made in court filings under seal.
+
+14. NO RESTRICTION ON LAWFUL EMPLOYMENT
+
+This Agreement does not prohibit you from working for another employer or engaging in a lawful profession, trade or business.
+
+It protects LIVEWORK's Confidential Information, trade secrets, systems and intellectual property from unauthorized acquisition, use or disclosure.
+
+15. ENFORCEMENT
+
+Unauthorized acquisition, access, copying, use or disclosure of Confidential Information or Proprietary Systems may cause harm for which monetary damages are inadequate.
+
+LIVEWORK may seek injunctive or other equitable relief, in addition to other remedies available under applicable law.
+
+LIVEWORK may immediately suspend or revoke access for suspected misuse or violation of this Agreement.
+
+16. GENERAL
+
+This Agreement is between you and Germann Inc., dba LIVEWORK, regardless of whether you are employed by LIVEWORK, Germann Inc., an affiliated company, a client, contractor, consultant or another organization.
+
+Your employer or organizational affiliation does not alter your individual obligations concerning access to LIVEWORK Confidential Information and Proprietary Systems under this Agreement.
+
+This Agreement does not create an employment relationship between you and Germann Inc. or LIVEWORK.
+
+This Agreement is governed by California law. If any provision is determined to be unenforceable, the remaining provisions will continue in effect.
+
+This Agreement supplements any other confidentiality, intellectual property, employment, consulting, services, security or acceptable use obligations applicable to you.
+
+Electronic acceptance constitutes your agreement to these terms.
+
+ACCEPTANCE
+
+I acknowledge that the LIVEWORK Desk is a private, nonpublic system and that access may expose me to confidential information, proprietary technology, trade secrets, workflows, automation, processing methods, data and other intellectual property belonging to Germann Inc., dba LIVEWORK.
+
+I have read and agree to the LIVEWORK Desk Access, Confidentiality and Proprietary Rights Agreement.

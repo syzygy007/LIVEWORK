@@ -437,6 +437,23 @@ body{background:var(--paper)}
 .rolecheck label{display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer}
 .rolecheck input{width:auto;height:auto;margin:0}
 
+/* ---------- desk access agreement ---------- */
+.acc{min-height:100vh;display:grid;place-items:center;padding:32px 16px;background:var(--paper)}
+.acc-in{width:min(760px,100%);background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:36px 36px 28px;display:grid;gap:18px}
+.acc .micro{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);font-weight:600}
+.acc h1{font-size:44px;line-height:1;letter-spacing:-.03em;margin:0}
+.acc-doc{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;background:var(--paper);font-size:14px;line-height:1.55;color:var(--ink)}
+.acc-doc p{margin:0 0 12px}.acc-doc h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:22px 0 10px}
+.acc-doc h2{font-size:22px;letter-spacing:-.02em;margin:0 0 4px}.acc-doc ul{margin:0 0 12px 18px;padding:0}.acc-doc li{margin:0 0 4px}
+.acc-doc .cap{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);font-weight:600;margin:0 0 18px}
+.acc label.tick{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.45;cursor:pointer}
+.acc label.tick input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:#000}
+.acc .field label{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--stone);margin:0 0 6px}
+.acc input[type=text]{width:100%;height:48px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);color:var(--ink);font:400 16px var(--font)}
+.acc .go{height:54px;border:0;border-radius:var(--r);background:var(--yellow);color:#000;font:700 16px var(--font);cursor:pointer;letter-spacing:-.01em}
+.acc .go[disabled]{opacity:.35;cursor:default}
+.acc .foot{font-size:12px;color:var(--stone);line-height:1.5}
+@media (max-width:600px){.acc-in{padding:24px 18px 20px}.acc h1{font-size:34px}.acc-doc{max-height:40vh}}
 /* ---------- help ---------- */
 .hbtn{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:30;height:46px;padding:0 18px 0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--yellow);color:#000;font:600 15px/1 var(--font);display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .hbtn svg{width:18px;height:18px;fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -3904,9 +3921,72 @@ function wire(){
 $('#veil').onclick = closeSheet;
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet(); });
 
+
+/* ---------- desk access agreement: nobody enters before accepting ---------- */
+const ACC_FILE = 'desk-agreement.txt';
+async function sha256(text){
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
+}
+function accRender(text){
+  const lines = text.replace(/\r/g,'').split('\n'); let out = '', ul = false, n = 0;
+  const close = () => { if(ul){ out += '</ul>'; ul = false; } };
+  for(const raw of lines){
+    const l = raw.trim(); if(!l){ close(); continue; }
+    if(/^- /.test(l)){ if(!ul){ out += '<ul>'; ul = true; } out += '<li>' + esc(l.slice(2)) + '</li>'; continue; }
+    close(); n++;
+    if(n === 1){ out += '<p class="cap">' + esc(l) + '</p>'; continue; }
+    if(n === 2){ out += '<h2>' + esc(l) + '</h2>'; continue; }
+    if(n === 3){ out += '<p class="cap">' + esc(l) + '</p>'; continue; }
+    if(/^(\d+\. )?[A-Z][A-Z ,.'§()·]+$/.test(l) && l.length < 80){ out += '<h3>' + esc(l) + '</h3>'; continue; }
+    out += '<p>' + esc(l) + '</p>';
+  }
+  close(); return out;
+}
+function accVersion(text){ const m = text.match(/^Version\s+(\S+)/m); return m ? m[1] : 'unversioned'; }
+/* resolves once this account holds an acceptance of the current agreement text */
+async function acceptGate(staff){
+  const email = String(F(staff,'email') || '').toLowerCase();
+  const r = await fetch(ACC_FILE + '?v=' + Date.now());
+  if(!r.ok) throw new Error('The desk agreement could not be loaded.');
+  const text = await r.text();
+  const ver = accVersion(text), hash = await sha256(text);
+  const have = await rest('desk_acceptances?select=id&email=eq.' + encodeURIComponent(email) + '&text_hash=eq.' + hash + '&limit=1').catch(() => []);
+  if(Array.isArray(have) && have.length) return;
+  const gate = document.getElementById('gate');
+  gate.style.display = '';
+  gate.innerHTML = '<div class="acc"><div class="acc-in">' +
+    '<div class="micro">Confidential · Authorized access only</div>' +
+    '<h1>Before you enter.</h1>' +
+    '<div class="acc-doc" id="accDoc">' + accRender(text) + '</div>' +
+    '<label class="tick"><input type="checkbox" id="accTick"><span>I have read and agree to the LIVEWORK Desk Access, Confidentiality and Proprietary Rights Agreement.</span></label>' +
+    '<div class="field"><label for="accName">Full legal name</label><input type="text" id="accName" autocomplete="name" placeholder="As it appears on your ID"></div>' +
+    '<button class="go" id="accGo" disabled>Agree and enter the desk</button>' +
+    '<div class="foot">Account ' + esc(email) + ' · Agreement version ' + esc(ver) + ' · Your acceptance, name, time and this document\u2019s fingerprint are recorded.</div>' +
+    '</div></div>';
+  const tick = $('#accTick'), name = $('#accName'), go = $('#accGo');
+  const check = () => { go.disabled = !(tick.checked && name.value.trim().length > 2); };
+  tick.onchange = check; name.oninput = check;
+  await new Promise(resolve => {
+    go.onclick = async () => {
+      go.disabled = true; go.textContent = 'Recording';
+      try{
+        await insert('desk_acceptances', { staff_id: idOf(staff) || null, email: email, full_name: name.value.trim(),
+          version: ver, text_hash: hash, agent: navigator.userAgent.slice(0,300), accepted_at: new Date().toISOString() });
+        gate.innerHTML = '';
+        resolve();
+      }catch(err){
+        go.disabled = false; go.textContent = 'Agree and enter the desk';
+        toast('Not recorded. ' + err.message, true);
+      }
+    };
+  });
+}
+
 /* ============================ boot ============================ */
 LWAuth.gate(document.getElementById('gate'), async function(staff){
   ME = staff;
+  try{ await acceptGate(staff); }catch(e){ toast(e.message, true); return; }
   document.getElementById('gate').style.display = 'none';
   document.getElementById('app').style.display = '';
   document.getElementById('meName').textContent = F(staff,'name','email');
