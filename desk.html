@@ -341,6 +341,16 @@ body{background:var(--paper)}
   .pfil{grid-template-columns:240px 300px minmax(220px,380px);align-items:center;margin-bottom:22px}
   .pfil .search{grid-column:auto}
 }
+/* the Search page: one poster line, then the subject filters */
+.fbar{margin-bottom:12px}
+.fbar .search.big{width:100%;height:64px;padding:0 20px;gap:14px}
+.fbar .search.big input{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.fbar .search.big .mag{width:24px;height:24px;flex:none}
+.pfil.ffil{grid-template-columns:1fr 1fr;margin-bottom:12px}
+.pfil.ffil .search{grid-column:auto;padding:0 15px}
+.pfil.ffil .search input{font:600 15px/1 Manrope,Arial,sans-serif}
+@media (min-width:901px){ .pfil.ffil{grid-template-columns:repeat(6,minmax(0,1fr))} }
+@media (max-width:900px){ .fbar .search.big{height:56px;padding:0 4px} .fbar .search.big input{font-size:19px} }
 .pfil select{-webkit-appearance:none;appearance:none;width:100%;height:50px;padding:0 36px 0 15px;
   border:1px solid var(--line);border-radius:var(--r);background-color:var(--white);color:var(--ink);
   font:600 15px/1 Manrope,Arial,sans-serif;cursor:pointer;text-overflow:ellipsis;
@@ -825,12 +835,13 @@ const sigBar = v => v == null ? '<span class="muted small">Not submitted yet</sp
 <script>
 /* ============================ views ============================ */
 const NAV = [
-  ['today','Today'],['companies','Clients'],['searches','Roles'],['candidates','Candidates'],['intake','Intake'],
+  ['today','Today'],['companies','Clients'],['searches','Roles'],['candidates','Candidates'],['find','Search'],['intake','Intake'],
   ['pools','Pools'],['pipeline','Pipeline'],['activity','Activity'],['placements','Placements'],
   ['invoices','Invoices'],['expenses','Expenses'],['mail','Mail'],['reports','Reports'],['people','People'],['settings','Settings']
 ];
 let VIEW = 'today';
-let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted' };
+let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted',
+  fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fSkill:'', fState:'' };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -925,7 +936,7 @@ function table(cols, rows, grid, opt){
 function draw(){
   const m = $('#main');
   m.innerHTML = ({
-    today: vToday, companies: vCompanies, searches: vSearches, candidates: vCandidates, intake: vIntake,
+    today: vToday, companies: vCompanies, searches: vSearches, candidates: vCandidates, find: vFind, intake: vIntake,
     pools: vPools, pipeline: vPipeline, activity: vActivity, placements: vPlacements,
     invoices: vInvoices, expenses: vExpenses, mail: vMail, reports: vReports, people: vPeople, settings: vSettings
   }[VIEW])();
@@ -1503,6 +1514,81 @@ function vCandidates(){
                  : '<div class="tbl"><div class="empty">Nobody here yet. Add a candidate, or drop resumes in.</div></div>');
 }
 
+/* ---------- Search ----------
+   One line over the whole pool, then narrow by subject. Every filter is
+   derived from what is already on file: a candidate belongs to a client or a
+   role through their pipeline rows or the search they came in on, to a
+   campaign through pipeline.campaign_id or the campaign written on intake,
+   to a skill through the tags the reader pulled off the resume. */
+function skillsOf(c){ return ((c.profile_json || {}).tags || []).map(x => String(x).toLowerCase()); }
+function candSearchIds(c){
+  const id = idOf(c);
+  const ids = S.pipeline.filter(p => String(p.candidate_id) === String(id)).map(p => String(p.search_id));
+  if(F(c,'source_search_id')) ids.push(String(F(c,'source_search_id')));
+  return ids;
+}
+function vFind(){
+  const terms = Q.fq.toLowerCase().split(/\s+/).filter(Boolean);
+  const skill = Q.fSkill.trim().toLowerCase();
+  const camp = Q.fCamp ? byId(S.campaigns, Q.fCamp) : null;
+  const campName = camp ? String(F(camp,'name') || '').toLowerCase() : '';
+  const hit = c => {
+    if(terms.length){ const h = candHay(c); if(!terms.every(t => h.includes(t))) return false; }
+    if(Q.fInd && !tagNames(idOf(c)).includes(Q.fInd)) return false;
+    if(Q.fRole && String(F(c,'role_type') || '') !== Q.fRole) return false;
+    if(skill && !skillsOf(c).some(x => x.includes(skill)) && !candHay(c).includes(skill)) return false;
+    const seIds = candSearchIds(c);
+    if(Q.fSe && seIds.indexOf(String(Q.fSe)) < 0) return false;
+    if(Q.fCo && !seIds.some(x => String((search(x) || {}).company_id) === String(Q.fCo))) return false;
+    if(Q.fCamp){
+      const onCamp = S.pipeline.some(p => String(p.candidate_id) === String(idOf(c)) && String(p.campaign_id) === String(Q.fCamp))
+        || (campName && String(F(c,'campaign') || '').toLowerCase() === campName);
+      if(!onCamp) return false;
+    }
+    if(Q.fState){
+      const live = rowsFor(idOf(c)).filter(p => stageOf(p) !== 'Passed' && stageOf(p) !== 'Placed');
+      const placed = rowsFor(idOf(c)).some(p => stageOf(p) === 'Placed');
+      if(Q.fState === 'play' && !live.length) return false;
+      if(Q.fState === 'pool' && (live.length || placed)) return false;
+      if(Q.fState === 'placed' && !placed) return false;
+    }
+    return true;
+  };
+  const found = S.candidates.filter(hit);
+  const rows = found.map(c => ({ c, r: candRank(c) })).sort((a,b) => a.r - b.r).slice(0, 200).map(x => candRow(x.c));
+  const seList = S.searches.filter(x => !Q.fCo || String(x.company_id) === String(Q.fCo));
+  const campList = S.campaigns.filter(x => !Q.fSe || String(x.search_id) === String(Q.fSe))
+    .filter(x => !Q.fCo || String((search(x.search_id) || {}).company_id) === String(Q.fCo));
+  const roles = ROLETYPES.slice();
+  S.candidates.forEach(c => { const r = F(c,'role_type'); if(r && roles.indexOf(r) < 0) roles.push(r); });
+  const inds = S.tags.map(t => F(t,'name','label')).filter(Boolean);
+  const skillCount = {};
+  S.candidates.forEach(c => skillsOf(c).forEach(x => { skillCount[x] = (skillCount[x] || 0) + 1; }));
+  const skills = Object.keys(skillCount).sort((a,b) => skillCount[b] - skillCount[a]).slice(0, 400);
+  const sel = (id, first, list, val, label) => '<select id="' + id + '"><option value="">' + first + '</option>' +
+    list.map(x => { const v = label ? String(idOf(x)) : x, l = label ? label(x) : x;
+      return '<option value="' + esc(v) + '"' + (String(val) === String(v) ? ' selected' : '') + '>' + esc(l) + '</option>'; }).join('') + '</select>';
+  const on = !!(terms.length || skill || Q.fCo || Q.fSe || Q.fCamp || Q.fRole || Q.fInd || Q.fState);
+  const chip = (v, l) => '<button class="chip ' + (Q.fState === v ? 'on' : '') + '" data-fstate="' + v + '">' + l + '</button>';
+  return head('Search.', on ? '<button class="btn ghost" id="fclear">Clear</button>' : '') +
+    '<p class="lede" style="margin-bottom:22px">One line over the whole pool. Every word in every resume counts, then narrow it down by subject.</p>' +
+    '<div class="fbar"><div class="search big">' + SRCH + '<input id="fq" placeholder="Name, title, company, a phrase from page two" value="' + esc(Q.fq) + '"></div></div>' +
+    '<div class="pfil ffil">' +
+      sel('fco', 'Any client', S.companies, Q.fCo, x => F(x,'name')) +
+      sel('fse', 'Any job', seList, Q.fSe, x => F(x,'title','role','job_title') + (Q.fCo ? '' : ' · ' + cname(x.company_id))) +
+      sel('fcamp', 'Any campaign', campList, Q.fCamp, x => (F(x,'name') || F(x,'channel') || 'Campaign') + ' · ' + sname(x.search_id)) +
+      sel('frole', 'Any role type', roles, Q.fRole) +
+      sel('find', 'Any industry', inds, Q.fInd) +
+      '<div class="search"><input id="fskill" list="skilllist" placeholder="Skill" value="' + esc(Q.fSkill) + '"></div>' +
+      '<datalist id="skilllist">' + skills.map(x => '<option value="' + esc(x) + '">').join('') + '</datalist>' +
+    '</div>' +
+    '<div class="tools" style="margin-top:2px">' + chip('', 'Everyone') + chip('play', 'In a search now') + chip('pool', 'Open pool') + chip('placed', 'Placed') +
+      '<span class="muted small" style="margin-left:auto">' + found.length.toLocaleString() + ' of ' + S.candidates.length.toLocaleString() +
+      (found.length > 200 ? ', showing the first 200' : '') + '</span></div>' +
+    (rows.length ? '<div class="clist">' + rows.join('') + '</div>'
+                 : '<div class="tbl"><div class="empty">' + (on ? 'Nobody matches that. Take a filter off.' : 'Nobody in the pool yet.') + '</div></div>');
+}
+
 /* ---------- Pools ---------- */
 function vPools(){
   return head('Pools.', '<button class="btn pill" data-new="pool"><span class="p">+</span>Name a pool</button>') +
@@ -1722,6 +1808,7 @@ function vPipeline(){
         '<div class="acts">' +
           (stageIx(p) < 4 ? '<button data-adv="' + idOf(p) + '">Advance</button>' : '') +
           '<button data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button>' +
+          (stageOf(p) !== 'Passed' && stageOf(p) !== 'Placed' ? '<button data-pass="' + idOf(p) + '">Pass</button>' : '') +
           '<button data-mail="pipe:' + idOf(p) + '">Present</button>' +
           '<button data-note="' + p.candidate_id + '|' + p.search_id + '">Interview note</button>' +
           '<button data-guide="' + p.candidate_id + '|' + p.search_id + '|' + idOf(p) + '">Guide</button>' +
@@ -2684,6 +2771,7 @@ function sheetSearch(){
           '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' + matchChip(p) +
             '<button class="btn sm ghost" data-adv="' + idOf(p) + '">Advance</button>' +
             '<button class="btn sm ghost" data-rel="' + idOf(p) + '">' + (isReleased(p)?'Hold':'Release') + '</button>' +
+            (stageOf(p) !== 'Passed' && stageOf(p) !== 'Placed' ? '<button class="btn sm ghost" data-pass="' + idOf(p) + '">Pass</button>' : '') +
           '</div></div>' + matchPanel(p) + '</div>';
       }).join('')
       : '<p class="muted small">Nobody submitted yet.</p>') +
@@ -4245,6 +4333,13 @@ function common(root){
     const r = await tryWrite(() => patch('pipeline', idOf(p), { [MAP.pipeline.stage]: dbStage(next) }), 'Moved to ' + next + '.');
     if(r){ await loadAll(); drawNav(); draw(); if(SHEET.kind && SHEET.kind !== 'form') paintSheet(); }
   });
+  /* passing takes them out of this search only. The candidate row and the pool are untouched. */
+  root.querySelectorAll('[data-pass]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const p = byId(S.pipeline, b.dataset.pass); if(!p) return;
+    if(!confirm('Pass on ' + pname(p.candidate_id) + ' for ' + sname(p.search_id) + '? They leave this search and stay in the pool.')) return;
+    const r = await tryWrite(() => patch('pipeline', idOf(p), { [MAP.pipeline.stage]: dbStage('Passed') }), 'Passed. Still in the pool.');
+    if(r){ await loadAll(); drawNav(); draw(); if(SHEET.kind && SHEET.kind !== 'form') paintSheet(); }
+  });
   root.querySelectorAll('[data-rel]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const p = byId(S.pipeline, b.dataset.rel);
     const now = !isReleased(p);
@@ -4270,7 +4365,7 @@ function wire(){
     await loadAll(); drawNav(); draw();
   });
   m.querySelectorAll('[data-pipe]').forEach(c => c.onclick = e => {
-    if(e.target.closest('button[data-adv],button[data-rel],button[data-note],button[data-mail],button[data-guide],button[data-guidemail],button[data-mvstage],button[data-setstage]')) return;
+    if(e.target.closest('button[data-adv],button[data-rel],button[data-pass],button[data-note],button[data-mail],button[data-guide],button[data-guidemail],button[data-mvstage],button[data-setstage]')) return;
     const p = byId(S.pipeline, c.dataset.pipe); if(p) openSheet('candidate', p.candidate_id);
   });
   const pco = m.querySelector('#pco');
@@ -4380,6 +4475,19 @@ function wire(){
   const qx = document.getElementById('qex');
   if(qx) qx.oninput = () => { Q.ex = qx.value; const p = qx.selectionStart; draw();
     const n = document.getElementById('qex'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
+  const fq = document.getElementById('fq');
+  if(fq) fq.oninput = () => { Q.fq = fq.value; const p = fq.selectionStart; draw();
+    const n = document.getElementById('fq'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
+  const fsk = document.getElementById('fskill');
+  if(fsk) fsk.oninput = fsk.onchange = () => { Q.fSkill = fsk.value; const p = fsk.selectionStart; draw();
+    const n = document.getElementById('fskill'); if(n){ n.focus(); if(p !== null) n.setSelectionRange(p,p); } };
+  [['fco','fCo'],['fse','fSe'],['fcamp','fCamp'],['frole','fRole'],['find','fInd']].forEach(([id, k]) => {
+    const el = document.getElementById(id);
+    if(el) el.onchange = () => { Q[k] = el.value; if(k === 'fCo'){ Q.fSe = ''; Q.fCamp = ''; } if(k === 'fSe') Q.fCamp = ''; draw(); };
+  });
+  m.querySelectorAll('[data-fstate]').forEach(b => b.onclick = () => { Q.fState = b.dataset.fstate; draw(); });
+  const fcl = document.getElementById('fclear');
+  if(fcl) fcl.onclick = () => { Q.fq = ''; Q.fCo = ''; Q.fSe = ''; Q.fCamp = ''; Q.fRole = ''; Q.fInd = ''; Q.fSkill = ''; Q.fState = ''; draw(); };
   m.querySelectorAll('[data-tag]').forEach(b => b.onclick = () => { Q.tag = b.dataset.tag; draw(); });
   m.querySelectorAll('[data-prem]').forEach(b => b.onclick = () => { Q.prem = b.dataset.prem; draw(); });
   m.querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
