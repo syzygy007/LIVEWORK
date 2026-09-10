@@ -512,12 +512,75 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 .hask button{height:44px;padding:0 16px;border:0;border-radius:var(--r);background:var(--solid);color:var(--solid-ink);font:600 14px var(--font);cursor:pointer}
 .hask button[disabled]{opacity:.4}
 .xamt{font-size:34px;font-weight:800;letter-spacing:-.03em;height:64px}
-.xdrop{padding:22px 18px}
-.clist .ch b .xco{font-weight:500;color:var(--stone);letter-spacing:0;font-size:16px;margin-left:6px}
-.clist .ch .pill.ok{background:var(--s-paid,#35C98A);color:#fff}
-.clist .xnote{color:var(--ink);font-size:15px;line-height:1.45;margin-top:8px}
-.clist .xa a.yes{background:var(--yellow,#F2C632);border-color:var(--yellow,#F2C632);color:#111}
-.clist .c.xr{cursor:pointer}
+.xbox{position:relative;background:var(--panel,#111);color:var(--panel-ink,#fff);border-radius:var(--r,10px);padding:22px 20px 18px;cursor:pointer;
+  border:1px solid transparent;transition:border-color .15s}
+.xbox.over{border-color:var(--yellow,#F2C632)}
+.xbox .xb{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:14px;align-items:center}
+.xbox .xcam{grid-row:1/3;width:48px;height:48px;border-radius:50%;background:var(--yellow,#F2C632);display:grid;place-items:center}
+.xbox .xcam svg{width:24px;height:24px;stroke:#111;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.xbox .xb b{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.1;color:#fff}
+.xbox .xsub{font-size:13px;color:rgba(255,255,255,.62);margin-top:3px}
+.xbox .xbtns{display:flex;gap:8px;margin-top:16px}
+.xbox .xbtns .btn{width:auto;padding:0 16px;height:38px}
+.xbox .xbtns .btn:not(.ghost){background:var(--yellow,#F2C632);color:#111;border-color:var(--yellow,#F2C632)}
+.xbox .xbtns .btn.ghost{color:#fff;border-color:rgba(255,255,255,.35);background:transparent}
+.xthumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.xthumbs:empty{display:none}
+.xth{position:relative;width:84px}
+.xth img,.xth i{display:block;width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.xth i{display:grid;place-items:center;font-style:normal;font-weight:800;font-size:13px;letter-spacing:.08em;background:var(--wall);color:var(--stone)}
+.xth i svg{width:26px;height:26px;stroke:var(--stone);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.xth span{display:block;margin-top:4px;font-size:11px;color:var(--stone);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xth .xrm{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;border:0;background:#111;color:#fff;font-size:15px;line-height:22px;padding:0;cursor:pointer}
+.xbox.has .xb b{font-size:18px}
+.xdot{color:var(--yellow,#F2C632)}
+.xtabs{margin:-6px 0 18px}
+.xtabs button{font-size:20px;height:44px;padding:0 0 4px;margin-right:22px;font-weight:600;border-bottom-width:3px}
+.xtabs button.on{border-bottom-color:var(--ink)}
+.xpick{position:relative;border:1px solid var(--line);border-radius:var(--r);background:var(--white);height:52px;margin-bottom:6px}
+.xpick select{appearance:none;-webkit-appearance:none;width:100%;height:100%;border:0;background:transparent;padding:0 44px 0 16px;font:inherit;font-size:17px;font-weight:600;color:var(--ink);outline:0}
+.xpick .cv{position:absolute;right:14px;top:50%;width:18px;height:18px;margin-top:-9px;stroke:var(--ink);fill:none;stroke-width:1.8;pointer-events:none}
+.xpick.sm{height:46px;margin:0}
+.xpick.sm select{font-size:15px;padding-left:14px}
+.stats.x2{grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:16px 0 22px}
+.stats.x2 .stat{display:flex;flex-direction:column-reverse;gap:6px;padding:20px 20px 20px 0}
+.stats.x2 .stat:last-child{border-right:0;padding-left:20px}
+.stats.x2 .stat b{font-size:44px;letter-spacing:-.03em;line-height:1}
+.stats.x2 .stat span{font-size:15px;color:var(--stone)}
+.xsec{margin-top:36px;display:flex;align-items:baseline;justify-content:space-between}
+.xbtnrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+.xbtnrow .btn{height:52px;font-size:16px;border-radius:12px;width:100%;min-width:0;padding:0 8px;white-space:nowrap;overflow:hidden}
+.xbtnrow .btn.ink{background:var(--ink,#111);color:var(--white,#fff);border-color:var(--ink,#111)}
+.xbtnrow .btn .p{font-size:22px;margin-right:6px;line-height:0}
+.xtools{display:grid;gap:10px;margin-bottom:12px}
+.xtools .search{width:100%;height:50px;background:var(--paper);border-radius:12px}
+.xtools .xpick.sm{width:max-content;min-width:170px}
+.xtools .xpick.sm select{padding-right:40px}
+.xtools .search .xmag svg{width:18px;height:18px;stroke:var(--stone);fill:none;stroke-width:1.8}
+.xlist{display:grid;gap:12px}
+.xcard{border:1px solid var(--line);border-radius:12px;background:var(--white);padding:18px 18px 4px}
+.xcard.can{cursor:pointer}
+.xcard .xhd{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.xcard .xl{display:grid;gap:3px;min-width:0}
+.xcard .xl b{font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.xcard .xm,.xcard .xw{font-size:14px;color:var(--stone)}
+.xcard .xrt{text-align:right;flex:none;display:grid;gap:4px;justify-items:end}
+.xcard .xrt b{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.xst{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--stone)}
+.xst i{width:8px;height:8px;border-radius:50%;background:var(--s-draft,#8A8A8A)}
+.xst.ok{color:#2A9B6C}.xst.ok i{background:var(--s-paid,#35C98A)}
+.xst.pend{color:var(--yellow-deep,#C79A15)}.xst.pend i{background:var(--yellow,#F2C632)}
+.xst.no{color:var(--s-due,#F05252)}.xst.no i{background:var(--s-due,#F05252)}
+.xcard .xnote{margin-top:12px;font-size:15px;line-height:1.45;color:var(--ink)}
+.xcard .xwhy{color:var(--s-due,#F05252)}
+.xcard .xacts{margin-top:14px;border-top:1px solid var(--line)}
+.xcard .xacts a{display:flex;align-items:center;gap:12px;height:50px;border-bottom:1px solid var(--line);font-size:16px;font-weight:600;color:var(--ink);cursor:pointer;text-decoration:none}
+.xcard .xacts a:last-child{border-bottom:0}
+.xcard .xacts a svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.xcard .xacts a span{flex:1}
+.xcard .xacts a .cv{width:16px;height:16px;stroke:var(--stone)}
+.xcard .xacts a.yes{color:var(--yellow-deep,#C79A15)}
+@media (max-width:900px){ .stats.x2 .stat b{font-size:40px} .xtabs button{font-size:19px} }
 @media (max-width:900px){ .xamt{font-size:40px;height:72px} }
 </style>
 </head>
@@ -887,7 +950,8 @@ const RICON = {
   doc:'<path d="M7 3.5h7l4 4V20.5H7Z"/><path d="M14 3.5v4h4"/><path d="M9.5 12h5M9.5 15.5h5"/>',
   spend:'<path d="M12 4v16"/><path d="M15.5 7.5H10.3a2.3 2.3 0 0 0 0 4.6h3.4a2.3 2.3 0 0 1 0 4.6H8.5"/>',
   ok:'<path d="M5 12.5l4.4 4.4L19 7.6"/>',
-  receipt:'<path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4Z"/><path d="M9 8h6M9 11.5h6M9 15h4"/>'
+  receipt:'<path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4Z"/><path d="M9 8h6M9 11.5h6M9 15h4"/>',
+  no:'<path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>'
 };
 const up = t => String(t).charAt(0).toUpperCase() + String(t).slice(1);
 const SRCH = '<svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.2"/><path d="m15.4 15.4 4 4"/></svg>';
@@ -2136,57 +2200,70 @@ function campSpendOnCo(coId){
   const seIds = S.searches.filter(s => String(s.company_id) === String(coId)).map(s => String(idOf(s)));
   return S.campaigns.filter(x => seIds.indexOf(String(x.search_id)) >= 0).reduce((n, x) => n + num(F(x,'spend')), 0);
 }
+const CHEVR = '<svg class="cv" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6 15.5 12 9.5 18"/></svg>';
+const XDOT = { requested:['Pending','pend'], submitted:['Logged','log'], approved:['Approved','ok'], rejected:['Rejected','no'] };
 function exRow(x){
   const st = exStatus(x), me = String(x.staff_id) === String(meId());
-  const pill = st === 'requested' ? '<span class="pill warn">Asking</span>'
-    : st === 'rejected' ? '<span class="pill">Rejected</span>'
-    : st === 'approved' ? '<span class="pill ok">Approved</span>' : '<span class="pill">Logged</span>';
-  const line = [F(x,'merchant'), F(x,'category'), short(F(x,'spent_on','created_at')), exWho(x)].filter(Boolean).map(esc).join(' \u00b7 ');
-  const owed = st !== 'rejected' && !F(x,'receipt_path');
-  return '<div class="c xr" data-ex="' + idOf(x) + '">' +
-    '<div class="ch"><b>' + exMoney(x) + ' <span class="xco">' + esc(cname(x.company_id)) + '</span></b>' + pill + '</div>' +
-    '<div class="m">' + line + (x.search_id ? ' \u00b7 ' + esc(sname(x.search_id)) : '') + '</div>' +
-    (F(x,'note') ? '<div class="t xnote">' + esc(F(x,'note')) + '</div>' : '') +
-    (st === 'rejected' && F(x,'rejected_reason') ? '<div class="t"><span class="muted warn">Rejected:</span> ' + esc(F(x,'rejected_reason')) + '</div>' : '') +
-    '<div class="a xa">' +
-      (F(x,'receipt_path') ? '<a data-exopen="' + idOf(x) + '">' + RICON_A('receipt') + 'Receipt</a>' : (owed && me ? '<a data-ex="' + idOf(x) + '">' + RICON_A('receipt') + 'Attach receipt</a>' : '')) +
-      (amAdmin() && (st === 'requested' || st === 'submitted') ? '<a class="yes" data-exok="' + idOf(x) + '">' + RICON_A('ok') + 'Approve</a><a data-exno="' + idOf(x) + '">Reject</a>' : '') +
-      ((me || amAdmin()) && st !== 'approved' ? '<a data-ex="' + idOf(x) + '">' + OPENI + 'Edit</a>' : '') +
-    '</div></div>';
+  const dot = XDOT[st] || XDOT.submitted;
+  const paths = exPaths(x);
+  const owed = st !== 'rejected' && !paths.length;
+  const canEdit = (me || amAdmin()) && st !== 'approved';
+  const acts = [];
+  paths.forEach((p, i) => acts.push('<a data-exopen="' + idOf(x) + '|' + i + '">' + RICON_A('receipt') + '<span>' + (paths.length > 1 ? 'View receipt ' + (i + 1) : 'View receipt') + '</span>' + CHEVR + '</a>'));
+  if(owed && me) acts.push('<a data-ex="' + idOf(x) + '">' + RICON_A('receipt') + '<span>Attach the receipt</span>' + CHEVR + '</a>');
+  if(amAdmin() && (st === 'requested' || st === 'submitted')) acts.push('<a class="yes" data-exok="' + idOf(x) + '">' + RICON_A('ok') + '<span>Approve</span>' + CHEVR + '</a><a data-exno="' + idOf(x) + '">' + RICON_A('no') + '<span>Send it back</span>' + CHEVR + '</a>');
+  return '<div class="xcard' + (canEdit ? ' can' : '') + '"' + (canEdit ? ' data-ex="' + idOf(x) + '"' : '') + '>' +
+    '<div class="xhd">' +
+      '<div class="xl"><b>' + esc(cname(x.company_id)) + '</b>' +
+        '<span class="xm">' + [F(x,'category'), short(F(x,'spent_on','created_at')), F(x,'merchant')].filter(Boolean).map(esc).join(' \u00b7 ') + (x.search_id ? ' \u00b7 ' + esc(sname(x.search_id)) : '') + '</span>' +
+        '<span class="xw">' + esc(exWho(x)) + '</span></div>' +
+      '<div class="xrt"><b>' + exMoney(x) + '</b><span class="xst ' + dot[1] + '"><i></i>' + dot[0] + '</span></div>' +
+    '</div>' +
+    (F(x,'note') ? '<div class="xnote">' + esc(F(x,'note')) + '</div>' : '') +
+    (st === 'rejected' && F(x,'rejected_reason') ? '<div class="xnote xwhy">Sent back: ' + esc(F(x,'rejected_reason')) + '</div>' : '') +
+    (acts.length ? '<div class="xacts">' + acts.join('') + '</div>' : '') +
+    '</div>';
 }
 const RICON_A = k => '<svg viewBox="0 0 24 24" aria-hidden="true">' + RICON[k] + '</svg>';
+const monthKey = x => String(F(x,'spent_on','created_at')).slice(0,7);
+const monthLabel = k => { const [y, m] = k.split('-'); return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('en-US', { month:'long', year:'numeric' }); };
 function vExpenses(){
   const q = String(Q.ex || '').toLowerCase();
-  const all = amAdmin() && Q.exScope === 'all';
-  const mine = S.expenses.filter(x => all || String(x.staff_id) === String(meId()));
+  const team = amAdmin() && Q.exScope === 'all';
+  const pool = S.expenses.filter(x => team || String(x.staff_id) === String(meId()));
+  const months = [...new Set(pool.map(monthKey).filter(k => /^\d{4}-\d{2}$/.test(k)))].sort().reverse();
+  const cur = today().slice(0,7);
+  if(months.indexOf(cur) < 0) months.unshift(cur);
+  const mk = months.indexOf(Q.exMonth) >= 0 ? Q.exMonth : cur;
+  const inMonth = pool.filter(x => monthKey(x) === mk);
   const hay = x => [exMoney(x), cname(x.company_id), F(x,'merchant'), F(x,'category'), F(x,'note'), exWho(x), x.search_id ? sname(x.search_id) : ''].join(' ').toLowerCase();
-  const found = mine.filter(x => !q || hay(x).includes(q));
   const tab = Q.exTab || 'all';
-  const list = found.filter(x => tab === 'all' || (tab === 'asking' ? exStatus(x) === 'requested' : exStatus(x) === tab))
+  const list = inMonth.filter(x => !q || hay(x).includes(q))
+    .filter(x => tab === 'all' || exStatus(x) === tab)
     .sort((a,b) => String(F(b,'spent_on','created_at')).localeCompare(String(F(a,'spent_on','created_at'))) || String(F(b,'created_at')).localeCompare(String(F(a,'created_at'))));
-  const month = mine.filter(x => exCounts(x) && exMonth(x));
-  const asking = (amAdmin() ? S.expenses : mine).filter(x => exStatus(x) === 'requested');
-  const cos = {}; month.forEach(x => { cos[String(x.company_id)] = (cos[String(x.company_id)] || 0) + num(F(x,'amount')); });
-  const top = Object.keys(cos).sort((a,b) => cos[b] - cos[a])[0];
-  const chip = (k, l, n) => '<button class="chip ' + (tab === k ? 'on' : '') + '" data-extab="' + k + '">' + l + (n ? ' ' + n : '') + '</button>';
-  return head('Expenses.',
-      '<button class="btn pill" data-new="expense"><span class="p">+</span>Log an expense</button>' +
-      '<button class="btn pill ghost" data-exreq="1">Ask first</button>') +
-    (amAdmin() ? '<div class="tools">' +
-      '<button class="chip ' + (!all ? 'on' : '') + '" data-exscope="mine">Mine</button>' +
-      '<button class="chip ' + (all ? 'on' : '') + '" data-exscope="all">Everyone</button></div>' : '') +
-    '<div class="stats">' +
-      '<div class="stat y"><b>' + money(exSum(month)) + '</b><span>This month</span></div>' +
-      '<div class="stat flag' + (asking.length ? '' : ' zero') + '"><b>' + asking.length + '</b><span>Asking for a yes</span></div>' +
-      '<div class="stat"><b>' + Object.keys(cos).length + '</b><span>Clients with spend</span></div>' +
-      '<div class="stat"><b>' + (top ? esc(cname(top)) : 'No one yet') + '</b><span>Most spent on</span></div>' +
+  const spent = exSum(inMonth.filter(exCounts));
+  const pending = (amAdmin() ? S.expenses : pool).filter(x => exStatus(x) === 'requested' || (amAdmin() && exStatus(x) === 'submitted')).length;
+  return head('Expenses<span class="xdot">.</span>', '') +
+    (amAdmin() ? '<div class="tabs xtabs">' +
+      '<button class="' + (!team ? 'on' : '') + '" data-exscope="mine">My expenses</button>' +
+      '<button class="' + (team ? 'on' : '') + '" data-exscope="all">Team</button></div>' : '') +
+    '<div class="xpick"><select id="exMonth">' + months.map(k => '<option value="' + k + '"' + (k === mk ? ' selected' : '') + '>' + monthLabel(k) + '</option>').join('') + '</select>' + CHEV + '</div>' +
+    '<div class="stats x2">' +
+      '<div class="stat"><span>This month</span><b>' + (money(spent) || '$0') + '</b></div>' +
+      '<div class="stat"><span>' + (amAdmin() ? 'Waiting on you' : 'Pending approval') + '</span><b>' + pending + '</b></div>' +
     '</div>' +
-    '<div class="tools"><div class="search">' + SRCH + '<input id="qex" placeholder="Search the notes, the client, the place" value="' + esc(Q.ex || '') + '"></div>' +
-      chip('all', 'All', found.length) + chip('asking', 'Asking', found.filter(x => exStatus(x) === 'requested').length) +
-      chip('submitted', 'Logged') + chip('approved', 'Approved') + chip('rejected', 'Rejected') + '</div>' +
-    (list.length ? '<div class="clist">' + list.slice(0, 200).map(exRow).join('') + '</div>'
-      : '<div class="empty">' + (q ? 'Nothing matches that.' : 'Nothing on the card yet. Snap a receipt.') + '</div>') +
-    '<p class="muted small" style="margin-top:16px">Company card spend. Every expense names a client, so spend shows next to fees on the account. Ask first when you want a yes before you spend.</p>';
+    '<div class="xbtnrow"><button class="btn ink" data-new="expense"><span class="p">+</span> Log expense</button>' +
+      '<button class="btn ghost" data-exreq="1">Request approval</button></div>' +
+    '<div class="sec xsec"><h2>Activity.</h2><span class="muted">' + list.length + (list.length === 1 ? ' expense' : ' expenses') + '</span></div>' +
+    '<div class="xtools">' +
+      '<div class="search"><span class="xmag">' + SRCH + '</span><input id="qex" placeholder="Search expenses" value="' + esc(Q.ex || '') + '"></div>' +
+      '<div class="xpick sm"><select id="exTab">' +
+        [['all','All statuses'],['requested','Pending'],['submitted','Logged'],['approved','Approved'],['rejected','Rejected']].map(([k,l]) => '<option value="' + k + '"' + (tab === k ? ' selected' : '') + '>' + l + '</option>').join('') +
+      '</select>' + CHEV + '</div>' +
+    '</div>' +
+    (list.length ? '<div class="xlist">' + list.slice(0, 200).map(exRow).join('') + '</div>'
+      : '<div class="empty">' + (q ? 'Nothing matches that.' : 'Nothing on the card in ' + monthLabel(mk) + '. Snap a receipt.') + '</div>') +
+    '<p class="muted small" style="margin-top:16px">Company card expenses, organized by client.</p>';
 }
 
 /* ---------- Mail ---------- */
@@ -2531,7 +2608,7 @@ function sheetCompany(){
       ['Margin', fees || spend ? '<b>' + (fees - spend < 0 ? '\u2212' : '') + money(Math.abs(fees - spend)) + '</b>' + (fees ? ' <span class="muted small">' + Math.round(100 * (fees - spend) / fees) + '% of fees</span>' : '') : '<span class="muted">Nothing yet</span>']
     ]) + (inv.length ? logList(inv.map(i => [esc(F(i,'invoice_no','number') || 'Draft'), money(F(i,'amount')) + ' · ' + esc(F(i,'status') || 'draft')])) : '') +
     (te.length ? '<div class="sec" style="margin-top:22px"><h2>On the card.</h2><span class="muted">' + te.length + (te.length === 1 ? ' expense' : ' expenses') + ' on this client.</span></div>' +
-      '<div class="clist">' + te.slice().sort((a,b) => String(F(b,'spent_on','created_at')).localeCompare(String(F(a,'spent_on','created_at')))).slice(0, 30).map(exRow).join('') + '</div>' : '') +
+      '<div class="xlist">' + te.slice().sort((a,b) => String(F(b,'spent_on','created_at')).localeCompare(String(F(a,'spent_on','created_at')))).slice(0, 30).map(exRow).join('') + '</div>' : '') +
     '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn ghost" data-new="invoice" data-co="' + idOf(c) + '">Raise an invoice</button>' +
     '<button class="btn ghost" data-new="expense" data-co="' + idOf(c) + '">Log an expense here</button></div>';
   }
@@ -2763,8 +2840,7 @@ function prefill(kind, r){
     setv('f_email', F(r,'email')); setv('f_phone', F(r,'phone')); setv('f_loc', F(r,'location')); setv('f_notes', F(r,'notes','summary')); }
   if(kind === 'expense'){ setv('f_amt', F(r,'amount') != null && F(r,'amount') !== '' ? String(F(r,'amount')) : ''); setv('f_co', r.company_id);
     setv('f_cat', F(r,'category') || 'Other'); setv('f_date', F(r,'spent_on') || today()); setv('f_merch', F(r,'merchant'));
-    setv('f_se', r.search_id || ''); setv('f_note', F(r,'note'));
-    const t = document.getElementById('xdropt'); if(t && F(r,'receipt_path')) t.textContent = 'Receipt on file. Drop another to replace it.'; }
+    setv('f_se', r.search_id || ''); setv('f_note', F(r,'note')); }
   if(kind === 'note'){ setv('f_cand', r.candidate_id); setv('f_se', r.search_id); setv('f_kind', F(r,'kind'));
     setv('f_strong', F(r,'strong_at')); setv('f_conc', F(r,'concerns')); setv('f_comp', F(r,'compensation','comp'));
     setv('f_avail', F(r,'availability')); setv('f_next', F(r,'next_step')); }
@@ -2967,9 +3043,12 @@ function form(kind, ctx){
       '<div class="field"><label for="f_snote">Spend note</label><input id="f_snote" placeholder="Invoice 4471, 30 day sponsored"></div></div>'],
     expense: [ctx.req ? 'Ask first.' : ctx.edit ? 'Expense.' : 'Log an expense.',
       ctx.req ? 'Say the dollars and the client. It shows on Today until it gets a yes.' : 'Snap the receipt, type the dollars, name the client. Done.',
-      (ctx.req ? '' : '<div class="field"><div class="bdrop xdrop" id="xdrop"><b id="xdropt">Snap or drop the receipt</b>' +
-        '<span class="muted small" id="xdrops">Photo or PDF. On a phone this opens the camera.</span>' +
-        '<input id="xfile" type="file" accept="image/*,application/pdf" style="display:none"></div></div>') +
+      (ctx.req ? '' : '<div class="field"><div class="xbox" id="xdrop">' +
+        '<div class="xb"><span class="xcam">' + CAMI + '</span><b>Snap the receipt.</b><span class="xsub">Or pick one from your photos. More than one is fine.</span></div>' +
+        '<div class="xbtns"><button type="button" class="btn sm" id="xcamb">Camera</button><button type="button" class="btn sm ghost" id="xlibb">Photos or files</button></div>' +
+        '<input id="xcam" type="file" accept="image/*" capture="environment" style="display:none">' +
+        '<input id="xfile" type="file" accept="image/*,application/pdf" multiple style="display:none"></div>' +
+        '<div class="xthumbs" id="xthumbs"></div></div>') +
       '<div class="field"><label for="f_amt">Dollars</label><input id="f_amt" class="xamt" inputmode="decimal" placeholder="0.00"></div>' +
       '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="two"><div class="field"><label for="f_cat">What kind</label><select id="f_cat">' + XCATS.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
@@ -3158,31 +3237,51 @@ function wireDocForm(){
   if(k) k.onchange = only;
   only();
 }
-let XFILE = null;
+/* receipts on the form: files picked now (XFILES) plus paths already on the row (XKEEP).
+   receipt_path holds every path, one per line. */
+const CAMI = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.3l1.4-2h5.6l1.4 2h2.3A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5Z"/><circle cx="12" cy="12.8" r="3.3"/></svg>';
+let XFILES = [], XKEEP = [];
+const exPaths = x => String(F(x,'receipt_path') || '').split('\n').map(s => s.trim()).filter(Boolean);
+const isPdfName = n => /\.pdf$/i.test(String(n || ''));
+function xPaint(){
+  const t = document.getElementById('xthumbs'); if(!t) return;
+  const tile = (inner, rm, label) => '<div class="xth">' + inner + '<button type="button" class="xrm" ' + rm + ' aria-label="Remove">&times;</button>' + (label ? '<span>' + esc(label) + '</span>' : '') + '</div>';
+  t.innerHTML =
+    XKEEP.map((p, i) => tile(isPdfName(p) ? '<i>PDF</i>' : '<i>' + RICON_A('receipt') + '</i>', 'data-xkeep="' + i + '"', 'On file')).join('') +
+    XFILES.map((f, i) => tile(/^image\//i.test(f.type) ? '<img src="' + f.url + '" alt="">' : '<i>PDF</i>', 'data-xnew="' + i + '"', Math.round(f.size / 1024) + 'KB')).join('');
+  t.querySelectorAll('[data-xkeep]').forEach(b => b.onclick = e => { e.stopPropagation(); XKEEP.splice(Number(b.dataset.xkeep), 1); xPaint(); });
+  t.querySelectorAll('[data-xnew]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const i = Number(b.dataset.xnew); try{ URL.revokeObjectURL(XFILES[i].url); }catch(err){} XFILES.splice(i, 1); xPaint(); });
+  const b = document.getElementById('xdrop'); if(b) b.classList.toggle('has', XKEEP.length + XFILES.length > 0);
+}
 function wireExpenseForm(ctx){
-  XFILE = null;
-  const z = document.getElementById('xdrop'), inp = document.getElementById('xfile');
+  XFILES = []; XKEEP = ctx && ctx.edit ? exPaths(byId(S.expenses, ctx.edit) || {}) : [];
+  const z = document.getElementById('xdrop'), inp = document.getElementById('xfile'), cam = document.getElementById('xcam');
   const amt = document.getElementById('f_amt');
   if(amt && !amt.value && !(ctx && ctx.edit)) setTimeout(() => amt.focus(), 50);
   if(!z || !inp) return;
-  const say = (t, s2) => { document.getElementById('xdropt').textContent = t;
-    if(s2 != null) document.getElementById('xdrops').textContent = s2; };
-  const take = f => {
-    if(!f) return;
-    if(!/^image\//i.test(f.type) && !/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)) return toast('A photo or a PDF.', true);
-    if(f.size > 20000000) return toast('That file is over 20MB.', true);
-    XFILE = f;
-    say(f.name, Math.round(f.size / 1024) + 'KB, ready to save.');
+  const take = files => {
+    [...(files || [])].forEach(f => {
+      if(!/^image\//i.test(f.type) && !/pdf$/i.test(f.type) && !isPdfName(f.name)) return toast('A photo or a PDF.', true);
+      if(f.size > 20000000) return toast(f.name + ' is over 20MB.', true);
+      let url = ''; try{ url = URL.createObjectURL(f); }catch(err){}
+      XFILES.push({ file: f, name: f.name, type: f.type, size: f.size, url });
+    });
+    xPaint();
   };
+  document.getElementById('xcamb').onclick = e => { e.stopPropagation(); (cam || inp).click(); };
+  document.getElementById('xlibb').onclick = e => { e.stopPropagation(); inp.click(); };
   z.onclick = () => inp.click();
-  inp.onchange = () => take(inp.files[0]);
-  z.ondragover = e => { e.preventDefault(); z.style.borderColor = 'var(--yellow,#F2C632)'; };
-  z.ondragleave = () => { z.style.borderColor = ''; };
-  z.ondrop = e => { e.preventDefault(); z.style.borderColor = ''; take(e.dataTransfer.files[0]); };
+  inp.onchange = () => { take(inp.files); inp.value = ''; };
+  if(cam) cam.onchange = () => { take(cam.files); cam.value = ''; };
+  z.ondragover = e => { e.preventDefault(); z.classList.add('over'); };
+  z.ondragleave = () => z.classList.remove('over');
+  z.ondrop = e => { e.preventDefault(); z.classList.remove('over'); take(e.dataTransfer.files); };
+  xPaint();
 }
-async function receiptUrl(x){
+async function receiptUrl(path){
   await alive();
-  const r = await fetch(LW.url + '/storage/v1/object/sign/receipts/' + F(x,'receipt_path'), {
+  const r = await fetch(LW.url + '/storage/v1/object/sign/receipts/' + path, {
     method:'POST', headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/json' },
     body: JSON.stringify({ expiresIn: 3600 }) });
   const j = await r.json().catch(() => null);
@@ -3475,17 +3574,23 @@ async function save(kind, ctx){
     if(!ctx.req && !(num(amt) > 0)) return toast('Type the dollars.', true);
     if(amt !== '' && !(num(amt) >= 0)) return toast('Dollars need to be a number.', true);
     const was = ctx.edit ? byId(S.expenses, ctx.edit) : null;
-    let path = was ? (F(was,'receipt_path') || '') : '';
-    if(XFILE){
+    const paths = ctx.req ? [] : XKEEP.slice();
+    if(XFILES.length){
+      const btn = document.getElementById('fsave'); if(btn){ btn.disabled = true; btn.textContent = 'Uploading'; }
       try{
         await alive();
-        const safe = XFILE.name.replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60);
-        path = 'staff/' + (meId() || 'x') + '/' + Date.now() + '-' + safe;
-        const up = await fetch(LW.url + '/storage/v1/object/receipts/' + path, { method:'POST',
-          headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type': XFILE.type || 'application/octet-stream', 'x-upsert':'true' }, body: XFILE });
-        if(!up.ok) throw new Error((await up.text()).slice(0, 140));
-      }catch(err){ console.error(err); return toast('The receipt did not upload. ' + err.message, true); }
+        for(let i = 0; i < XFILES.length; i++){
+          const f = XFILES[i];
+          const safe = f.name.replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60);
+          const p = 'staff/' + (meId() || 'x') + '/' + Date.now() + '-' + i + '-' + safe;
+          const up = await fetch(LW.url + '/storage/v1/object/receipts/' + p, { method:'POST',
+            headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type': f.type || 'application/octet-stream', 'x-upsert':'true' }, body: f.file });
+          if(!up.ok) throw new Error((await up.text()).slice(0, 140));
+          paths.push(p);
+        }
+      }catch(err){ console.error(err); if(btn){ btn.disabled = false; btn.textContent = 'Save'; } return toast('A receipt did not upload. ' + err.message, true); }
     }
+    const path = paths.join('\n');
     let status = was ? exStatus(was) : (ctx.req ? 'requested' : 'submitted');
     if(was && status === 'requested' && path) status = 'submitted';
     if(was && status === 'rejected') status = was.kind === 'request' && !path ? 'requested' : 'submitted';
@@ -3497,7 +3602,7 @@ async function save(kind, ctx){
     if(was && status !== 'rejected') row[M.expense.reason] = null;
     if(!was) row[M.expense.staff] = meId();
     r = await put('expenses', row, ctx, ctx.req ? 'Asked. It sits on Today until it gets a yes.' : was ? 'Saved.' : 'On the card, on the client.');
-    XFILE = null;
+    XFILES = []; XKEEP = [];
   }
   if(kind === 'contact'){
     r = await put('contacts', { [M.contact.company]: val('f_co'), [M.contact.name]: val('f_name'),
@@ -3965,12 +4070,14 @@ function common(root){
     form('campaign', { camp: b.dataset.camp }); });
   root.querySelectorAll('[data-ex]').forEach(b => b.onclick = e => { e.stopPropagation();
     const x = byId(S.expenses, b.dataset.ex); if(!x) return;
-    if(exStatus(x) === 'approved' && !amAdmin() && F(x,'receipt_path')) return;
+    if(exStatus(x) === 'approved' && !amAdmin() && exPaths(x).length) return;
     form('expense', { edit: b.dataset.ex }); });
   root.querySelectorAll('[data-exreq]').forEach(b => b.onclick = e => { e.stopPropagation(); form('expense', { req: true }); });
   root.querySelectorAll('[data-exopen]').forEach(b => b.onclick = async e => { e.stopPropagation();
-    const x = byId(S.expenses, b.dataset.exopen); if(!x) return;
-    try{ openUrl(await receiptUrl(x)); }catch(err){ toast(err.message, true); } });
+    const [id, ix] = String(b.dataset.exopen).split('|');
+    const x = byId(S.expenses, id); if(!x) return;
+    const p = exPaths(x)[Number(ix) || 0]; if(!p) return;
+    try{ openUrl(await receiptUrl(p)); }catch(err){ toast(err.message, true); } });
   root.querySelectorAll('[data-exok]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const x = byId(S.expenses, b.dataset.exok); if(!x) return;
     const ok = await tryWrite(() => patch('expenses', idOf(x), { status:'approved', approved_by: meId(), approved_at: new Date().toISOString(), rejected_reason: null }),
@@ -4196,7 +4303,8 @@ function wire(){
     b.disabled = false; b.textContent = lbl; });
   m.querySelectorAll('[data-stab]').forEach(b => b.onclick = () => { Q.searchTab = b.dataset.stab; draw(); });
   m.querySelectorAll('[data-cotab]').forEach(b => b.onclick = () => { Q.coTab = b.dataset.cotab; draw(); });
-  m.querySelectorAll('[data-extab]').forEach(b => b.onclick = () => { Q.exTab = b.dataset.extab; draw(); });
+  const xm = document.getElementById('exMonth'); if(xm) xm.onchange = () => { Q.exMonth = xm.value; draw(); };
+  const xt = document.getElementById('exTab'); if(xt) xt.onchange = () => { Q.exTab = xt.value; draw(); };
   m.querySelectorAll('[data-exscope]').forEach(b => b.onclick = () => { Q.exScope = b.dataset.exscope; draw(); });
   const qx = document.getElementById('qex');
   if(qx) qx.oninput = () => { Q.ex = qx.value; const p = qx.selectionStart; draw();
