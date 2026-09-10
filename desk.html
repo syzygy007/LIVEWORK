@@ -662,6 +662,13 @@ const tagNames = cid => S.candidate_tags.filter(t => String(t.candidate_id) === 
   .map(t => { const tag = byId(S.tags, t.tag_id); return tag ? F(tag,'name','label') : ''; }).filter(Boolean);
 const rowsFor = cid => S.pipeline.filter(p => String(p.candidate_id) === String(cid));
 const contactsOf = coid => S.contacts.filter(c => String(c.company_id) === String(coid));
+/* a client that is being worked needs a billing contact, so invoices and
+   reminders never fall to the hiring manager */
+function needsBilling(coId){
+  if(contactsOf(coId).some(ct => ct[MAP.contact.billing] === true)) return false;
+  return S.searches.some(s => String(s.company_id) === String(coId) && isOpen(s)) ||
+         S.invoices.some(i => String(i.company_id) === String(coId));
+}
 
 /* outcome only. submit to interview, interview to offer, placement history, recency. never sentiment. */
 function signal(c){
@@ -1148,7 +1155,8 @@ function coRow(c){
   return '<div class="c">' +
     '<div class="ch"><b data-co="' + id + '">' + esc(F(c,'name')) + '</b>' +
       '<span class="pill">' + (open ? open + (open === 1 ? ' open role' : ' open roles') : 'No open role') + '</span>' +
-      (docState(id).ok ? '' : '<span class="pill warn">No agreement</span>') + '</div>' +
+      (docState(id).ok ? '' : '<span class="pill warn">No agreement</span>') +
+      (needsBilling(id) ? '<span class="pill warn">No billing contact</span>' : '') + '</div>' +
     '<div class="m">' + esc(line) + (F(c,'city','location') ? ' \u00b7 ' + esc(F(c,'city','location')) : '') + '</div>' +
     '<div class="t">' + touched + '</div>' +
     '<div class="a">' +
@@ -2294,6 +2302,7 @@ function sheetCompany(){
           '<button class="sw ' + (ct[MAP.contact.billing]===true?'on':'') + '" data-bill="' + cid + '" aria-label="Billing contact"></button>' +
         '</div></div>';
     }).join('') + '</div>' +
+      (needsBilling(idOf(c)) ? '<p class="small" style="margin:0 0 10px"><span class="pill warn">No billing contact</span> Turn Billing on for the AP person, or invoices and reminders go to the first contact with an email, usually the hiring manager.</p>' : '') +
       '<p class="muted small">Room lets them sign in at the client room with a code. Billing sends invoices and payment reminders to them. One billing contact per client.</p>' +
       '<button class="btn" data-new="contact" data-co="' + idOf(c) + '">Add a contact</button>';
   if(T===2) body = (ss.length ? ss.map(s => '<div class="toggle"><div><b>' + esc(F(s,'title','role')) + '</b><small>' + esc(F(s,'location')) + ' · ' + (isOpen(s)?'Open':'Closed') + '</small></div><button class="btn sm ghost" data-se="' + idOf(s) + '">Open</button></div>').join('') : '<p class="muted small">No searches yet.</p>') +
@@ -2313,7 +2322,7 @@ function sheetCompany(){
     '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
     '<button class="btn" data-new="agreement" data-co="' + idOf(c) + '">Draw up an agreement</button>' +
     '<button class="btn ghost" data-new="document" data-co="' + idOf(c) + '">Upload a signed copy</button></div>';
-  shell(esc(F(c,'name')) + '.', esc(F(c,'city','location','industry')),
+  shell(esc(F(c,'name')) + '.', esc(F(c,'city','location','industry')) + (needsBilling(idOf(c)) ? ' · <span class="pill warn">No billing contact</span>' : ''),
     tabs(['Profile','Contacts','Searches','Activity','Money','Documents']) + body);
 }
 function sheetSearch(){

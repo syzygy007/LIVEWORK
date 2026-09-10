@@ -27,15 +27,24 @@ This is what the helper knows. Plain answers, one screen at a time. Edit this fi
 - Inside a client: Profile (legal name, notice address, notice email, terms), Contacts, Roles, Documents, Activity.
 - Contacts tab: each person has Call, Email and two switches. Room lets them into the client room. Billing marks who invoices go to (one per client, needs a work email).
 
+## Setting up a new client
+- Clients, + Add a client. Legal name, notice address and notice email matter because they print on the agreement. Pick contingent or retained terms.
+- Add two contacts, even when it is the same company. The hiring manager, the person you send candidates to, gets Room on so they can see the client room. The billing contact, usually AP, gets Billing on. Invoices, courtesy reminders and collections go to the Billing contact only. If you leave Billing off, invoices fall to the first contact with an email, which is usually the hiring manager, and they end up chasing their own AP for you. Keep the two apart unless the client tells you one person does both.
+- Get the agreement signed: Documents tab, Draw up an agreement, Client Recruiting Agreement for a contingent client, Retained Search Agreement for a retained role, Mutual NDA if they ask. Approve and send for signature. The red No agreement pill clears when the signed copy is back.
+- A client is ready when it has the agreement signed, a Room contact and a Billing contact. Then open the role.
+
 ## Agreements and signing
 - Documents tab on a client: "Draw up an agreement". Pick the kind: Client Recruiting Agreement (account wide, contingent, 20 percent), Retained Search Agreement (one role, 10,000 retainer credited against the fee), or Mutual NDA.
-- The form only asks for what the record does not already know. Press Create it. Read the PDF in the preview, page through it, then either Approve and send for signature (the client gets an emailed link, opens it, draws a signature with a finger, and both of you get the executed copy with an audit page) or Email it for a wet signature (attaches the PDF to a mail). Change what prints and redo it reopens the inputs.
+- The form only asks for what the record does not already know. Press Create it. Read the PDF in the preview, page through it, then either Approve and send for signature (the client gets an emailed link, opens it, draws a signature with a finger, and both of you get the executed copy with an audit page; the executed copy also files itself on the client's Documents tab as Signed, with Open next to it, so nothing needs uploading) or Email it for a wet signature (attaches the PDF to a mail). Change what prints and redo it reopens the inputs.
 - A client with a signed Client Recruiting Agreement is complete. A retained role also needs its own signed Retained Search Agreement.
 - Upload a signed copy is for agreements signed outside the desk.
 - LIVESIGN signs any other PDF: open livesign.html, choose the PDF, it finds the signature, name and date fields on a fillable form or you tap the page to place them, drag to move, pull the yellow corner to resize, x to remove, sign once with your finger, Sign and send. The signed PDF with its audit page is emailed to the address you typed and to you. LIVEWORK keeps no copy of the document.
 
 ## Roles (searches)
 - A role belongs to a client. Status is open, filled, cancelled or on hold. Retained roles carry the retainer.
+- Starting a search, posting a job, opening a requisition: it is the same thing and the role comes first. Roles, + Open a role (or Open a search on the client's page). Pick the client, fill the title, recruiter and comp, then drop the role summary on The brief box (PDF, Word or text). It reads the brief and pulls the must haves and nice to haves into chips. Take out the wrong ones, add what is missing, then Save. Must haves are what every candidate is matched against, so get those right.
+- Then advertise it. Open the role, Campaigns tab, New campaign, one per lead source (a job board, a sourcing push, a referral drive). Put the spend on it or it stays red. Launching the search sends the client a notice.
+- Then bring the applicants in. Intake, Drop resumes. At the top set The role these applied to and the Campaign, once for the batch. Drop the resume PDFs, press Read N, check the cards, Save all. Every one lands on that role at Sourced, tagged with the campaign, and gets a match score against the must haves. Tick Thank them for applying and each one gets an email.
 - Open roles with nobody submitted for 3 days show on Today.
 - Advertising for a role starts when you launch the search; the client gets a notice.
 
@@ -56,6 +65,11 @@ This is what the helper knows. Plain answers, one screen at a time. Edit this fi
 
 ## Interviews
 - Add an interview from + Add on Today. It records when, what kind, and a going in note. There are no calendar invites or meeting links; use Outlook and Teams for that. After it happens Today asks you to write it up.
+
+## Interview guides
+- An interview guide is a custom guide for one candidate on one role, written by the AI from the candidate's profile, the role's must haves and any interview notes. It opens the person's story, asks one behavioral question per must have with what a strong and a weak answer sound like and a 1 to 5 rating, lists what LIVEWORK already asked so the client does not repeat it, and closes on what motivates them.
+- To create one: open the candidate, Documents tab, press the yellow Generate Interview Guide button. It takes about a minute and opens in a new tab. Once it exists the button turns black and reads Interview Guide PDF, which opens the recruiter copy. The candidate needs to be on a role first, because the guide is written against that role. A Guide button also sits on every pipeline card.
+- The recruiter copy has The read and the Probe section, which stay on our side. The client copy drops both. Send the guide to the client, on the Documents tab or Send guide on a released pipeline card, emails the client copy to the client contact on that search. Sending is a courtesy, as needed, never automatic.
 
 ## Placements and invoices
 - A placement records the hire: candidate, role, start date, base salary, fee.
@@ -84,6 +98,10 @@ This is what the helper knows. Plain answers, one screen at a time. Edit this fi
 - "Add someone to the portal" or "give the client access": the client's Contacts tab, turn Room on for that person.
 - "Log a call": press Call on the row, it logs itself. Or Activity, Add.
 - "Bill the client": Placements first, then Raise an invoice from the placement.
+- "Set up a client", "onboard a client", "new account": Clients, + Add a client, then two contacts (Room for the hiring manager, Billing for AP) and a signed agreement. See Setting up a new client.
+- "Who gets the invoice": the Billing contact on the client's Contacts tab. Never the hiring manager unless they are also the billing contact.
+- "Start a search", "post a job", "create a requisition", "open a req": Roles, + Open a role. See Roles for the whole flow: role, campaigns, then Intake.
+- "Create a guide", "interview prep", "questions for the client to ask": the candidate's Documents tab, Generate Interview Guide.
 
 ## When the helper does not know
 - Say so, and point to team@livework.inc or Derek.
