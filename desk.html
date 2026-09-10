@@ -471,6 +471,25 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 @media (max-width:600px){.accrow{grid-template-columns:1fr;gap:2px}.accpop-in{padding:20px 16px}}
 .agdot i{width:8px;height:8px;border-radius:50%;flex:none;display:inline-block}
 .agdot i.ok{background:#1DB954}.agdot i.old{background:var(--yellow)}.agdot i.no{background:var(--line)}
+.pp-lede{font-size:18px;color:var(--stone);margin:-14px 0 22px}
+.pp-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.pp-chips{display:flex;gap:6px;flex-wrap:wrap}
+.pp-chip{height:40px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);color:var(--ink);font:600 13px var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.pp-chip.on{background:var(--solid);color:var(--solid-ink);border-color:var(--solid)}
+.pp-chip em{font-style:normal;opacity:.55;font-weight:500}
+.pp-chip i,.pp-st i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.pp-chip i.active,.pp-st.active i{background:#1DB954}.pp-chip i.pending,.pp-st.pending i{background:var(--yellow-deep,#D9A400)}.pp-chip i.off,.pp-st.off i{background:var(--line)}
+.pp-tools .btn.ghost{margin-left:auto}
+.tbl .r.pp{cursor:default;padding:16px 20px}
+.pp-who{display:flex;align-items:center;gap:14px;min-width:0}
+.pp-who > div{display:grid;gap:2px;min-width:0}
+.pp-av{width:44px;height:44px;border-radius:50%;background:var(--solid);color:var(--solid-ink);font:700 15px var(--font);display:inline-flex;align-items:center;justify-content:center;flex:none;letter-spacing:.02em}
+.pp-sub{font-size:13px;color:var(--stone)}
+.pp-who .agdot{margin-top:2px}
+.pp-st{display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;background:var(--paper);color:var(--ink);white-space:nowrap}
+.pp-st.active{background:rgba(29,185,84,.12)}.pp-st.pending{background:rgba(217,164,0,.16)}
+.pp-foot{padding:14px 20px;font-size:13px;color:var(--stone)}
+@media (max-width:900px){.pp-tools .btn.ghost{margin-left:0}}
 /* ---------- help ---------- */
 .hbtn{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:30;height:46px;padding:0 18px 0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--yellow);color:#000;font:600 15px/1 var(--font);display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .hbtn svg{width:18px;height:18px;fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -1231,6 +1250,10 @@ const activeStaff = () => S.staff.filter(x => x.active !== false);
 /* three tiers. owner is the super user, sits above admin and is not
    listed to admins. everyone else is delivery. */
 const ROLES = ['owner','admin','recruiter','coordinator'];
+/* what each tier is called on screen. the stored value stays the same;
+   the owner tier is the root of the desk and reads that way */
+const ROLE_LABEL = { owner:'Root', admin:'Admin', recruiter:'Recruiter', coordinator:'Coordinator', manager:'Manager', staff:'Staff' };
+const roleLabel = r => ROLE_LABEL[String(r || '').toLowerCase()] || (String(r || 'staff').charAt(0).toUpperCase() + String(r || 'staff').slice(1));
 const meRow = () => byId(S.staff, meId()) || {};
 const roleOf = x => String(F(x,'role') || 'recruiter').toLowerCase();
 const isOwner = () => roleOf(meRow()) === 'owner';
@@ -2190,42 +2213,86 @@ function vPeople(){
     String(x.plan_year) === String(new Date().getFullYear()));
   const grantable = who => ROLES.filter(r => r !== 'owner' || isOwner())
     .map(r => '<option value="' + r + '"' + (roleOf(who) === r ? ' selected' : '') + '>' +
-      r.charAt(0).toUpperCase() + r.slice(1) + '</option>').join('');
+      roleLabel(r) + '</option>').join('');
+  /* status: Off if switched off, Pending until the desk agreement is accepted, else Active */
+  const statusOf = x => x.active === false ? 'off' : (accRows(F(x,'email')).length ? 'active' : 'pending');
+  const STATUS = { active:'Active', pending:'Pending', off:'Off' };
+  const initials = n => String(n || '?').trim().split(/\s+/).slice(0,2).map(w => w[0] || '').join('').toUpperCase();
 
-  const rows = list.map(x => {
+  const q = String(Q.people || '').trim().toLowerCase();
+  const tab = Q.peopleTab || 'all';
+  const shown = list.filter(x => {
+    if(tab !== 'all' && statusOf(x) !== tab) return false;
+    if(!q) return true;
+    return [F(x,'name'), F(x,'email'), roleLabel(roleOf(x))].join(' ').toLowerCase().includes(q);
+  });
+  const counts = { all: list.length };
+  list.forEach(x => { const k = statusOf(x); counts[k] = (counts[k] || 0) + 1; });
+
+  const GRID = '2.2fr 1.6fr 150px 110px 70px 70px 120px 130px';
+  const rows = shown.map(x => {
     const id = idOf(x), self = String(id) === String(meId());
     const lines = ytd(id);
     const fees = lines.reduce((t,l) => t + Number(l.fee_net || 0), 0);
     const comm = lines.reduce((t,l) => t + Number(l.commission || 0), 0);
-    return '<div class="r" style="grid-template-columns:1.4fr 1.7fr 150px 90px 80px 80px 110px 110px">' +
-      '<div><b>' + esc(F(x,'name','email')) + '</b>' + (self ? '<br><span class="muted small">You</span>' : '') + '<br>' + accDot(F(x,'email')) + '</div>' +
+    const st = statusOf(x);
+    return '<div class="r pp" style="grid-template-columns:' + GRID + '">' +
+      '<div class="pp-who"><span class="pp-av">' + esc(initials(F(x,'name','email'))) + '</span>' +
+        '<div><b>' + esc(F(x,'name','email')) + '</b>' +
+        '<span class="pp-sub">' + (self ? 'You' : esc(roleLabel(roleOf(x)))) + '</span>' +
+        accDot(F(x,'email')) + '</div></div>' +
       '<span class="muted">' + esc(F(x,'email')) + '</span>' +
       (canSetRole(x) ? '<select class="rolesel" data-staff="' + id + '">' + grantable(x) + '</select>'
-                     : '<span class="chip" title="' + (self ? 'You cannot change your own role' : 'Only an owner can change an owner') + '">' +
-                       esc(roleOf(x)) + '</span>') +
-      '<span class="st ' + (x.active === false ? 'placed' : 'open') + '">' + (x.active === false ? 'Off' : 'Active') + '</span>' +
-      '<span class="muted small">' + openAM(id) + '</span>' +
-      '<span class="muted small">' + openRec(id) + '</span>' +
-      '<span class="muted small">' + usd(fees) + '</span>' +
+                     : '<span class="chip" title="' + (self ? 'You cannot change your own role' : 'Only a Root can change a Root') + '">' +
+                       esc(roleLabel(roleOf(x))) + '</span>') +
+      '<span class="pp-st ' + st + '"><i></i>' + STATUS[st] + '</span>' +
+      '<span class="muted">' + openAM(id) + '</span>' +
+      '<span class="muted">' + openRec(id) + '</span>' +
+      '<span class="muted">' + usd(fees) + '</span>' +
       '<b>' + usd(comm) + '</b></div>';
   });
 
   const unstaffed = S.searches.filter(x => isOpen(x) && (!x.am_id || !x.recruiter_id)).length;
+  const chip = (k, label) => '<button class="pp-chip' + (tab === k ? ' on' : '') + '" data-ptab="' + k + '">' +
+    (k === 'all' ? '' : '<i class="' + k + '"></i>') + label + (counts[k] ? ' <em>' + counts[k] + '</em>' : '') + '</button>';
 
-  return head('People.', '') +
-    (unstaffed ? '<div class="sec"><h2>' + unstaffed + ' open ' + (unstaffed === 1 ? 'role is' : 'roles are') +
+  return head('Who is in the system.', '') +
+    '<div class="pp-lede">' + (isOwner() ? 'You can change anyone but yourself.' : 'Root accounts are visible but locked.') + '</div>' +
+    (unstaffed ? '<div class="sec" style="margin-top:8px"><h2>' + unstaffed + ' open ' + (unstaffed === 1 ? 'role is' : 'roles are') +
       ' missing a name.</h2><span class="muted small">A role with no AM or no Recruiter is invisible to everyone but an admin.</span></div>' : '') +
-    '<div class="sec"><h2>Who is in the system.</h2><span class="muted small">' +
-      (isOwner() ? 'You can change anyone but yourself.' : 'Owner accounts are visible but locked.') + '</span></div>' +
-    table(['Person','Email','Role','Status','As AM','As Rec','Net fees YTD','Commission YTD'], rows,
-      '1.4fr 1.7fr 150px 90px 80px 80px 110px 110px', { empty: 'Nobody yet.' }) +
+    '<div class="tools pp-tools"><div class="search">' + SRCH + '<input id="qpeople" placeholder="Search people, email, or tier" value="' + esc(Q.people || '') + '"></div>' +
+      '<div class="pp-chips">' + chip('all','All') + chip('active','Active') + chip('pending','Pending') + chip('off','Off') + '</div>' +
+      '<button class="btn ghost" id="ppExport">Export</button></div>' +
+    table(['Person','Email','Tier','Status','As AM','As Rec','Net fees YTD','Commission YTD'], rows, GRID,
+      { empty: q ? 'Nobody matches that.' : 'Nobody here.' }) +
+    '<div class="pp-foot">' + shown.length + (shown.length === 1 ? ' person' : ' people') + (shown.length !== list.length ? ' of ' + list.length : '') + '</div>' +
     '<div class="sec"><h2>What each tier reaches.</h2></div>' +
     '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
-      '<div class="row"><b>Owner</b><span>Everything. Only another owner can change an owner</span></div>' +
-      '<div class="row"><b>Admin</b><span>Every role and every commission line. Can change anyone except an owner, and cannot grant the owner tier</span></div>' +
+      '<div class="row"><b>Root</b><span>The permanent tier the desk is built on. Everything, always. Only another Root can change a Root</span></div>' +
+      '<div class="row"><b>Admin</b><span>Every role and every commission line. Can change anyone except a Root, and cannot grant the Root tier</span></div>' +
       '<div class="row"><b>Recruiter</b><span>Only roles where they are the AM or the Recruiter, and only their own commission</span></div>' +
       '<div class="row"><b>Coordinator</b><span>Same reach as a recruiter. No commission credit unless named on a role</span></div>' +
     '</div>';
+}
+/* People wiring: search, the status chips and the CSV export */
+function wirePeople(m){
+  const qi = m.querySelector('#qpeople');
+  if(qi) qi.oninput = () => { Q.people = qi.value; const p = qi.selectionStart; draw();
+    const n = document.getElementById('qpeople'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
+  m.querySelectorAll('[data-ptab]').forEach(b => b.onclick = () => { Q.peopleTab = b.dataset.ptab; draw(); });
+  const ex = m.querySelector('#ppExport');
+  if(ex) ex.onclick = () => {
+    const keys = ['name','email','role','active'];
+    const acc = e => accRows(e)[0] || {};
+    const csv = ['name,email,tier,active,agreement_accepted_at,agreement_version,agreement_ip'].concat(S.staff.map(x => {
+      const a = acc(F(x,'email'));
+      return [F(x,'name'), F(x,'email'), roleLabel(roleOf(x)), x.active === false ? 'no' : 'yes', a.accepted_at || '', a.version || '', a.ip || '']
+        .map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',');
+    })).join('\n');
+    const b = new Blob([csv], { type:'text/csv' }); const u = URL.createObjectURL(b);
+    const t = document.createElement('a'); t.href = u; t.download = 'livework-people.csv';
+    document.body.appendChild(t); t.click(); t.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+  };
 }
 
 /* ---------- Settings ---------- */
@@ -2237,7 +2304,7 @@ function vSettings(){
     table(['Person','Email','Role'],
       S.staff.map(s => '<div class="r" style="grid-template-columns:1.4fr 1.8fr 140px">' +
         '<b>' + esc(F(s,'name','email')) + '</b><span class="muted">' + esc(F(s,'email')) + '</span>' +
-        '<span class="chip">' + esc(F(s,'role') || 'staff') + '</span></div>'),
+        '<span class="chip">' + esc(roleLabel(F(s,'role'))) + '</span></div>'),
       '1.4fr 1.8fr 140px') +
     '<div class="sec"><h2>Import sources.</h2><span class="muted small">Keys land here when the accounts are open</span></div>' +
     table(['Source','Status'],
@@ -3803,6 +3870,7 @@ function common(root){
 function wire(){
   const m = $('#main');
   common(m);
+  try{ wirePeople(m); }catch(e){ console.warn('people', e.message); }
   m.querySelectorAll('select.rolesel').forEach(sel => sel.onchange = async () => {
     const was = S.staff.find(x => String(idOf(x)) === String(sel.dataset.staff));
     const prev = was ? roleOf(was) : '';
@@ -3997,7 +4065,7 @@ function accSheet(email){
     document.body.appendChild(t); t.click(); t.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
   };
 }
-document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('[data-acc]'); if(a){ e.preventDefault(); e.stopPropagation(); accSheet(a.dataset.acc); } }, true);
+document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('[data-acc]'); if(a){ e.preventDefault(); e.stopPropagation(); if(isAdmin()) accSheet(a.dataset.acc); } }, true);
 async function sha256(text){
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
@@ -4064,7 +4132,7 @@ LWAuth.gate(document.getElementById('gate'), async function(staff){
   document.getElementById('gate').style.display = 'none';
   document.getElementById('app').style.display = '';
   document.getElementById('meName').textContent = F(staff,'name','email');
-  document.getElementById('meRole').textContent = 'The Desk · ' + (F(staff,'role') || 'staff');
+  document.getElementById('meRole').textContent = 'The Desk · ' + roleLabel(F(staff,'role'));
   document.getElementById('signout').onclick = e => { e.preventDefault(); LWAuth.signOut(); };
   
   $('#scrim').onclick = closeDrawer;
