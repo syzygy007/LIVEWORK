@@ -403,6 +403,21 @@ body{background:var(--paper)}
 .mev .s.partial{color:var(--yellow-deep)}
 .mev .s.none{color:var(--stone)}
 .mev .q{color:var(--stone);font-size:12px;margin-top:4px;line-height:1.5}
+.mev .s.nice{color:var(--stone)}
+.mev .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);margin-left:8px}
+.skl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-height:32px}
+.skl .sk{display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 6px 0 12px;border:1px solid var(--line);border-radius:999px;background:var(--wall);font-size:13px;font-weight:600;white-space:nowrap}
+.skl .sk.must{background:var(--yellow);border-color:var(--yellow-deep);color:#141210}
+.skl .sk button{all:unset;cursor:pointer;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;font-size:15px;color:inherit;opacity:.7}
+.skl .sk button:hover{opacity:1;background:rgba(0,0,0,.08)}
+.skl input{flex:1 1 160px;min-width:140px;height:30px;border:1px dashed var(--line);border-radius:999px;padding:0 12px;background:none;font:inherit;font-size:13px}
+.skl input:focus{outline:none;border-color:var(--yellow-deep);border-style:solid}
+.skv{display:flex;flex-wrap:wrap;gap:6px}
+.skv b{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--wall);border:1px solid var(--line)}
+.skv b.must{background:var(--yellow);border-color:var(--yellow-deep);color:#141210}
+.bdrop{border:2px dashed var(--line,#D3CEC4);padding:18px;text-align:center;cursor:pointer;background:var(--paper,#F4F2ED);border-radius:var(--r,10px)}
+.bdrop b{display:block}
+.bdrop.busy{opacity:.6;pointer-events:none}
 .mrow{padding:14px 0;border-bottom:1px solid var(--line)}
 .mrow:last-child{border-bottom:0}
 .mrow .mh{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -492,7 +507,7 @@ const MAP = {
   contact:   { company:'company_id', name:'name', email:'email', title:'title', phone:'phone', room:'room_access', billing:'is_billing' },
   search:    { company:'company_id', title:'title', location:'location', kind:'engagement_type', status:'status',
                comp_min:'comp_low', comp_max:'comp_high', opened:'opened_at', notes:'notes', owner:'owner_id',
-               am:'am_id', recruiter:'recruiter_id', ad:'ad_spend' },
+               am:'am_id', recruiter:'recruiter_id', ad:'ad_spend', must:'must_haves', nice:'nice_to_haves' },
   candidate: { name:'name', email:'email', phone:'phone', title:'title', location:'location',
                premier:'premier', premier_reason:'premier_reason', premier_by:'premier_by', notes:'summary' },
   pipeline:  { search:'search_id', candidate:'candidate_id', stage:'stage', released:'released', released_at:'released_at', added_by:'added_by', campaign:'campaign_id' },
@@ -1438,16 +1453,19 @@ let MOPEN = {};
 function matchOf(p){ const n = F(p,'match_pct'); return (n === 0 || n) ? Number(n) : null; }
 function matchRows(p){ const m = p.match_json; return (m && Array.isArray(m.rows)) ? m.rows : []; }
 function matchCount(p){ const r = matchRows(p); if(!r.length) return '';
-  return r.filter(x => x.status === 'met').length + ' of ' + r.length + ' must haves'; }
+  const m = r.filter(x => x.kind !== 'nice'), n = r.filter(x => x.kind === 'nice');
+  return m.filter(x => x.status === 'met').length + ' of ' + m.length + ' must haves' +
+    (n.length ? ', ' + n.filter(x => x.status === 'met').length + ' of ' + n.length + ' nice' : ''); }
 function matchChip(p){ const n = matchOf(p); if(n === null) return '';
   return '<button class="mch' + (n >= 80 ? ' hi' : '') + '" data-mopen="' + idOf(p) + '">' +
     '<b>' + n + '%</b><span>' + esc(matchCount(p)) + '</span></button>'; }
 function matchPanel(p){ if(!MOPEN[idOf(p)]) return '';
   const r = matchRows(p); if(!r.length) return '';
   const note = (p.match_json && p.match_json.note) ? p.match_json.note : '';
-  return '<div class="mev">' + r.map(x =>
-      '<div class="e"><span class="s ' + esc(x.status) + '">' + esc(x.status) + '</span>' +
-      '<span><b>' + esc(x.req) + '</b>' +
+  const ord = [...r].sort((a,b) => (a.kind === 'nice') - (b.kind === 'nice'));
+  return '<div class="mev">' + ord.map(x =>
+      '<div class="e"><span class="s ' + esc(x.status) + (x.kind === 'nice' ? ' nice' : '') + '">' + esc(x.status) + '</span>' +
+      '<span><b>' + esc(x.req) + '</b>' + (x.kind === 'nice' ? '<span class="k">nice to have</span>' : '') +
       (x.evidence ? '<div class="q">' + esc(x.evidence) + '</div>' : '') + '</span></div>').join('') +
     (note ? '<p class="muted small" style="margin-top:10px">' + esc(note) + '</p>' : '') + '</div>'; }
 async function runMatch(search_id, candidate_id){
@@ -2315,6 +2333,8 @@ function sheetSearch(){
         : '<span class="muted">Not announced yet</span>'],
       ['Days open', daysBetween(F(s,'opened_at','created_at'))],
       ['Fee', esc(F(s,'fee') || '20% of first year base')],
+      ['Must haves', skView(skSplit(F(s,'must_haves')), 'must')],
+      ['Nice to haves', skView(skSplit(F(s,'nice_to_haves')), '')],
       ['The brief', esc(F(s,'notes','brief','description'))]
     ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>' +
       '<button class="btn ghost" data-edit="search:' + idOf(s) + '">Edit</button>' +
@@ -2351,7 +2371,7 @@ function sheetSearch(){
         (rows.length ? '<button class="btn ghost" data-runmatch="' + idOf(s) + '">' +
           (scored ? 'Run the match again' : 'Match everyone to this role') + '</button>' : '') +
       '</div>' +
-      (rows.length && !F(s,'must_haves') ? '<p class="muted small" style="margin-top:10px">This role has no must haves written yet, so there is nothing to match against. Edit the job order and list them one per line.</p>' : '');
+      (rows.length && !F(s,'must_haves') ? '<p class="muted small" style="margin-top:10px">This role has no must haves yet, so there is nothing to match against. Press Edit on the Job order tab and drop the role summary, or type them in.</p>' : '');
   }
   if(T===2) body = amCampaigns() ? campaignsTab(s)
     : '<p class="muted small">Campaign and acquisition detail is limited to the people who run it.</p>';
@@ -2505,7 +2525,8 @@ function prefill(kind, r){
   if(kind === 'search'){ setv('f_co', r.company_id); setv('f_title', F(r,'title','role')); setv('f_loc', F(r,'location'));
     setv('f_kind', F(r,'kind','engagement_type')); setv('f_stat', String(F(r,'status') || 'open').toLowerCase());
     setv('f_min', F(r,'comp_min','comp_low')); setv('f_max', F(r,'comp_max','comp_high')); setv('f_notes', F(r,'notes'));
-    setv('f_am', r.am_id || ''); setv('f_rec', r.recruiter_id || ''); setv('f_ad', r.ad_spend != null ? String(r.ad_spend) : ''); }
+    setv('f_am', r.am_id || ''); setv('f_rec', r.recruiter_id || ''); setv('f_ad', r.ad_spend != null ? String(r.ad_spend) : '');
+    SK.must = skSplit(r.must_haves); SK.nice = skSplit(r.nice_to_haves); skPaint(); }
   if(kind === 'candidate'){ setv('f_name', F(r,'name','full_name')); setv('f_title', F(r,'title','headline'));
     setv('f_email', F(r,'email')); setv('f_phone', F(r,'phone')); setv('f_loc', F(r,'location')); setv('f_notes', F(r,'notes','summary')); }
   if(kind === 'note'){ setv('f_cand', r.candidate_id); setv('f_se', r.search_id); setv('f_kind', F(r,'kind'));
@@ -2553,7 +2574,14 @@ function form(kind, ctx){
       '<div class="field"><label for="f_ad">Advertising on this role, dollars</label><input id="f_ad" inputmode="decimal" placeholder="Deducted from the fee before commission"></div>' +
       '<div class="two"><div class="field"><label for="f_min">Comp low</label><input id="f_min" inputmode="numeric"></div>' +
       '<div class="field"><label for="f_max">Comp high</label><input id="f_max" inputmode="numeric"></div></div>' +
-      '<div class="field"><label for="f_notes">The brief</label><textarea id="f_notes" placeholder="What good looks like, who they report to, why the seat is open."></textarea></div>'],
+      '<div class="field"><label>The brief</label>' +
+        '<div class="bdrop" id="bdrop"><b id="bdropt">Drop the role summary here, or click to pick one</b>' +
+        '<span class="muted small" id="bdrops">PDF, Word or text. It reads the brief and pulls the must haves and nice to haves.</span>' +
+        '<input id="bfile" type="file" accept=".pdf,.docx,.txt,.md,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none"></div></div>' +
+      '<div class="field"><textarea id="f_notes" placeholder="What good looks like, who they report to, why the seat is open. Or paste the whole summary here."></textarea>' +
+        '<div style="margin-top:8px"><button type="button" class="btn sm ghost" id="bpull">Pull the skills from what is written</button></div></div>' +
+      '<div class="field"><label>Must haves <span class="muted">(what the match scores against)</span></label><div class="skl" id="skmust"></div></div>' +
+      '<div class="field"><label>Nice to haves <span class="muted">(half weight)</span></label><div class="skl" id="sknice"></div></div>'],
     candidate: ['Add a candidate.', 'Drop a resume PDF and the form fills itself. Check it, then save.',
       '<div id="rdrop" style="border:2px dashed var(--line,#D3CEC4);padding:22px;text-align:center;cursor:pointer;background:var(--paper,#F4F2ED)">' +
         '<b id="rdropt">Drop a resume PDF here, or click to pick one</b><br><span class="muted small" id="rdrops">Reads name, contact, title, sections and skills. PDF only for now.</span>' +
@@ -2714,6 +2742,7 @@ function form(kind, ctx){
   $('#fsave').onclick = () => save(kind, ctx);
   if(kind === 'invoice') wireInvoiceForm(ctx);
   if(kind === 'candidate') wireResumeDrop();
+  if(kind === 'search') wireRoleForm(ctx);
   if(kind === 'mail'){ wireMailForm(ctx);
     if(ctx.subj) setv('f_subj', ctx.subj);
     if(ctx.body) setv('f_body', ctx.body);
@@ -2732,6 +2761,89 @@ function form(kind, ctx){
       setv('f_toe', p[0] || ''); setv('f_name', p[1] || ''); setv('f_stitle', p[2] || ''); };
     if(w && w.options.length > 1){ w.selectedIndex = 1; w.onchange(); }
   }
+}
+/* the skills a role is matched on. must haves score full, nice to haves half.
+   a dropped brief fills both lists through role-skills, and every chip can go. */
+const SK = { must: [], nice: [], was: '' };
+function skSplit(t){ return String(t || '').split(/[\n;]+/).map(x => x.trim()).filter(Boolean); }
+function skView(list, cls){ return list.length ? '<div class="skv">' + list.map(x => '<b class="' + cls + '">' + esc(x) + '</b>').join('') + '</div>' : ''; }
+function skPaint(){
+  const box = k => document.getElementById(k === 'must' ? 'skmust' : 'sknice');
+  ['must','nice'].forEach(k => { const el = box(k); if(!el) return;
+    el.innerHTML = SK[k].map((x, i) => '<span class="sk ' + (k === 'must' ? 'must' : '') + '">' + esc(x) +
+        '<button type="button" data-skx="' + k + ':' + i + '" title="Remove">\u00d7</button></span>').join('') +
+      '<input data-skadd="' + k + '" placeholder="' + (k === 'must' ? 'Add a must have, press Enter' : 'Add a nice to have, press Enter') + '">';
+    el.querySelectorAll('[data-skx]').forEach(b => b.onclick = () => { const [kk, i] = b.dataset.skx.split(':'); SK[kk].splice(+i, 1); skPaint(); });
+    const inp = el.querySelector('[data-skadd]');
+    inp.onkeydown = e => { if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); skAdd(k, inp.value); inp.value = ''; skPaint();
+        const n = box(k).querySelector('[data-skadd]'); if(n) n.focus(); } };
+    inp.onblur = () => { if(inp.value.trim()){ skAdd(k, inp.value); inp.value = ''; skPaint(); } };
+  });
+}
+function skAdd(k, v){ v = String(v || '').trim().replace(/[.;,]+$/, ''); if(!v) return;
+  const other = k === 'must' ? 'nice' : 'must';
+  SK[other] = SK[other].filter(x => x.toLowerCase() !== v.toLowerCase());
+  if(!SK[k].some(x => x.toLowerCase() === v.toLowerCase())) SK[k].push(v); }
+async function briefText(file){
+  const name = file.name.toLowerCase();
+  if(/\.pdf$/.test(name) || /pdf$/.test(file.type)){
+    const lib = await import('./pdf.min.mjs');
+    lib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.mjs';
+    const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+    let out = '';
+    for(let i = 1; i <= Math.min(pdf.numPages, 12); i++){
+      const pg = await pdf.getPage(i), tc = await pg.getTextContent();
+      out += tc.items.map(t => t.str).join(' ') + '\n';
+    }
+    return out;
+  }
+  if(/\.docx$/.test(name)){
+    const M = await needLib('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js', 'mammoth');
+    if(!M) throw new Error('Could not load the Word reader.');
+    const r = await M.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+    return r.value || '';
+  }
+  return await file.text();
+}
+async function pullSkills(text, say){
+  text = String(text || '').replace(/\s+/g, ' ').trim();
+  if(text.length < 40) return toast('There is not enough written to read yet.', true);
+  say('Reading the brief.', 'Picking the must haves and nice to haves.');
+  try{
+    const j = await Promise.race([fnCall('role-skills', { text: text.slice(0, 24000), title: val('f_title') }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('No answer from the reader in a minute.')), 60000))]);
+    const must = Array.isArray(j.must) ? j.must : [], nice = Array.isArray(j.nice) ? j.nice : [];
+    must.forEach(x => skAdd('must', x)); nice.forEach(x => skAdd('nice', x));
+    skPaint();
+    say('Read it.', must.length + ' must haves and ' + nice.length + ' nice to haves. Take out any that are wrong, add what is missing.');
+    if(j.title && !val('f_title')) setv('f_title', j.title);
+  }catch(err){ say('Could not read that one.', err.message); toast(err.message, true); console.error(err); }
+}
+function wireRoleForm(ctx){
+  if(!ctx || !ctx.edit){ SK.must = []; SK.nice = []; }
+  SK.was = SK.must.join('\n') + '|' + SK.nice.join('\n');
+  skPaint();
+  const z = document.getElementById('bdrop'), inp = document.getElementById('bfile'), pull = document.getElementById('bpull');
+  if(!z || !inp) return;
+  const say = (t, s2) => { const a = document.getElementById('bdropt'), b = document.getElementById('bdrops');
+    if(a) a.textContent = t; if(b && s2 != null) b.textContent = s2; };
+  const take = async file => {
+    if(!file) return;
+    if(file.size > 15000000) return toast('That file is over 15MB.', true);
+    z.classList.add('busy'); say('Reading ' + file.name, 'Pulling the text out.');
+    try{
+      const text = await briefText(file);
+      const n = document.getElementById('f_notes'); if(n && !n.value.trim()) n.value = text.trim().slice(0, 6000);
+      await pullSkills(text, say);
+    }catch(err){ say('Could not read that one.', err.message); toast(err.message, true); }
+    z.classList.remove('busy');
+  };
+  z.onclick = () => inp.click();
+  inp.onchange = () => take(inp.files[0]);
+  z.ondragover = e => { e.preventDefault(); z.style.borderColor = 'var(--yellow,#E3BD3B)'; };
+  z.ondragleave = () => { z.style.borderColor = ''; };
+  z.ondrop = e => { e.preventDefault(); z.style.borderColor = ''; take(e.dataTransfer.files[0]); };
+  if(pull) pull.onclick = () => pullSkills(val('f_notes'), say);
 }
 /* resume drop: upload the original with the staff token, let the backend read it, fill the form */
 let RESUME = null;
@@ -3090,7 +3202,11 @@ async function save(kind, ctx){
       [M.search.opened]: ctx.edit ? undefined : today(), [M.search.notes]: val('f_notes'),
       [M.search.am]: val('f_am'), [M.search.recruiter]: val('f_rec'),
       [M.search.ad]: val('f_ad') ? num(val('f_ad')) : '',
+      [M.search.must]: SK.must.join('\n'), [M.search.nice]: SK.nice.join('\n'),
       [M.search.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Search updated.' : 'Search opened.');
+    if(r && ctx.edit && SK.was !== SK.must.join('\n') + '|' + SK.nice.join('\n') &&
+       S.pipeline.some(p => String(p.search_id) === String(ctx.edit)))
+      setTimeout(() => toast('The skills changed. Open the Pipeline tab and press Run the match again.'), 1200);
   }
   if(kind === 'candidate'){
     if(!val('f_name')) return toast('A candidate needs a name.', true);
