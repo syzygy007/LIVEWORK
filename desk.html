@@ -349,7 +349,9 @@ body{background:var(--paper)}
 .pfil.ffil{grid-template-columns:1fr 1fr;margin-bottom:12px}
 .pfil.ffil .search{grid-column:auto;padding:0 15px}
 .pfil.ffil .search input{font:600 15px/1 Manrope,Arial,sans-serif}
+.fsort{display:inline-flex;gap:6px;margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
 @media (min-width:901px){ .pfil.ffil{grid-template-columns:repeat(6,minmax(0,1fr))} }
+@media (max-width:900px){ .fsort{margin-left:0;padding-left:0;border-left:0;width:100%} }
 @media (max-width:900px){ .fbar .search.big{height:56px;padding:0 4px} .fbar .search.big input{font-size:19px} }
 .pfil select{-webkit-appearance:none;appearance:none;width:100%;height:50px;padding:0 36px 0 15px;
   border:1px solid var(--line);border-radius:var(--r);background-color:var(--white);color:var(--ink);
@@ -841,7 +843,7 @@ const NAV = [
 ];
 let VIEW = 'today';
 let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted',
-  fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fSkill:'', fState:'' };
+  fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fSkill:'', fState:'', fSort:'best' };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -1555,7 +1557,12 @@ function vFind(){
     return true;
   };
   const found = S.candidates.filter(hit);
-  const rows = found.map(c => ({ c, r: candRank(c) })).sort((a,b) => a.r - b.r).slice(0, 200).map(x => candRow(x.c));
+  const byName = (a,b) => String(F(a,'name','full_name')).localeCompare(String(F(b,'name','full_name')), undefined, { sensitivity:'base' });
+  const byDate = (a,b) => String(F(b,'created_at') || '').localeCompare(String(F(a,'created_at') || ''));
+  const sorted = Q.fSort === 'az' ? found.slice().sort(byName)
+    : Q.fSort === 'date' ? found.slice().sort(byDate)
+    : found.map(c => ({ c, r: candRank(c) })).sort((a,b) => a.r - b.r).map(x => x.c);
+  const rows = sorted.slice(0, 200).map(candRow);
   const seList = S.searches.filter(x => !Q.fCo || String(x.company_id) === String(Q.fCo));
   const campList = S.campaigns.filter(x => !Q.fSe || String(x.search_id) === String(Q.fSe))
     .filter(x => !Q.fCo || String((search(x.search_id) || {}).company_id) === String(Q.fCo));
@@ -1584,7 +1591,9 @@ function vFind(){
     '</div>' +
     '<div class="tools" style="margin-top:2px">' + chip('', 'Everyone') + chip('play', 'In a search now') + chip('pool', 'Open pool') + chip('placed', 'Placed') +
       '<span class="muted small" style="margin-left:auto">' + found.length.toLocaleString() + ' of ' + S.candidates.length.toLocaleString() +
-      (found.length > 200 ? ', showing the first 200' : '') + '</span></div>' +
+      (found.length > 200 ? ', showing the first 200' : '') + '</span>' +
+      '<span class="fsort">' + [['best','Needs you'],['date','Newest'],['az','A to Z']].map(([v,l]) =>
+        '<button class="chip ' + (Q.fSort === v ? 'on' : '') + '" data-fsort="' + v + '">' + l + '</button>').join('') + '</span></div>' +
     (rows.length ? '<div class="clist">' + rows.join('') + '</div>'
                  : '<div class="tbl"><div class="empty">' + (on ? 'Nobody matches that. Take a filter off.' : 'Nobody in the pool yet.') + '</div></div>');
 }
@@ -4486,6 +4495,7 @@ function wire(){
     if(el) el.onchange = () => { Q[k] = el.value; if(k === 'fCo'){ Q.fSe = ''; Q.fCamp = ''; } if(k === 'fSe') Q.fCamp = ''; draw(); };
   });
   m.querySelectorAll('[data-fstate]').forEach(b => b.onclick = () => { Q.fState = b.dataset.fstate; draw(); });
+  m.querySelectorAll('[data-fsort]').forEach(b => b.onclick = () => { Q.fSort = b.dataset.fsort; draw(); });
   const fcl = document.getElementById('fclear');
   if(fcl) fcl.onclick = () => { Q.fq = ''; Q.fCo = ''; Q.fSe = ''; Q.fCamp = ''; Q.fRole = ''; Q.fInd = ''; Q.fSkill = ''; Q.fState = ''; draw(); };
   m.querySelectorAll('[data-tag]').forEach(b => b.onclick = () => { Q.tag = b.dataset.tag; draw(); });
