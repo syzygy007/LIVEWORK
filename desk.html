@@ -3962,7 +3962,7 @@ async function acceptGate(staff){
     '<label class="tick"><input type="checkbox" id="accTick"><span>I have read and agree to the LIVEWORK Desk Access, Confidentiality and Proprietary Rights Agreement.</span></label>' +
     '<div class="field"><label for="accName">Full legal name</label><input type="text" id="accName" autocomplete="name" placeholder="As it appears on your ID"></div>' +
     '<button class="go" id="accGo" disabled>Agree and enter the desk</button>' +
-    '<div class="foot">Account ' + esc(email) + ' · Agreement version ' + esc(ver) + ' · Your acceptance, name, time and this document\u2019s fingerprint are recorded.</div>' +
+    '<div class="foot">Account ' + esc(email) + ' · Agreement version ' + esc(ver) + ' · Your acceptance, name, time, network address and this document\u2019s fingerprint are recorded.</div>' +
     '</div></div>';
   const tick = $('#accTick'), name = $('#accName'), go = $('#accGo');
   const check = () => { go.disabled = !(tick.checked && name.value.trim().length > 2); };
@@ -3971,8 +3971,7 @@ async function acceptGate(staff){
     go.onclick = async () => {
       go.disabled = true; go.textContent = 'Recording';
       try{
-        await insert('desk_acceptances', { staff_id: idOf(staff) || null, email: email, full_name: name.value.trim(),
-          version: ver, text_hash: hash, agent: navigator.userAgent.slice(0,300), accepted_at: new Date().toISOString() });
+        await fnCall('desk-accept', { full_name: name.value.trim(), version: ver, text_hash: hash });
         gate.innerHTML = '';
         resolve();
       }catch(err){
