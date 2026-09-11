@@ -1716,7 +1716,7 @@ function campaignsTab(s){
 /* ---------- Match against the role ----------
    The percent lives on the pipeline row, never on the person. Coverage is
    counted from the evidence rows so the number can always be opened up. */
-let MOPEN = {};
+let MOPEN = {}, MALL = {};
 function matchOf(p){ const n = F(p,'match_pct'); return (n === 0 || n) ? Number(n) : null; }
 function matchRows(p){ const m = p.match_json; return (m && Array.isArray(m.rows)) ? m.rows : []; }
 function matchCount(p){ const r = matchRows(p); if(!r.length) return '';
@@ -1735,14 +1735,36 @@ function matchPanel(p){ if(!MOPEN[idOf(p)]) return '';
       '<span><b>' + esc(x.req) + '</b>' + (x.kind === 'nice' ? '<span class="k">nice to have</span>' : '') +
       (x.evidence ? '<div class="q">' + esc(x.evidence) + '</div>' : '') + '</span></div>').join('') +
     (note ? '<p class="muted small" style="margin-top:10px">' + esc(note) + '</p>' : '') + '</div>'; }
+let MRUN = null; /* the role being matched right now, so a second press waits */
+function matchTodo(search_id){ return S.pipeline.filter(p => p.search_id === search_id && matchOf(p) === null).length; }
+function matchApply(rows){
+  /* paint what came back without a reload. the percent is stored on the row already. */
+  const by = {}; S.pipeline.forEach(p => { by[idOf(p)] = p; });
+  (rows || []).forEach(r => { const p = by[r.id]; if(!p) return;
+    p.match_pct = r.match_pct; p.match_json = r.match_json; p.matched_at = r.matched_at; });
+}
 async function runMatch(search_id, candidate_id){
-  toast('Reading everyone against the role.');
+  if(MRUN){ toast('Still matching. Give it a moment.'); return; }
+  const todo = candidate_id ? 1 : matchTodo(search_id);
+  MRUN = search_id;
+  let done = 0, errs = [];
+  toast(candidate_id ? 'Reading one person against the role.' : (todo ? 'Reading ' + todo + ' against the role.' : 'Checking the role.'));
   try{
-    const b = candidate_id ? { search_id, candidate_id } : { search_id };
-    const r = await fnCall('match-score', b);
-    await loadAll(); paintSheet(); drawNav(); draw();
-    toast('Matched ' + r.scored + (r.scored === 1 ? ' candidate.' : ' candidates.'));
+    for(let guard = 0; guard < 40; guard++){
+      const b = candidate_id ? { search_id, candidate_id } : { search_id, limit: 12 };
+      const r = await fnCall('match-score', b);
+      matchApply(r.rows); done += r.scored || 0;
+      if(r.errors) errs = errs.concat(r.errors);
+      paintSheet(); draw();
+      if(!r.remaining || !r.scored) break;
+      toast(done + ' of ' + (done + r.remaining) + ' scored.');
+    }
+    drawNav();
+    toast(done ? 'Matched ' + done + (done === 1 ? ' candidate.' : ' candidates.') + (errs.length ? ' ' + errs.length + ' did not read.' : '')
+               : 'Everyone already has a percent. Nothing was read again.', !!errs.length);
+    if(errs.length) console.warn('match-score', errs);
   }catch(e){ toast(e.message, true); }
+  MRUN = null;
 }
 
 function pipeRow(p){
@@ -2258,9 +2280,7 @@ async function intakeSaveAll(){
   await loadAll(); drawNav(); draw();
   toast(ok + ' of ' + live.length + ' saved.' + (added ? ' ' + added + ' added to the role.' : '') + ackNote);
   if(added && BATCH.search_id){
-    try{ toast('Matching ' + added + ' to the role.'); await fnCall('match-score', { search_id: BATCH.search_id });
-      await loadAll(); draw(); toast('Matched.'); }
-    catch(e){ toast('Saved, but the match did not run: ' + e.message, true); }
+    await runMatch(BATCH.search_id);
   }
 }
 /* ---------- Invoices ---------- */
@@ -2809,7 +2829,10 @@ function sheetSearch(){
       return y - x;
     });
     const scored = rows.filter(p => matchOf(p) !== null).length;
-    body = (ranked.length ? ranked.map(p => {
+    const left = rows.length - scored;
+    const MCAP = 40, showAll = !!MALL[idOf(s)];
+    const shown = showAll ? ranked : ranked.slice(0, MCAP);
+    body = (ranked.length ? shown.map(p => {
         const c = cand(p.candidate_id) || {};
         const prem = c[MAP.candidate.premier] === true;
         return '<div class="mrow"><div class="mh">' +
@@ -2824,11 +2847,13 @@ function sheetSearch(){
           '</div></div>' + matchPanel(p) + '</div>';
       }).join('')
       : '<p class="muted small">Nobody submitted yet.</p>') +
+      (ranked.length > MCAP && !showAll ? '<button class="btn ghost" style="margin-top:12px" data-mall="' + idOf(s) + '">Show all ' + ranked.length + '</button>' : '') +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">' +
         '<button class="btn" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>' +
-        (rows.length ? '<button class="btn ghost" data-runmatch="' + idOf(s) + '">' +
-          (scored ? 'Run the match again' : 'Match everyone to this role') + '</button>' : '') +
+        (left ? '<button class="btn" data-runmatch="' + idOf(s) + '">Match the ' + left + ' not yet matched</button>'
+              : (rows.length ? '<button class="btn ghost" data-runmatch="' + idOf(s) + '">Check for changed must haves</button>' : '')) +
       '</div>' +
+      (rows.length ? '<p class="muted small" style="margin-top:10px">' + scored + ' of ' + rows.length + ' scored. A percent is kept on the row and never read again unless the must haves change.</p>' : '') +
       (rows.length && !F(s,'must_haves') ? '<p class="muted small" style="margin-top:10px">This role has no must haves yet, so there is nothing to match against. Press Edit on the Job order tab and drop the role summary, or type them in.</p>' : '');
   }
   if(T===2) body = amCampaigns() ? campaignsTab(s)
@@ -4339,6 +4364,8 @@ function common(root){
     const k = b.dataset.mopen; MOPEN[k] = !MOPEN[k]; paintSheet(); draw(); });
   root.querySelectorAll('[data-runmatch]').forEach(b => b.onclick = e => { e.stopPropagation();
     runMatch(b.dataset.runmatch); });
+  root.querySelectorAll('[data-mall]').forEach(b => b.onclick = e => { e.stopPropagation();
+    MALL[b.dataset.mall] = 1; paintSheet(); });
   root.querySelectorAll('[data-camp]').forEach(b => b.onclick = e => { e.stopPropagation();
     form('campaign', { camp: b.dataset.camp }); });
   root.querySelectorAll('[data-ex]').forEach(b => b.onclick = e => { e.stopPropagation();
