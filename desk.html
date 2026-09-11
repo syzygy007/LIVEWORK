@@ -1769,6 +1769,7 @@ function pipeRow(p){
           '<button data-rel="' + id + '">' + (rel ? 'Hold back' : 'Release to the client') + '</button>' +
           '<button data-mail="pipe:' + id + '">Present</button>' +
           '<button data-note="' + p.candidate_id + '|' + p.search_id + '">Interview note</button>' +
+          (stageOf(p) !== 'Placed' ? '<button data-mvrole="' + id + '">Move to another role</button>' : '') +
         '</div></div>' +
     '</div></div>';
 }
@@ -1829,6 +1830,7 @@ function vPipeline(){
           '<button data-note="' + p.candidate_id + '|' + p.search_id + '">Interview note</button>' +
           '<button data-guide="' + p.candidate_id + '|' + p.search_id + '|' + idOf(p) + '">Guide</button>' +
           (isReleased(p) ? '<button data-guidemail="' + p.candidate_id + '|' + p.search_id + '">Send guide</button>' : '') +
+          (stageOf(p) !== 'Placed' ? '<button data-mvrole="' + idOf(p) + '">Move to role</button>' : '') +
         '</div></div>').join('') + '</div>';
   }).join('');
   return head('Pipeline.', '<button class="btn pill" data-new="pipeline"><span class="p">+</span>Submit</button>') +
@@ -1897,7 +1899,9 @@ const INTAKE_CAP = 100;
 const INDUSTRIES = ['Electrical','Construction','Finance','IT','Sales','Operations','Engineering','Logistics','Manufacturing','HR','Marketing','Legal','Healthcare','Other'];
 const ROLETYPES = ['Outside Sales','Inside Sales','Estimating','Project Management','Operations','Engineering','Field and Trades','Warehouse','Accounting and Finance','Administrative','IT','Executive','Other'];
 const SOURCES = ['LinkedIn','Indeed','Referral','Sourced','Direct apply','Career site','Other'];
-let BATCH = { id: null, company_id:'', search_id:'', source:'', role_type:'', campaign:'', campaign_id:'', ack:false, ack_role:'' };
+let BATCH = { id: null, company_id:'', search_id:'', source:'', role_type:'', campaign:'', campaign_id:'', ack:false, ack_role:'', industry:'' };
+/* the industry every card in this drop starts with: what was typed in the batch bar, else the client's industry */
+function batchIndustry(){ return BATCH.industry || (BATCH.company_id ? String(F(company(BATCH.company_id) || {}, 'industry') || '') : ''); }
 function batchCamp(){ return BATCH.campaign_id ? byId(S.campaigns, BATCH.campaign_id) : null; }
 function batchId(){ if(!BATCH.id) BATCH.id = uuid(); return BATCH.id; }
 function uuid(){ return (crypto.randomUUID ? crypto.randomUUID()
@@ -2012,6 +2016,8 @@ function vIntake(){
       '<div class="field"><label>How they came</label><select data-bk="source">' + opts(POOLSRC, BATCH.source) + '</select></div>' +
       '<div class="field"><label>Role type</label><select data-bk="role_type">' + opts(ROLETYPES, BATCH.role_type) + '</select></div>' +
     '</div>' +
+    '<div class="field"><label>Industry tag for every one</label><input data-bk="industry" list="indlist" placeholder="Pick one or type it" value="' + esc(batchIndustry()) + '">' +
+      '<div class="muted small">Fills the industry on every resume in this drop. Change it on a card if one is different.</div></div>' +
     (amCampaigns() ? '<div class="field"><button class="btn ghost" data-new="campaign" style="width:100%">New campaign</button></div>' : '') +
     '<div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px">' +
       '<label class="toggle" style="display:flex;gap:10px;align-items:flex-start">' +
@@ -2066,7 +2072,7 @@ function intakeRestore(){
 }
 function fieldsFrom(p){
   return { name: p.name || '', title: p.title || '', email: String(p.email || '').toLowerCase(),
-    phone: p.phone || '', location: p.location || '', summary: p.summary || '', industry: '' };
+    phone: p.phone || '', location: p.location || '', summary: p.summary || '', industry: batchIndustry() };
 }
 function matchExisting(p){
   const em = String(p.email || '').toLowerCase();
@@ -2101,7 +2107,16 @@ async function intakeAdd(files){
     const old = x.hash && S.candidates.find(c => F(c,'file_hash') === x.hash);
     if(twice || old){
       x.status = 'skipped';
-      x.note = twice ? 'Same file twice in this drop' : 'Same file already imported for ' + pname(idOf(old));
+      x.note = twice ? 'Same file twice in this drop' : 'Already on file as ' + pname(idOf(old)) + '.';
+      if(old && BATCH.search_id){
+        const on = S.pipeline.some(p => String(p.search_id) === String(BATCH.search_id) && String(p.candidate_id) === String(idOf(old)));
+        if(on) x.note += ' Already on ' + sname(BATCH.search_id) + '.';
+        else {
+          const row = await tryWrite(() => insert('pipeline', clean({ [MAP.pipeline.search]: BATCH.search_id, [MAP.pipeline.candidate]: idOf(old),
+            [MAP.pipeline.stage]: 'sourced', [MAP.pipeline.released]: false, [MAP.pipeline.added_by]: meId(), [MAP.pipeline.campaign]: BATCH.campaign_id || undefined })));
+          if(row){ S.pipeline.push(row); x.note += ' Added to ' + sname(BATCH.search_id) + ' at Sourced.'; }
+        }
+      } else if(old) x.note += ' Pick the role above and drop it again, or open the candidate and press Add to a role.';
       twice ? dupFile++ : dupOld++;
       draw(); continue;
     }
@@ -2119,7 +2134,7 @@ async function intakeAdd(files){
     }catch(err){ x.status = 'error'; x.error = 'Upload failed. ' + err.message; console.error(err); }
     draw();
   }
-  if(dupFile || dupOld) toast((dupFile + dupOld) + ' skipped as duplicates.');
+  if(dupFile || dupOld) toast((dupFile + dupOld) + ' already on file. See the note on each.');
 }
 
 async function intakeRead(x){
@@ -3055,6 +3070,8 @@ function form(kind, ctx){
           '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
           '<div class="field"><label for="f_stage">Stage</label><select id="f_stage">' + STAGES.slice(0,5).map(s => '<option' + (s==='Submitted'?' selected':'') + '>' + s + '</option>').join('') + '</select></div>') +
       '<div class="field"><label><input type="checkbox" id="f_rel" style="height:auto;width:auto;margin-right:8px">Release to the client room now</label></div>'],
+    mvrole: ['Move to another role.', 'The card moves as it is, same stage, held back until you release it there.',
+      '<div class="field"><label for="f_se">Role</label><select id="f_se">' + opts(S.searches.filter(s => isOpen(s) && String(idOf(s)) !== String((byId(S.pipeline, ctx.pipe) || {}).search_id)), s => F(s,'title','role') + ' · ' + cname(s.company_id)) + '</select></div>'],
     call: ['Log a call.', 'Outcome first. A task keeps it from dying here.',
       '<div class="two"><div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
       '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div></div>' +
@@ -3840,6 +3857,13 @@ async function save(kind, ctx){
       RESUME = null;
     }
   }
+  if(kind === 'mvrole'){
+    const p = byId(S.pipeline, ctx.pipe); if(!p) return;
+    if(!val('f_se')) return toast('Pick the role.', true);
+    if(S.pipeline.some(x => String(x.search_id) === val('f_se') && String(x.candidate_id) === String(p.candidate_id))) return toast(pname(p.candidate_id) + ' is already on that role.', true);
+    r = await tryWrite(() => patch('pipeline', idOf(p), { [M.pipeline.search]: val('f_se'), [M.pipeline.released]: false, [M.pipeline.released_at]: null }),
+      'Moved to ' + sname(val('f_se')) + '.');
+  }
   if(kind === 'pipeline'){
     const boxes = Array.from(document.querySelectorAll('input[name="f_roles"]:checked:not(:disabled)'));
     if(boxes.length || (ctx.cand && !ctx.se)){
@@ -4368,6 +4392,7 @@ function common(root){
     const [kind, id] = b.dataset.edit.split(':');
     form(kind, { edit: id }); });
   root.querySelectorAll('[data-delco]').forEach(b => b.onclick = e => { e.stopPropagation(); deleteClient(b.dataset.delco, b); });
+  root.querySelectorAll('[data-mvrole]').forEach(b => b.onclick = e => { e.stopPropagation(); form('mvrole', { pipe: b.dataset.mvrole }); });
   root.querySelectorAll('[data-mail]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [what, id] = b.dataset.mail.split(':');
     if(what === 'cand') return form('mail', { cand: id, tpl: 'reachout' });
@@ -4509,6 +4534,7 @@ function wire(){
       if(x && x.qid) await queueWrite(x, { status: 'skipped' });
       INTAKE.splice(+b.dataset.irm, 1); draw(); });
     m.querySelectorAll('[data-isame]').forEach(cb => cb.onchange = () => { const x = INTAKE[+cb.dataset.isame]; if(x) x.same = cb.checked; draw(); });
+    let wasInd = batchIndustry();
     m.querySelectorAll('[data-bk]').forEach(el => el.onchange = async () => {
       BATCH[el.dataset.bk] = el.value;
       if(el.dataset.bk === 'campaign_id'){
@@ -4519,6 +4545,10 @@ function wire(){
       }
       if(el.dataset.bk === 'search_id'){ const s = el.value ? search(el.value) : null; BATCH.company_id = s ? s.company_id : '';
         const keep = batchCamp(); if(keep && String(keep.search_id) !== String(el.value)){ BATCH.campaign_id = ''; BATCH.campaign = ''; } }
+      /* the batch industry lands on every card still carrying the old default or nothing */
+      const ind = batchIndustry();
+      INTAKE.forEach(x => { if(x.fields && x.status !== 'saved' && (!x.fields.industry || x.fields.industry === wasInd)) x.fields.industry = ind; });
+      wasInd = ind;
       draw(); await stampAll(); });
     m.querySelectorAll('[data-bk="ack_role"]').forEach(el => el.oninput = () => { BATCH.ack_role = el.value; });
     m.querySelectorAll('[data-ack]').forEach(cb => cb.onchange = () => {
