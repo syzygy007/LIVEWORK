@@ -599,6 +599,8 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 .xcard .xacts a.yes{color:var(--yellow-deep,#C79A15)}
 @media (max-width:900px){ .stats.x2 .stat b{font-size:40px} .xtabs button{font-size:19px} }
 @media (max-width:900px){ .xamt{font-size:40px;height:72px} }
+.btn.ghost.del{color:var(--s-due);border-color:var(--s-due)}
+.btn.ghost.del:hover{background:var(--s-due);color:#fff}
 </style>
 </head>
 <body>
@@ -739,6 +741,11 @@ async function insert(t, row){
 async function patch(t, id, row){
   const out = await rest(t + '?id=eq.' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify(row), prefer:'return=representation' });
   return Array.isArray(out) ? out[0] : out;
+}
+/* filter is a PostgREST query string, e.g. company_id=eq.<id> or search_id=in.(a,b) */
+async function del(t, filter){
+  await rest(t + '?' + filter, { method:'DELETE', prefer:'return=minimal' });
+  return true;
 }
 async function fnCall(name, body){
   await alive();
@@ -1854,17 +1861,34 @@ function vPlacements(){
       '<div class="stat y"><b>' + S.placements.filter(p => daysBetween(F(p,'start_date','created_at')) <= 90).length + '</b><span>Inside the ninety day guarantee</span></div>' +
       '<div class="stat"><b>' + money(S.placements.length ? S.placements.reduce((n,p) => n + num(F(p,'salary')), 0) / S.placements.length : 0) + '</b><span>Average salary placed</span></div>' +
     '</div>' +
-    table(['Candidate','Client','Started','Salary','Fee','Guarantee'],
-      S.placements.map(p => {
+    table(['Candidate','Client','Started','Salary','Fee','Campaign cost','Time to fill','Guarantee'],
+      S.placements.slice().sort((a,b) => String(F(b,'start_date','created_at')).localeCompare(String(F(a,'start_date','created_at')))).map(p => {
         const d = daysBetween(F(p,'start_date','created_at'));
         const pct = Math.min(100, Math.round(d / 90 * 100));
-        return '<div class="r" style="grid-template-columns:1.3fr 1.3fr 130px 120px 120px 1fr" data-place="' + idOf(p) + '">' +
+        const cost = campSpendOnSe(p.search_id), ttf = timeToFill(p);
+        return '<div class="r" style="grid-template-columns:' + PL_GRID + '" data-place="' + idOf(p) + '">' +
           '<b>' + esc(pname(p.candidate_id)) + '</b>' +
           '<span class="muted">' + esc(cname(p.company_id || (search(p.search_id)||{}).company_id)) + '</span>' +
           '<span class="muted small">' + day(F(p,'start_date','created_at')) + '</span>' +
           '<span>' + money(F(p,'salary')) + '</span><span>' + money(F(p,'fee')) + '</span>' +
-          '<div><span class="muted small">' + (d >= 90 ? 'Cleared' : (90 - d) + ' days left') + '</span><div class="gbar"><i style="width:' + pct + '%"></i></div></div></div>';
-      }), '1.3fr 1.3fr 130px 120px 120px 1fr');
+          '<span class="muted" title="Spend on every campaign run for this search">' + (cost === null ? '<span class="small">No campaign</span>' : money(cost)) + '</span>' +
+          '<span class="muted" title="From the search opening to the placement being recorded">' + (ttf === null ? '<span class="small">No open date</span>' : ttf + (ttf === 1 ? ' day' : ' days')) + '</span>' +
+          '<div><span class="muted small">' + (d >= 90 ? 'Cleared' : (90 - d) + (90 - d === 1 ? ' day left' : ' days left')) + '</span><div class="gbar"><i style="width:' + pct + '%"></i></div></div></div>';
+      }), PL_GRID);
+}
+const PL_GRID = '1.2fr 1.2fr 110px 105px 100px 115px 100px 1fr';
+/* campaign cost on one search: the spend on every campaign tied to it. null when no campaign was run */
+function campSpendOnSe(seId){
+  const xs = S.campaigns.filter(x => String(x.search_id) === String(seId));
+  if(!xs.length) return null;
+  return xs.reduce((n, x) => n + num(F(x,'spend')), 0);
+}
+/* days from the search opening to the day the placement was recorded (the start date can be weeks later) */
+function timeToFill(p){
+  const s = search(p.search_id) || {};
+  const from = F(s,'opened_at','created_at'), to = F(p,'created_at') || F(p,'start_date');
+  if(!from || !to) return null;
+  return daysBetween(from, to);
 }
 
 /* ---------- Intake: drop up to a hundred resumes, one queue, dedupe, batch stamp ---------- */
@@ -2670,7 +2694,8 @@ function sheetCompany(){
       ['Address', esc(F(c,'address') || 'Not on file')],
       ['Notices to', esc(F(c,'notice_email') || 'Not on file')],
       ['Notes', esc(F(c,'notes','bio'))]
-    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-edit="company:' + idOf(c) + '">Edit</button><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button></div>';
+    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-edit="company:' + idOf(c) + '">Edit</button><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button>' +
+      (isAdmin() ? '<button class="btn ghost del" data-delco="' + idOf(c) + '">Delete client</button>' : '') + '</div>';
   if(T===1) body = '<div class="clist">' + contactsOf(idOf(c)).map(ct => {
       const cid = idOf(ct);
       const ph = String(F(ct,'phone') || '').replace(/[^0-9+]/g,'');
@@ -3068,8 +3093,9 @@ function form(kind, ctx){
       '<div class="field"><label for="f_name">Pool</label><input id="f_name" placeholder="Warehouse leadership, SoCal"></div>' +
       '<div class="field"><label for="f_notes">What it is for</label><textarea id="f_notes"></textarea></div>'],
     placement: ['Record a placement.', 'This starts the ninety day guarantee clock.',
-      '<div class="field"><label for="f_se">Search</label><select id="f_se">' + opts(S.searches, s => F(s,'title','role') + ' · ' + cname(s.company_id), ctx.se) + '</select></div>' +
-      '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select></div>' +
+      '<div class="field"><label for="f_se">Search</label><select id="f_se">' + opts(S.searches.filter(s => isOpen(s) || String(idOf(s)) === String(ctx.se)), s => F(s,'title','role') + ' · ' + cname(s.company_id), ctx.se) + '</select></div>' +
+      '<div class="field"><label for="f_cq">Find the candidate</label><input id="f_cq" placeholder="Type a name to narrow the list" autocomplete="off"></div>' +
+      '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select><div class="muted small" id="f_candn"></div></div>' +
       '<div class="two"><div class="field"><label for="f_start">Start date</label><input id="f_start" type="date"></div>' +
       '<div class="field"><label for="f_sal">Base salary</label><input id="f_sal" inputmode="numeric"></div></div>' +
       '<div class="field"><label for="f_fee">Fee</label><input id="f_fee" inputmode="numeric" placeholder="20% of base"></div>'],
@@ -3183,6 +3209,7 @@ function form(kind, ctx){
   const first = $('#sheet').querySelector('input,select,textarea'); if(first) first.focus();
   $('#fsave').onclick = () => save(kind, ctx);
   if(kind === 'invoice') wireInvoiceForm(ctx);
+  if(kind === 'placement') wirePlacementForm(ctx);
   if(kind === 'candidate') wireResumeDrop();
   if(kind === 'search') wireRoleForm(ctx);
   if(kind === 'mail'){ wireMailForm(ctx);
@@ -3204,6 +3231,30 @@ function form(kind, ctx){
       setv('f_toe', p[0] || ''); setv('f_name', p[1] || ''); setv('f_stitle', p[2] || ''); };
     if(w && w.options.length > 1){ w.selectedIndex = 1; w.onchange(); }
   }
+}
+/* the candidate list on a placement follows the search picked above it: only the people in that
+   pipeline (not Passed), A to Z, then the typed name narrows it further. No search picked = everyone. */
+function wirePlacementForm(ctx){
+  const se = $('#f_se'), cq = $('#f_cq'), cs = $('#f_cand'), n = $('#f_candn');
+  if(!se || !cs) return;
+  const paint = () => {
+    const seId = se.value, q = norm(cq ? cq.value : '');
+    const keep = cs.value || ctx.cand || '';
+    let list = S.candidates;
+    if(seId){
+      const ids = S.pipeline.filter(p => String(p.search_id) === String(seId) && stageOf(p) !== 'Passed').map(p => String(p.candidate_id));
+      list = S.candidates.filter(c => ids.indexOf(String(idOf(c))) >= 0);
+    }
+    if(q) list = list.filter(c => norm(F(c,'name','full_name')).includes(q));
+    list = list.slice().sort((a,b) => String(F(a,'name','full_name')).localeCompare(String(F(b,'name','full_name')), undefined, { sensitivity:'base' }));
+    cs.innerHTML = opts(list, c => F(c,'name','full_name'), keep);
+    if(keep && cs.value !== String(keep)) cs.value = '';
+    if(list.length === 1 && !cs.value) cs.value = String(idOf(list[0]));
+    if(n) n.textContent = seId ? (list.length + (list.length === 1 ? ' person' : ' people') + ' on this search') : (list.length + ' in the pool. Pick the search to narrow it.');
+  };
+  se.onchange = paint;
+  if(cq) cq.oninput = paint;
+  paint();
 }
 /* the skills a role is matched on. must haves score full, nice to haves half.
    a dropped brief fills both lists through role-skills, and every chip can go. */
@@ -3987,6 +4038,39 @@ function wireSheet(){
   });
   common(sh);
 }
+/* deleting a client. Money records are never deleted: a client with a placement, an invoice or an expense
+   stays and the button says so. Otherwise the client goes with its contacts, searches, pipeline rows,
+   campaigns, notes, tasks, activity and documents. Candidates stay in the pool. */
+async function deleteClient(coId, btn){
+  const c = company(coId); if(!c) return;
+  const name = F(c,'name') || 'this client';
+  const ss = S.searches.filter(s => String(s.company_id) === String(coId));
+  const seIds = ss.map(s => String(idOf(s)));
+  const money_ = S.placements.filter(p => String(p.company_id) === String(coId)).length
+    + S.invoices.filter(i => String(i.company_id) === String(coId)).length
+    + S.expenses.filter(x => String(x.company_id) === String(coId)).length;
+  if(money_) return toast(name + ' has placements, invoices or expenses on it. Those records stay, so the client cannot be deleted. Mark it inactive instead.', true);
+  const pipe = S.pipeline.filter(p => seIds.indexOf(String(p.search_id)) >= 0).length;
+  const cts = contactsOf(coId).length;
+  const what = 'Delete ' + name + '?\n\nGone with it: ' + cts + (cts === 1 ? ' contact, ' : ' contacts, ') + ss.length + (ss.length === 1 ? ' search, ' : ' searches, ') + pipe + ' pipeline ' + (pipe === 1 ? 'row' : 'rows') + ', and its notes, tasks and documents.\nCandidates stay in the pool. This cannot be undone.';
+  if(!confirm(what)) return;
+  if(prompt('Type DELETE to confirm.') !== 'DELETE') return toast('Not deleted.');
+  const lbl = btn ? btn.textContent : ''; if(btn){ btn.disabled = true; btn.textContent = 'Deleting'; }
+  const inSe = 'search_id=in.(' + seIds.map(encodeURIComponent).join(',') + ')';
+  const onCo = 'company_id=eq.' + encodeURIComponent(coId);
+  /* child rows first. a table that lacks the column just skips */
+  const steps = [];
+  if(seIds.length) steps.push(['pipeline_log', inSe], ['interview_notes', inSe], ['interview_guides', inSe], ['campaigns', inSe],
+    ['activity', inSe], ['tasks', inSe], ['intake_queue', inSe], ['pipeline', inSe]);
+  steps.push(['signature_requests', onCo], ['documents', onCo], ['activity', onCo], ['tasks', onCo], ['intake_queue', onCo], ['contacts', onCo], ['searches', onCo]);
+  for(const [t, f] of steps){
+    try{ await del(t, f); }
+    catch(e){ if(!/column|does not exist|42703/i.test(e.message)){ toast('Stopped at ' + t + '. ' + e.message, true); if(btn){ btn.disabled = false; btn.textContent = lbl; } return; } }
+  }
+  const ok = await tryWrite(() => del('companies', 'id=eq.' + encodeURIComponent(coId)), name + ' deleted.');
+  if(!ok){ if(btn){ btn.disabled = false; btn.textContent = lbl; } await loadAll(); draw(); return; }
+  closeSheet(); await loadAll(); drawNav(); draw();
+}
 /* the search launch notice. One press, and only ever a press. */
 async function startSearch(btn, seId, again){
   const s = search(seId) || {};
@@ -4283,6 +4367,7 @@ function common(root){
   root.querySelectorAll('[data-edit]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [kind, id] = b.dataset.edit.split(':');
     form(kind, { edit: id }); });
+  root.querySelectorAll('[data-delco]').forEach(b => b.onclick = e => { e.stopPropagation(); deleteClient(b.dataset.delco, b); });
   root.querySelectorAll('[data-mail]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [what, id] = b.dataset.mail.split(':');
     if(what === 'cand') return form('mail', { cand: id, tpl: 'reachout' });
