@@ -69,7 +69,10 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .ls-page canvas{display:block;width:100%;height:auto}
 .ls-page .n{position:absolute;top:8px;right:8px;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--stone);background:var(--paper);padding:2px 6px;pointer-events:none}
 .ls-f{position:absolute;border:2px solid var(--yellow-deep);background:rgba(242,198,50,.18);display:flex;align-items:center;justify-content:center;font:600 11px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;color:#000;cursor:default}
-.ls-f.date,.ls-f.name{background:rgba(242,198,50,.25)}
+.ls-f.date,.ls-f.name,.ls-f.title{background:rgba(242,198,50,.25);text-transform:none;letter-spacing:0;font-weight:500;font-size:12px;justify-content:flex-start;padding-left:4px;overflow:hidden;white-space:nowrap}
+.ls-f .tag{position:absolute;left:4px;top:1px;font:500 7px/1 var(--font);letter-spacing:0;text-transform:none;color:#555;pointer-events:none}
+.ls-f .uid{position:absolute;left:4px;bottom:1px;font:500 6px/1 var(--font);letter-spacing:0;text-transform:none;color:#777;pointer-events:none}
+.ls-f.sig{border-left-width:3px}
 .ls-f{cursor:move;touch-action:none}
 .ls-f .rz{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;border-radius:50%;background:var(--yellow-deep);border:2px solid #fff;cursor:nwse-resize;touch-action:none}
 .ls-f img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
@@ -144,6 +147,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         <button class="ls-mode on" data-mode="sig">Signature</button>
         <button class="ls-mode" data-mode="date">Date</button>
         <button class="ls-mode" data-mode="name">Name</button>
+        <button class="ls-mode" data-mode="title">Title</button>
         <span class="sp"></span>
         <span class="cnt" id="cnt">No fields yet</span>
       </div>
@@ -162,7 +166,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
           <label class="ls-tick"><input type="checkbox" id="consent">
             I agree to sign this electronically and this is my signature.</label>
           <button class="btn" id="sign">Sign and send</button>
-          <p class="ls-note">The signed PDF is emailed to you with an audit page. LIVEWORK keeps no copy of the document.</p>
+          <p class="ls-note">The signed PDF is emailed to you with an audit page. Your signature gets a LIVESIGN ID. LIVEWORK keeps the signing record (document name, time, ID, hash), never the document.</p>
           <div class="ls-msg" id="msg"></div>
         </div>
       </div>
@@ -208,7 +212,7 @@ function ready(kind, who, name, email, title){
   $('#gate').style.display = 'none'; $('#drop').style.display = ''; $('#app').style.display = '';
   $('#who').textContent = name || email || 'LIVESIGN';
   if(name) $('#name').value = name; if(email) $('#email').value = email; if(title) $('#title2').value = title;
-  fit();
+  relabel(); fit();
 }
 function staffDoor(){
   $('#pickdoor').style.display = 'none'; $('#cdoor').style.display = 'none';
@@ -246,7 +250,7 @@ $('#asclient').onclick = clientDoor; $('#asstaff').onclick = staffDoor;
 
 /* ---------- the document ---------- */
 let BUF = null, FILE = '', PAGES = [], FIELDS = [], MODE = 'sig';
-const SIZE = { sig: [0.2, 0.045], date: [0.12, 0.022], name: [0.2, 0.022] };   /* fraction of page width and height */
+const SIZE = { sig: [0.2, 0.045], date: [0.12, 0.022], name: [0.2, 0.022], title: [0.2, 0.022] };   /* fraction of page width and height */
 
 $('#pick').onclick = () => $('#file').click();
 $('#file').onchange = e => { if(e.target.files[0]) openPdf(e.target.files[0]); };
@@ -280,7 +284,7 @@ async function openPdf(f){
       for(const a of ann){
         if(a.subtype !== 'Widget' || !a.rect) continue;
         const nm = String(a.fieldName || '') + ' ' + String(a.alternativeText || '');
-        const kind = a.fieldType === 'Sig' || /sig/i.test(nm) ? 'sig' : /date/i.test(nm) ? 'date' : /\bname\b|signer|print/i.test(nm) ? 'name' : '';
+        const kind = a.fieldType === 'Sig' || /sig/i.test(nm) ? 'sig' : /date/i.test(nm) ? 'date' : /title/i.test(nm) ? 'title' : /\bname\b|signer|print/i.test(nm) ? 'name' : '';
         if(!kind) continue;
         const [x1, y1, x2, y2] = a.rect;
         const f = { page: p, kind, x: Math.min(x1, x2) / v1.width, y: 1 - Math.max(y1, y2) / v1.height, w: Math.abs(x2 - x1) / v1.width, h: Math.abs(y2 - y1) / v1.height, id: Math.random().toString(36).slice(2), auto: true };
@@ -314,8 +318,10 @@ function place(ev, box, p){
 function draw(f, pg){
   const d = document.createElement('div'); d.className = 'ls-f ' + f.kind; d.dataset.id = f.id;
   d.style.left = (f.x * 100) + '%'; d.style.top = (f.y * 100) + '%'; d.style.width = (f.w * 100) + '%'; d.style.height = (f.h * 100) + '%';
-  d.textContent = f.kind === 'sig' ? 'Sign here' : f.kind === 'date' ? 'Date' : 'Name';
-  if(f.kind === 'sig' && inked){ d.textContent = ''; const i = new Image(); i.src = cv.toDataURL('image/png'); d.appendChild(i); }
+  d.textContent = label(f.kind);
+  if(f.kind === 'sig'){ if(inked){ d.childNodes[0].textContent = ''; const i = new Image(); i.src = cv.toDataURL('image/png'); d.appendChild(i); }
+    const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Signed by:'; d.appendChild(t);
+    const u = document.createElement('span'); u.className = 'uid'; u.textContent = 'LIVESIGN ID on signing'; d.appendChild(u); }
   const x = document.createElement('span'); x.className = 'x'; x.textContent = 'x';
   x.onclick = e => { e.stopPropagation(); FIELDS = FIELDS.filter(q => q.id !== f.id); d.remove(); count(); };
   const rz = document.createElement('span'); rz.className = 'rz';
@@ -335,6 +341,10 @@ function draw(f, pg){
   ['pointerup','pointercancel'].forEach(k => { d.addEventListener(k, up); rz.addEventListener(k, up); });
   d.addEventListener('click', e => e.stopPropagation());
 }
+function today(){ return new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }); }
+function label(k){ return k === 'sig' ? 'Sign here' : k === 'date' ? today() : k === 'title' ? ($('#title2').value.trim() || 'Title') : ($('#name').value.trim() || 'Name'); }
+function relabel(){ document.querySelectorAll('.ls-f.name, .ls-f.title').forEach(d => { d.childNodes[0].textContent = label(d.classList.contains('title') ? 'title' : 'name'); }); }
+$('#name').addEventListener('input', relabel); $('#title2').addEventListener('input', relabel);
 function count(){
   const s = FIELDS.filter(f => f.kind === 'sig').length, o = FIELDS.length - s;
   $('#cnt').textContent = FIELDS.length ? (s + ' signature' + (s === 1 ? '' : 's') + (o ? ', ' + o + ' other' : '')) : 'No fields yet';
@@ -409,7 +419,7 @@ $('#sign').onclick = async () => {
     if(!d.ok) throw new Error(d.error || 'That did not go through.');
     $('#work').style.display = 'none';
     $('#h1').textContent = 'Signed.'; $('#sub').textContent = 'Your copy is on its way.';
-    $('#dnote').textContent = 'Emailed to ' + $('#email').value.trim() + (d.also ? ' and ' + d.also : '') + '. Document hash ' + (d.hash || '').slice(0, 12) + '. Nothing was stored.';
+    $('#dnote').textContent = 'Emailed to ' + $('#email').value.trim() + (d.also ? ' and ' + d.also : '') + '. Signature ID LIVESIGN ' + (d.sig_id || '') + '. Document hash ' + (d.hash || '').slice(0, 12) + '. The document was not stored.';
     if(d.pdf){ const bin = atob(d.pdf), u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
       const url = URL.createObjectURL(new Blob([u], { type: 'application/pdf' }));
       $('#dlink').href = url; $('#dlink').download = FILE.replace(/\.pdf$/i, '') + ' signed.pdf'; }
