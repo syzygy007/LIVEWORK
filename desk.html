@@ -371,6 +371,9 @@ body{background:var(--paper)}
 .ctbl .h > div[data-csort]{cursor:pointer;user-select:none;display:flex;gap:5px;align-items:center}
 .ctbl .h .cv{width:12px;height:12px;opacity:.35;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .ctbl .h .cv.on{opacity:1}
+.aiveil{position:fixed;inset:0;z-index:40;background:rgba(8,8,8,.72);display:flex;align-items:center;justify-content:center}
+.aiveil .bx{background:var(--white);border-radius:var(--r);padding:30px 40px;text-align:center;max-width:min(420px,90vw)}
+.aiveil .aiwait{padding:0}
 .aiwait{display:flex;flex-direction:column;align-items:center;gap:12px;padding:26px 0}
 .aiwait .ln{font-size:15px;font-weight:600;letter-spacing:-.01em}
 .aiwait .sb{font-size:13px;color:var(--stone)}
@@ -1696,6 +1699,21 @@ function aiOrb(px){
     '<circle cx="100" cy="100" r="' + (small ? 16 : 14) + '" fill="#FFF7B0" opacity=".16" class="pu"/>' +
     '<circle cx="100" cy="100" r="' + (small ? 7 : 6) + '" fill="#FFF7B0" opacity=".5" class="pu2"/></svg>';
 }
+/* one overlay, for the calls that hand back a file rather than a screen */
+function aiHold(line, sub){
+  aiDrop();
+  const d = document.createElement('div');
+  d.className = 'aiveil'; d.id = 'aiveil';
+  d.innerHTML = '<div class="bx">' + aiWait(line, sub, 96) + '</div>';
+  document.body.appendChild(d);
+}
+function aiSay(line, sub){
+  const v = document.getElementById('aiveil'); if(!v) return;
+  const l = v.querySelector('.ln'), b = v.querySelector('.sb');
+  if(l) l.textContent = line;
+  if(b && sub) b.textContent = sub;
+}
+function aiDrop(){ const v = document.getElementById('aiveil'); if(v) v.remove(); }
 function aiWait(line, sub, px){
   return '<div class="aiwait">' + aiOrb(px || 90) + '<div class="ln">' + esc(line) + '</div>' +
     (sub ? '<div class="sb">' + esc(sub) + '</div>' : '') + '</div>';
@@ -4744,7 +4762,8 @@ async function buildGuide(btn, candId, seId, pipeId){
   if(w) writeInto(w, guideWait(pname(candId)));
   const lbl = btn.textContent; btn.disabled = true;
   let n = 0; btn.textContent = 'Writing';
-  const tick = setInterval(() => { n++; btn.textContent = 'Writing ' + n + 's'; }, 1000);
+  aiHold('Writing the guide', 'The file, the brief and the screen notes, all at once.');
+  const tick = setInterval(() => { n++; btn.textContent = 'Writing ' + n + 's'; aiSay('Writing the guide', n + ' seconds in'); }, 1000);
   try{
     const j = await fnCall('interview-guide', { candidate_id: candId, search_id: seId || null, pipeline_id: pipeId || null });
     openGuide(j, w);
@@ -4755,16 +4774,19 @@ async function buildGuide(btn, candId, seId, pipeId){
     toast('No guide. ' + err.message, true);
   }
   clearInterval(tick);
+  aiDrop();
   btn.disabled = false; btn.textContent = lbl;
 }
 /* the recruiter PDF. The read and the probes are in this one. */
 async function guidePdf(btn, candId, seId, redact){
   const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Building';
+  aiHold('Writing the guide', 'The file, the brief and the screen notes, all at once.');
   try{
     const j = await fnCall('guide-pdf', { candidate_id: candId, search_id: seId || null, redact: redact === true });
+    aiDrop();
     if(j.url) openUrl(j.url);
     toast('Guide PDF ready.');
-  }catch(err){ toast('No PDF. ' + err.message, true); }
+  }catch(err){ aiDrop(); toast('No PDF. ' + err.message, true); }
   btn.disabled = false; btn.textContent = lbl;
 }
 /* the courtesy send. Client copy only, and only ever on a press. */
