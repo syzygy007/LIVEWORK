@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Verify a signature · LIVESIGN</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>try{var k=localStorage.getItem("lw_skin")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.skin=k}catch(e){}</script>
+<link rel="stylesheet" href="lw.css?v=6">
+<script src="lw-config.js?v=3"></script>
+<style>
+.wrap{width:min(1040px,100% - 96px);margin:0 auto}
+@media (max-width:720px){.wrap{width:calc(100% - 32px)}}
+.nav{border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.nav img{height:18px}
+.nav img.on-dark{display:none}html[data-skin="dark"] .nav img.on-light{display:none}html[data-skin="dark"] .nav img.on-dark{display:inline}
+.nav .who{font-size:13px;color:var(--stone)}
+.vf-hero{padding:64px 0 32px;max-width:720px}
+.vf-hero .micro{font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--stone)}
+.vf-hero h1{margin:16px 0 18px;font-weight:800;letter-spacing:-.045em;line-height:.9;font-size:clamp(48px,9vw,112px)}
+.vf-hero h1 i{font-style:normal;color:var(--yellow)}
+.vf-hero p{margin:0;color:var(--stone);font-size:16px;max-width:52ch}
+.vf-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;max-width:560px;margin:28px 0 8px}
+.vf-form input{height:56px;border:1px solid var(--line);background:var(--white);color:var(--ink);padding:0 16px;font:600 18px/1 var(--font);letter-spacing:.06em;text-transform:uppercase;border-radius:var(--r)}
+.vf-form .btn{height:56px;padding:0 26px}
+@media (max-width:520px){.vf-form{grid-template-columns:1fr}}
+.vf-msg{font-size:13px;min-height:18px;color:#C4453F}
+.vf-card{border:1px solid var(--line);background:var(--white);padding:28px;max-width:760px;margin:32px 0 64px;display:none}
+.vf-card .ok{display:flex;align-items:center;gap:12px;margin:0 0 22px;font-size:24px;font-weight:800;letter-spacing:-.02em}
+.vf-card .ok b{width:14px;height:14px;border-radius:50%;background:#2E9E5B;flex:none}
+.vf-rows{display:grid;gap:0}
+.vf-row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;padding:12px 0;border-top:1px solid var(--line);font-size:15px}
+.vf-row span{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--stone);padding-top:3px}
+.vf-row code{font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+@media (max-width:520px){.vf-row{grid-template-columns:1fr;gap:4px}}
+.vf-card .note{margin:22px 0 0;font-size:13px;line-height:1.5;color:var(--stone)}
+.vf-card .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a href="index.html" aria-label="LIVEWORK"><img class="mark on-light" src="livework-wordmark-black.svg" alt="LIVE | WORK"><img class="mark on-dark" src="livework-wordmark-white.svg" alt="LIVE | WORK"></a>
+  <span class="who">LIVESIGN</span>
+</div></header>
+<main class="wrap">
+  <div class="vf-hero">
+    <div class="micro">Livesign</div>
+    <h1>Verify a<br>signature<i>.</i></h1>
+    <p>Every signature placed with LIVESIGN carries an ID. Type it in and we show the signing record: the document name, who signed, when, and the fingerprint of the file. The document itself is never stored here.</p>
+    <div class="vf-form"><input id="id" placeholder="LIVESIGN ID" autocomplete="off" spellcheck="false"><button class="btn" id="go">Verify</button></div>
+    <div class="vf-msg" id="msg"></div>
+  </div>
+  <div class="vf-card" id="card">
+    <div class="ok"><b></b><span id="okt">On record.</span></div>
+    <div class="vf-rows" id="rows"></div>
+    <p class="note">To confirm a file is the executed copy, compute its SHA-256 (any hash tool) and compare it to the executed fingerprint above. A match means the file is byte for byte what was signed.</p>
+    <div class="row"><button class="btn ghost" id="cert">Download the certificate</button></div>
+  </div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let REC = null;
+const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const when = iso => new Date(iso).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
+function rows(r){
+  return [
+    ['Signature ID', 'LIVESIGN ' + r.sig_id], ['Document', r.document_name], ['Signed by', r.signer_name + (r.signer_title ? ', ' + r.signer_title : '')],
+    ['Signer email', r.signer_email], ['Signed in as', r.signed_in_as], ['Signed at', when(r.signed_at)], ['Method', r.method],
+    ['Signatures placed', String(r.signatures)], ['Original SHA-256', r.original_sha256, 1], ['Executed SHA-256', r.executed_sha256, 1], ['Signature SHA-256', r.sig_sha256, 1], ['Record ID', r.id, 1]
+  ];
+}
+async function verify(){
+  const id = $('#id').value.replace(/livesign/i, '').replace(/[^0-9a-f]/gi, '').toUpperCase();
+  $('#msg').textContent = ''; $('#card').style.display = 'none';
+  if(id.length < 8) return $('#msg').textContent = 'Type the ID printed on the signature.';
+  $('#go').disabled = true;
+  try{
+    const r = await fetch(LW.url + '/functions/v1/live-sign', { method: 'POST', headers: { 'content-type': 'application/json', apikey: LW.anon, Authorization: 'Bearer ' + LW.anon }, body: JSON.stringify({ verify: id }) });
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error || 'Not found.');
+    REC = d.record;
+    $('#rows').innerHTML = rows(REC).map(([k, v, mono]) => '<div class="vf-row"><span>' + esc(k) + '</span>' + (mono ? '<code>' + esc(v) + '</code>' : '<div>' + esc(v) + '</div>') + '</div>').join('');
+    $('#card').style.display = ''; history.replaceState(null, '', '?id=' + id);
+  }catch(e){ $('#msg').textContent = e.message; }
+  $('#go').disabled = false;
+}
+$('#go').onclick = verify; $('#id').addEventListener('keydown', e => { if(e.key === 'Enter') verify(); });
+$('#cert').onclick = async () => {
+  if(!REC) return;
+  if(!window.PDFLib){ await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pdf-lib.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const pdf = await PDFDocument.create(), p = pdf.addPage([612, 792]);
+  const F = await pdf.embedFont(StandardFonts.Helvetica), FB = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const INK = rgb(0, 0, 0), GREY = rgb(0.42, 0.42, 0.42), GOLD = rgb(0.949, 0.776, 0.196);
+  p.drawRectangle({ x: 0, y: 682, width: 612, height: 110, color: INK });
+  p.drawText('LIVE', { x: 48, y: 722, size: 30, font: FB, color: rgb(1, 1, 1) });
+  p.drawText('|', { x: 48 + FB.widthOfTextAtSize('LIVE', 30) + 4, y: 722, size: 30, font: F, color: GOLD });
+  p.drawText('WORK', { x: 48 + FB.widthOfTextAtSize('LIVE', 30) + 16, y: 722, size: 30, font: FB, color: rgb(1, 1, 1) });
+  p.drawText('CERTIFICATE OF SIGNING', { x: 564 - FB.widthOfTextAtSize('CERTIFICATE OF SIGNING', 8), y: 734, size: 8, font: FB, color: GOLD });
+  p.drawText('Signed.', { x: 48, y: 624, size: 40, font: FB, color: INK });
+  p.drawCircle({ x: 56 + FB.widthOfTextAtSize('Signed', 40), y: 628, size: 4, color: GOLD });
+  let y = 586;
+  const wrap = (t, size, w) => { const out = []; let line = ''; for(const word of String(t).split(/(?<=[\s\/])/)){ if(F.widthOfTextAtSize(line + word, size) > w && line){ out.push(line); line = word; } else line += word; } if(line) out.push(line); return out; };
+  for(const [k, v, mono] of rows(REC)){
+    const size = mono ? 8.5 : 10, lines = mono ? [String(v).slice(0, 32) + (String(v).length > 32 ? ' ' + String(v).slice(32) : '')] : wrap(v, size, 360);
+    p.drawLine({ start: { x: 48, y: y + 14 }, end: { x: 564, y: y + 14 }, thickness: 0.5, color: rgb(0.86, 0.85, 0.83) });
+    p.drawText(k.toUpperCase(), { x: 48, y, size: 7, font: FB, color: GREY });
+    lines.forEach((ln, i) => p.drawText(ln, { x: 200, y: y - i * 12, size, font: F, color: INK }));
+    y -= 14 + Math.max(1, lines.length) * 12;
+  }
+  p.drawText('Generated ' + when(new Date().toISOString()) + ' from the LIVESIGN record. Verify any time at livework.inc/verify.html?id=' + REC.sig_id, { x: 48, y: y - 10, size: 8, font: F, color: GREY });
+  p.drawText('LIVEWORK · CERTIFICATE OF SIGNING', { x: 48, y: 40, size: 7, font: FB, color: GREY });
+  p.drawText('ESIGN AND UETA', { x: 564 - FB.widthOfTextAtSize('ESIGN AND UETA', 7), y: 40, size: 7, font: FB, color: GREY });
+  const bytes = await pdf.save(), url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'LIVESIGN ' + REC.sig_id + ' certificate.pdf'; a.click();
+};
+const q = new URLSearchParams(location.search).get('id'); if(q){ $('#id').value = q; verify(); }
+</script>
+</body>
+</html>

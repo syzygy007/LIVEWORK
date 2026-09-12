@@ -166,7 +166,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
           <label class="ls-tick"><input type="checkbox" id="consent">
             I agree to sign this electronically and this is my signature.</label>
           <button class="btn" id="sign">Sign and send</button>
-          <p class="ls-note">The signed PDF is emailed to you with an audit page. Your signature gets a LIVESIGN ID. LIVEWORK keeps the signing record (document name, time, ID, hash), never the document.</p>
+          <p class="ls-note">The signed PDF is emailed to you. Every page and your signature carry a LIVESIGN ID that anyone can verify. LIVEWORK keeps the signing record (document name, time, ID, hash), never the document.</p>
           <div class="ls-msg" id="msg"></div>
         </div>
       </div>
@@ -419,7 +419,7 @@ $('#sign').onclick = async () => {
     if(!d.ok){ if(/room (session|access)/i.test(d.error || '')){ try{ localStorage.removeItem('lw_room_session'); }catch(e){} } throw new Error(d.error || 'That did not go through.'); }
     $('#work').style.display = 'none';
     $('#h1').textContent = 'Signed.'; $('#sub').textContent = 'Your copy is on its way.';
-    $('#dnote').textContent = 'Emailed to ' + $('#email').value.trim() + (d.also ? ' and ' + d.also : '') + '. Signature ID LIVESIGN ' + (d.sig_id || '') + '. Document hash ' + (d.hash || '').slice(0, 12) + '. The document was not stored.';
+    $('#dnote').textContent = 'Emailed to ' + $('#email').value.trim() + (d.also ? ' and ' + d.also : '') + '. Signature ID LIVESIGN ' + (d.sig_id || '') + '. Anyone can verify it at livework.inc/verify.html?id=' + (d.sig_id || '') + '. The document was not stored.';
     if(d.pdf){ const bin = atob(d.pdf), u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
       const url = URL.createObjectURL(new Blob([u], { type: 'application/pdf' }));
       $('#dlink').href = url; $('#dlink').download = FILE.replace(/\.pdf$/i, '') + ' signed.pdf'; }
