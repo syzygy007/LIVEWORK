@@ -371,6 +371,10 @@ body{background:var(--paper)}
 .ctbl .h > div[data-csort]{cursor:pointer;user-select:none;display:flex;gap:5px;align-items:center}
 .ctbl .h .cv{width:12px;height:12px;opacity:.35;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .ctbl .h .cv.on{opacity:1}
+html[data-skin="dark"] .aiorb path{fill-opacity:.02}
+html[data-skin="dark"] .aiorb path[stroke-opacity="0.95"],html[data-skin="dark"] .aiorb .pu{stroke-opacity:1}
+.btn .aiorb,.aibusy .aiorb{margin-right:8px;flex:none}
+.aibusy{display:inline-flex;align-items:center;justify-content:center}
 .aiveil{position:fixed;inset:0;z-index:40;background:rgba(8,8,8,.72);display:flex;align-items:center;justify-content:center}
 .aiveil .bx{background:var(--white);border-radius:var(--r);padding:30px 40px;text-align:center;max-width:min(420px,90vw)}
 .aiveil .aiwait{padding:0}
@@ -1698,6 +1702,23 @@ function aiOrb(px){
     '<g class="t2">' + aiLayer(small ? 48 : 52, .13, .07, 9.8, '#FFF7B0', '#FFF7B0', small ? sw - 1 : 1.2, small ? .1 : .06) + '</g>' +
     '<circle cx="100" cy="100" r="' + (small ? 16 : 14) + '" fill="#FFF7B0" opacity=".16" class="pu"/>' +
     '<circle cx="100" cy="100" r="' + (small ? 7 : 6) + '" fill="#FFF7B0" opacity=".5" class="pu2"/></svg>';
+}
+/* the press turns into the loader: same button, same width, the orb where the label was */
+function aiSpin(btn, label){
+  const w = btn.offsetWidth, html = btn.innerHTML;
+  btn.style.minWidth = w + 'px';
+  btn.classList.add('aibusy');
+  btn.disabled = true;
+  btn.innerHTML = aiOrb(24) + '<span>' + esc(label || 'Working') + '</span>';
+  return function(){
+    btn.classList.remove('aibusy');
+    btn.disabled = false;
+    btn.innerHTML = html;
+    btn.style.minWidth = '';
+  };
+}
+function aiSpinSay(btn, label){
+  const sp = btn.querySelector('span'); if(sp) sp.textContent = label;
 }
 /* one overlay, for the calls that hand back a file rather than a screen */
 function aiHold(line, sub){
@@ -4760,10 +4781,9 @@ async function buildGuide(btn, candId, seId, pipeId){
      a background open and there is something to watch while it writes */
   const w = window.open('', '_blank');
   if(w) writeInto(w, guideWait(pname(candId)));
-  const lbl = btn.textContent; btn.disabled = true;
-  let n = 0; btn.textContent = 'Writing';
-  aiHold('Writing the guide', 'The file, the brief and the screen notes, all at once.');
-  const tick = setInterval(() => { n++; btn.textContent = 'Writing ' + n + 's'; aiSay('Writing the guide', n + ' seconds in'); }, 1000);
+  const done = aiSpin(btn, 'Writing');
+  let n = 0;
+  const tick = setInterval(() => { n++; aiSpinSay(btn, 'Writing ' + n + 's'); }, 1000);
   try{
     const j = await fnCall('interview-guide', { candidate_id: candId, search_id: seId || null, pipeline_id: pipeId || null });
     openGuide(j, w);
@@ -4773,21 +4793,19 @@ async function buildGuide(btn, candId, seId, pipeId){
     if(w) writeInto(w, guideFail(err.message));
     toast('No guide. ' + err.message, true);
   }
-  clearInterval(tick);
-  aiDrop();
-  btn.disabled = false; btn.textContent = lbl;
+  clearInterval(tick); done();
 }
 /* the recruiter PDF. The read and the probes are in this one. */
 async function guidePdf(btn, candId, seId, redact){
-  const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Building';
-  aiHold('Writing the guide', 'The file, the brief and the screen notes, all at once.');
+  const done = aiSpin(btn, 'Writing');
+  let n = 0;
+  const tick = setInterval(() => { n++; aiSpinSay(btn, 'Writing ' + n + 's'); }, 1000);
   try{
     const j = await fnCall('guide-pdf', { candidate_id: candId, search_id: seId || null, redact: redact === true });
-    aiDrop();
     if(j.url) openUrl(j.url);
     toast('Guide PDF ready.');
-  }catch(err){ aiDrop(); toast('No PDF. ' + err.message, true); }
-  btn.disabled = false; btn.textContent = lbl;
+  }catch(err){ toast('No PDF. ' + err.message, true); }
+  clearInterval(tick); done();
 }
 /* the courtesy send. Client copy only, and only ever on a press. */
 async function sendGuide(btn, candId, seId){
