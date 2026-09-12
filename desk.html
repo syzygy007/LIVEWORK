@@ -350,7 +350,42 @@ body{background:var(--paper)}
 .pfil.ffil .search{grid-column:auto;padding:0 15px}
 .pfil.ffil .search input{font:600 15px/1 Manrope,Arial,sans-serif}
 .fsort{display:inline-flex;gap:6px;margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
-@media (min-width:901px){ .pfil.ffil{grid-template-columns:repeat(7,minmax(0,1fr))} }
+@media (min-width:901px){ .pfil.ffil{grid-template-columns:repeat(5,minmax(0,1fr))} .pfil.ffil.ftop{grid-template-columns:repeat(3,minmax(150px,180px)) auto} }
+/* the Search page v2: the search line is the head, three subject filters plus More filters, recent searches when idle, thin result rows */
+.fbar .search.big{position:relative}
+.fkb{flex:none;font:600 12px/1 Manrope,Arial,sans-serif;color:var(--stone);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--wall);white-space:nowrap}
+@media (max-width:900px){ .fkb{display:none} }
+.fmore{display:inline-flex;align-items:center;gap:9px;height:50px;padding:0 15px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);color:var(--ink);
+  font:600 15px/1 Manrope,Arial,sans-serif;cursor:pointer;white-space:nowrap}
+.fmore.on{border-color:var(--ink)}
+.fmore svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round}
+.fmore i{font-style:normal;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--yellow);color:#000;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.fmore em{font-style:normal;color:var(--stone);font-size:12px}
+.fpanel{padding:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--wall)}
+.fpanel .search{height:50px}
+.fchips{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap}
+.fcount{display:flex;align-items:center;gap:14px;margin:26px 0 8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.fcount .flink{margin-left:auto;font-size:14px;font-weight:600;text-decoration:underline;cursor:pointer;color:var(--ink)}
+.fcount .flab{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stone)}
+.fcount.frh{margin-top:30px;padding-bottom:10px}
+.flist{max-width:740px}
+.frow{display:flex;align-items:center;gap:14px;min-height:60px;padding:8px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.frow .fn{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.frow .fn b{font-size:16px;font-weight:700;letter-spacing:-.01em;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.frow .fn span{font-size:14px;color:var(--stone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow .pill{flex:none;font-size:12px;font-weight:600;background:var(--wall);color:var(--ink);padding:5px 9px;border-radius:999px}
+.frow .fa{flex:none;display:flex;gap:4px}
+.frow .fa a{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;color:var(--ink)}
+.frow .fa a:hover{background:var(--wall)}
+.frow .fa svg,.frow .fck,.frow .fgo{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.frow.frec{cursor:pointer}
+.frow.frec .fck{width:22px;height:22px;stroke:var(--ink)}
+.frow.frec .fn b{cursor:pointer}
+.frow.frec .fgo{margin-left:auto;color:var(--stone)}
+.frow.frec:hover .fgo{color:var(--ink)}
+.fbrowse{display:inline-flex;align-items:center;gap:10px;margin-top:24px;font-size:16px;font-weight:600;text-decoration:underline;cursor:pointer;color:var(--ink)}
+.fbrowse svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:900px){ .frow .fn span{white-space:normal} .frow .pill{display:none} .fcount{flex-wrap:wrap} }
 .ctools{position:sticky;top:0;z-index:6;background:var(--paper);padding:10px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--line)}
 .ctabs{display:flex;gap:22px;margin-bottom:12px;overflow-x:auto}
 .ctabs button{border:0;background:transparent;padding:0 0 10px;font:inherit;font-size:14px;font-weight:600;color:var(--stone);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
@@ -909,7 +944,7 @@ const NAV = [
 ];
 let VIEW = 'today';
 let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted',
-  fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fDept:'', fSkill:'', fState:'', fSort:'best',
+  fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fDept:'', fSkill:'', fState:'', fSort:'best', fLoc:'', fMore:false,
   cTab:'all', cDept:'', cLoc:'', cStat:'', cSort:'rank', cDir:1 };
 
 function counts(k){
@@ -1761,6 +1796,34 @@ function candSearchIds(c){
   if(F(c,'source_search_id')) ids.push(String(F(c,'source_search_id')));
   return ids;
 }
+const FKEYS = ['fq','fCo','fSe','fLoc','fCamp','fRole','fInd','fDept','fSkill','fState'];
+function fRecent(){ try{ return JSON.parse(localStorage.getItem('lw_recent_find') || '[]'); }catch(e){ return []; } }
+function fLabel(q){
+  const co = q.fCo ? byId(S.companies, q.fCo) : null, se = q.fSe ? search(q.fSe) : null;
+  return [q.fq && q.fq.trim(), co ? F(co,'name') : '', se ? F(se,'title','role','job_title') : '', q.fLoc, q.fRole, q.fInd, q.fDept, q.fSkill,
+    { play:'In a search now', pool:'Open pool', placed:'Placed' }[q.fState] || ''].filter(Boolean).join(' \u00b7 ');
+}
+function fRemember(){
+  const q = {}; FKEYS.forEach(k => { q[k] = Q[k]; });
+  const l = fLabel(q); if(!l) return;
+  const list = fRecent().filter(x => fLabel(x) !== l); list.unshift(q);
+  try{ localStorage.setItem('lw_recent_find', JSON.stringify(list.slice(0, 6))); }catch(e){}
+}
+function fRow(c){
+  const id = idOf(c);
+  const ph = String(F(c,'phone') || '').replace(/[^0-9+]/g, '');
+  const em = F(c,'email');
+  const line = [F(c,'title','headline'), F(c,'location')].filter(Boolean).join(' \u00b7 ');
+  return '<div class="frow" data-frow="' + id + '">' +
+    '<div class="fn"><b class="' + (c[MAP.candidate.premier] === true ? 'premier' : '') + '" data-cand="' + id + '">' + esc(F(c,'name','full_name')) + '</b>' +
+      (line ? '<span>' + esc(line) + '</span>' : '') + '</div>' +
+    '<span class="pill">' + esc(candStage(c)) + '</span>' +
+    '<span class="fa">' +
+      (ph ? '<a href="tel:' + esc(ph) + '" data-touch="cand:' + id + '|call" title="Call">' + CALLI + '</a>' : '<a data-logcall="' + id + '|" title="Call">' + CALLI + '</a>') +
+      (em ? '<a href="mailto:' + esc(em) + '" data-touch="cand:' + id + '|email" title="Email">' + MAILI + '</a>' : '<a data-mail="cand:' + id + '" title="Email">' + MAILI + '</a>') +
+      '<a data-cand="' + id + '" title="Open">' + OPENI + '</a>' +
+    '</span></div>';
+}
 function vFind(){
   const terms = Q.fq.toLowerCase().split(/\s+/).filter(Boolean);
   const skill = Q.fSkill.trim().toLowerCase();
@@ -1768,6 +1831,7 @@ function vFind(){
   const campName = camp ? String(F(camp,'name') || '').toLowerCase() : '';
   const hit = c => {
     if(terms.length){ const h = candHay(c); if(!terms.every(t => h.includes(t))) return false; }
+    if(Q.fLoc && String(F(c,'location') || '') !== Q.fLoc) return false;
     if(Q.fInd && !tagNames(idOf(c)).includes(Q.fInd)) return false;
     if(Q.fRole && String(F(c,'role_type') || '') !== Q.fRole) return false;
     if(Q.fDept && String(F(c,'department') || '').toLowerCase() !== Q.fDept.toLowerCase()) return false;
@@ -1789,13 +1853,14 @@ function vFind(){
     }
     return true;
   };
-  const found = S.candidates.filter(hit);
+  const on = !!(terms.length || skill || Q.fCo || Q.fSe || Q.fLoc || Q.fCamp || Q.fRole || Q.fInd || Q.fDept || Q.fState);
+  const found = on ? S.candidates.filter(hit) : [];
   const byName = (a,b) => String(F(a,'name','full_name')).localeCompare(String(F(b,'name','full_name')), undefined, { sensitivity:'base' });
   const byDate = (a,b) => String(F(b,'created_at') || '').localeCompare(String(F(a,'created_at') || ''));
   const sorted = Q.fSort === 'az' ? found.slice().sort(byName)
     : Q.fSort === 'date' ? found.slice().sort(byDate)
     : found.map(c => ({ c, r: candRank(c) })).sort((a,b) => a.r - b.r).map(x => x.c);
-  const rows = sorted.slice(0, 200).map(candRow);
+  const rows = sorted.slice(0, 200).map(fRow);
   const seList = S.searches.filter(x => !Q.fCo || String(x.company_id) === String(Q.fCo));
   const campList = S.campaigns.filter(x => !Q.fSe || String(x.search_id) === String(Q.fSe))
     .filter(x => !Q.fCo || String((search(x.search_id) || {}).company_id) === String(Q.fCo));
@@ -1804,35 +1869,53 @@ function vFind(){
   const inds = S.tags.map(t => F(t,'name','label')).filter(Boolean);
   const depts = DEPARTMENTS.slice();
   S.candidates.forEach(c => { const d = F(c,'department'); if(d && !depts.some(x => x.toLowerCase() === String(d).toLowerCase())) depts.push(d); });
+  const locCount = {};
+  S.candidates.forEach(c => { const l = String(F(c,'location') || '').trim(); if(l) locCount[l] = (locCount[l] || 0) + 1; });
+  const locs = Object.keys(locCount).sort((a,b) => locCount[b] - locCount[a] || a.localeCompare(b)).slice(0, 60);
+  if(Q.fLoc && locs.indexOf(Q.fLoc) < 0) locs.push(Q.fLoc);
   const skillCount = {};
   S.candidates.forEach(c => skillsOf(c).forEach(x => { skillCount[x] = (skillCount[x] || 0) + 1; }));
   const skills = Object.keys(skillCount).sort((a,b) => skillCount[b] - skillCount[a]).slice(0, 400);
   const sel = (id, first, list, val, label) => '<select id="' + id + '"><option value="">' + first + '</option>' +
     list.map(x => { const v = label ? String(idOf(x)) : x, l = label ? label(x) : x;
       return '<option value="' + esc(v) + '"' + (String(val) === String(v) ? ' selected' : '') + '>' + esc(l) + '</option>'; }).join('') + '</select>';
-  const on = !!(terms.length || skill || Q.fCo || Q.fSe || Q.fCamp || Q.fRole || Q.fInd || Q.fDept || Q.fState);
   const chip = (v, l) => '<button class="chip ' + (Q.fState === v ? 'on' : '') + '" data-fstate="' + v + '">' + l + '</button>';
-  return head('Search.', on ? '<button class="btn ghost" id="fclear">Clear</button>' : '') +
-    '<p class="lede" style="margin-bottom:22px">One line over the whole pool. Every word in every resume counts, then narrow it down by subject.</p>' +
-    '<div class="fbar"><div class="search big">' + SRCH + '<input id="fq" placeholder="Name, title, company, a phrase from page two" value="' + esc(Q.fq) + '"></div></div>' +
-    '<div class="pfil ffil">' +
-      sel('fco', 'Any client', S.companies, Q.fCo, x => F(x,'name')) +
-      sel('fse', 'Any job', seList, Q.fSe, x => F(x,'title','role','job_title') + (Q.fCo ? '' : ' · ' + cname(x.company_id))) +
-      sel('fcamp', 'Any campaign', campList, Q.fCamp, x => (F(x,'name') || F(x,'channel') || 'Campaign') + ' · ' + sname(x.search_id)) +
+  const moreN = [skill, Q.fCamp, Q.fRole, Q.fInd, Q.fDept, Q.fState].filter(Boolean).length;
+  const recent = fRecent();
+  return '<div class="fbar"><div class="search big">' + SRCH +
+      '<input id="fq" placeholder="Search names, companies, skills, or resume text" value="' + esc(Q.fq) + '">' +
+      '<kbd class="fkb" title="Jump here from anywhere">\u2318 K</kbd></div></div>' +
+    '<div class="pfil ffil ftop">' +
+      sel('fco', 'Client', S.companies, Q.fCo, x => F(x,'name')) +
+      sel('fse', 'Role', seList, Q.fSe, x => F(x,'title','role','job_title') + (Q.fCo ? '' : ' \u00b7 ' + cname(x.company_id))) +
+      sel('floc', 'Location', locs, Q.fLoc) +
+      '<button class="fmore' + (Q.fMore || moreN ? ' on' : '') + '" id="fmore">' + FSLID + 'More filters' + (moreN ? '<i>' + moreN + '</i>' : '') + '<em>\u25be</em></button>' +
+    '</div>' +
+    (Q.fMore ? '<div class="pfil ffil fpanel">' +
+      sel('fcamp', 'Any campaign', campList, Q.fCamp, x => (F(x,'name') || F(x,'channel') || 'Campaign') + ' \u00b7 ' + sname(x.search_id)) +
       sel('frole', 'Any role type', roles, Q.fRole) +
       sel('find', 'Any industry', inds, Q.fInd) +
       sel('fdept', 'Any department', depts, Q.fDept) +
       '<div class="search"><input id="fskill" list="skilllist" placeholder="Skill" value="' + esc(Q.fSkill) + '"></div>' +
       '<datalist id="skilllist">' + skills.map(x => '<option value="' + esc(x) + '">').join('') + '</datalist>' +
-    '</div>' +
-    '<div class="tools" style="margin-top:2px">' + chip('', 'Everyone') + chip('play', 'In a search now') + chip('pool', 'Open pool') + chip('placed', 'Placed') +
-      '<span class="muted small" style="margin-left:auto">' + found.length.toLocaleString() + ' of ' + S.candidates.length.toLocaleString() +
-      (found.length > 200 ? ', showing the first 200' : '') + '</span>' +
-      '<span class="fsort">' + [['best','Needs you'],['date','Newest'],['az','A to Z']].map(([v,l]) =>
-        '<button class="chip ' + (Q.fSort === v ? 'on' : '') + '" data-fsort="' + v + '">' + l + '</button>').join('') + '</span></div>' +
-    (rows.length ? '<div class="clist">' + rows.join('') + '</div>'
-                 : '<div class="tbl"><div class="empty">' + (on ? 'Nobody matches that. Take a filter off.' : 'Nobody in the pool yet.') + '</div></div>');
+      '<div class="fchips">' + chip('', 'Everyone') + chip('play', 'In a search now') + chip('pool', 'Open pool') + chip('placed', 'Placed') + '</div>' +
+    '</div>' : '') +
+    (on
+      ? '<div class="fcount"><span class="muted small">' + found.length.toLocaleString() + ' of ' + S.candidates.length.toLocaleString() +
+          (found.length > 200 ? ', showing the first 200' : '') + '</span>' +
+          '<span class="fsort">' + [['best','Needs you'],['date','Newest'],['az','A to Z']].map(([v,l]) =>
+            '<button class="chip ' + (Q.fSort === v ? 'on' : '') + '" data-fsort="' + v + '">' + l + '</button>').join('') + '</span>' +
+          '<a class="flink" id="fclear">Clear</a></div>' +
+        (rows.length ? '<div class="flist" id="fres">' + rows.join('') + '</div>'
+                     : '<div class="tbl"><div class="empty">Nobody matches that. Take a filter off.</div></div>')
+      : (recent.length ? '<div class="fcount frh"><span class="flab">Recent searches</span><a class="flink" id="frclear">Clear</a></div>' +
+          '<div class="flist frl">' + recent.map((q, i) => '<a class="frow frec" data-frec="' + i + '">' + FCLK +
+            '<span class="fn"><b>' + esc(fLabel(q)) + '</b></span>' + FGO + '</a>').join('') + '</div>' : '') +
+        '<a class="fbrowse" data-v="candidates">Browse all ' + S.candidates.length.toLocaleString() + ' candidates ' + OPENI + '</a>');
 }
+const FSLID = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 12h3M11 12h9M4 17h12M20 17h0"/><circle cx="16" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="18" cy="17" r="2"/></svg>';
+const FCLK = '<svg class="fck" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
+const FGO = '<svg class="fgo" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>';
 
 /* ---------- Pools ---------- */
 function vPools(){
@@ -5110,14 +5193,25 @@ function wire(){
   const fsk = document.getElementById('fskill');
   if(fsk) fsk.oninput = fsk.onchange = () => { Q.fSkill = fsk.value; const p = fsk.selectionStart; draw();
     const n = document.getElementById('fskill'); if(n){ n.focus(); if(p !== null) n.setSelectionRange(p,p); } };
-  [['fco','fCo'],['fse','fSe'],['fcamp','fCamp'],['frole','fRole'],['find','fInd'],['fdept','fDept']].forEach(([id, k]) => {
+  if(fq) fq.onkeydown = e => { if(e.key === 'Enter'){ fRemember(); fq.blur(); } };
+  [['fco','fCo'],['fse','fSe'],['floc','fLoc'],['fcamp','fCamp'],['frole','fRole'],['find','fInd'],['fdept','fDept']].forEach(([id, k]) => {
     const el = document.getElementById(id);
-    if(el) el.onchange = () => { Q[k] = el.value; if(k === 'fCo'){ Q.fSe = ''; Q.fCamp = ''; } if(k === 'fSe') Q.fCamp = ''; draw(); };
+    if(el) el.onchange = () => { Q[k] = el.value; if(k === 'fCo'){ Q.fSe = ''; Q.fCamp = ''; } if(k === 'fSe') Q.fCamp = ''; fRemember(); draw(); };
   });
-  m.querySelectorAll('[data-fstate]').forEach(b => b.onclick = () => { Q.fState = b.dataset.fstate; draw(); });
+  m.querySelectorAll('[data-fstate]').forEach(b => b.onclick = () => { Q.fState = b.dataset.fstate; fRemember(); draw(); });
   m.querySelectorAll('[data-fsort]').forEach(b => b.onclick = () => { Q.fSort = b.dataset.fsort; draw(); });
+  const fmo = document.getElementById('fmore');
+  if(fmo) fmo.onclick = () => { Q.fMore = !Q.fMore; draw(); };
   const fcl = document.getElementById('fclear');
-  if(fcl) fcl.onclick = () => { Q.fq = ''; Q.fCo = ''; Q.fSe = ''; Q.fCamp = ''; Q.fRole = ''; Q.fInd = ''; Q.fDept = ''; Q.fSkill = ''; Q.fState = ''; draw(); };
+  if(fcl) fcl.onclick = () => { fRemember(); FKEYS.forEach(k => { Q[k] = ''; }); draw(); };
+  const frc = document.getElementById('frclear');
+  if(frc) frc.onclick = () => { try{ localStorage.removeItem('lw_recent_find'); }catch(e){} draw(); };
+  m.querySelectorAll('[data-frec]').forEach(b => b.onclick = () => {
+    const q = fRecent()[+b.dataset.frec]; if(!q) return;
+    FKEYS.forEach(k => { Q[k] = q[k] || ''; }); draw();
+  });
+  const fres = document.getElementById('fres');
+  if(fres) fres.addEventListener('click', e => { if(e.target.closest('[data-cand],[data-touch],[data-logcall],[data-mail]')) fRemember(); }, true);
   m.querySelectorAll('[data-tag]').forEach(b => b.onclick = () => { Q.tag = b.dataset.tag; draw(); });
   m.querySelectorAll('[data-prem]').forEach(b => b.onclick = () => { Q.prem = b.dataset.prem; draw(); });
   m.querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
@@ -5169,6 +5263,10 @@ function wire(){
 }
 $('#veil').onclick = closeSheet;
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet(); });
+document.addEventListener('keydown', e => {
+  if((e.metaKey || e.ctrlKey) && String(e.key).toLowerCase() === 'k'){ e.preventDefault(); if(VIEW !== 'find') go('find');
+    const n = document.getElementById('fq'); if(n){ n.focus(); n.select(); } }
+});
 
 
 /* ---------- desk access agreement: nobody enters before accepting ---------- */
