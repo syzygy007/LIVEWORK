@@ -416,7 +416,7 @@ $('#sign').onclick = async () => {
         email: $('#email').value.trim(), consent: true, sig: signature(),
         fields: FIELDS.map(f => ({ page: f.page, kind: f.kind, x: f.x, y: f.y, w: f.w, h: f.h })) }) });
     const d = await r.json().catch(() => ({ ok: false, error: 'no answer from the server' }));
-    if(!d.ok) throw new Error(d.error || 'That did not go through.');
+    if(!d.ok){ if(/room (session|access)/i.test(d.error || '')){ try{ localStorage.removeItem('lw_room_session'); }catch(e){} } throw new Error(d.error || 'That did not go through.'); }
     $('#work').style.display = 'none';
     $('#h1').textContent = 'Signed.'; $('#sub').textContent = 'Your copy is on its way.';
     $('#dnote').textContent = 'Emailed to ' + $('#email').value.trim() + (d.also ? ' and ' + d.also : '') + '. Signature ID LIVESIGN ' + (d.sig_id || '') + '. Document hash ' + (d.hash || '').slice(0, 12) + '. The document was not stored.';
@@ -429,9 +429,10 @@ $('#sign').onclick = async () => {
 };
 /* boot last, after every declaration above exists */
 (async () => {
+  /* staff first: a stale client room session in this browser must never outrank the desk sign in */
+  if(await LWAuth.ensure()){ try{ localStorage.removeItem('lw_room_session'); }catch(e){} return staffDoor(); }
   const rs = roomSession();
   if(rs) return ready('room', rs, rs.contact && rs.contact.name, rs.contact && rs.contact.email, '');
-  if(await LWAuth.ensure()) staffDoor();
 })();
 </script>
 </body>
