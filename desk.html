@@ -371,6 +371,20 @@ body{background:var(--paper)}
 .ctbl .h > div[data-csort]{cursor:pointer;user-select:none;display:flex;gap:5px;align-items:center}
 .ctbl .h .cv{width:12px;height:12px;opacity:.35;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .ctbl .h .cv.on{opacity:1}
+.aiwait{display:flex;flex-direction:column;align-items:center;gap:12px;padding:26px 0}
+.aiwait .ln{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.aiwait .sb{font-size:13px;color:var(--stone)}
+.aiorb{display:block}
+.aiorb .t1{transform-origin:100px 100px;animation:aiturn 19s linear infinite}
+.aiorb .t2{transform-origin:100px 100px;animation:aiturnb 13s linear infinite}
+.aiorb .t3{transform-origin:100px 100px;animation:aiturn 27s linear infinite}
+.aiorb .pu{animation:aipuls 3.4s ease-in-out infinite}
+.aiorb .pu2{animation:aipuls2 2.6s ease-in-out infinite}
+@keyframes aiturn{to{transform:rotate(360deg)}}
+@keyframes aiturnb{to{transform:rotate(-360deg)}}
+@keyframes aipuls{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes aipuls2{0%,100%{opacity:.9}50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.aiorb g,.aiorb .pu,.aiorb .pu2{animation:none!important}}
 .cmore{display:flex;justify-content:center;padding:18px 0 4px;color:var(--stone);font-size:13px}
 @media (max-width:900px){
   .ctools{top:calc(54px + env(safe-area-inset-top));padding-top:8px}
@@ -1643,6 +1657,49 @@ function CARET(k){
   return '<svg class="cv' + (on ? ' on' : '') + '" viewBox="0 0 24 24" aria-hidden="true">' +
     (d ? '<path d="M6 9.5 12 15.5 18 9.5"/>' : '<path d="M6 14.5 12 8.5 18 14.5"/>') + '</svg>';
 }
+/* The one animation that means a model is running. Three translucent shapes, each
+   morphing and turning on its own clock, so where they overlap the fill stacks up.
+   It is only ever drawn for resume reading, match scoring and the interview guide,
+   so the shape itself tells you the machine is thinking and not just fetching. */
+const AI_STILL = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function aiBlobPath(R, a1, a2, p){
+  const C = 100, N = 10, pts = [];
+  for(let i = 0; i < N; i++){
+    const th = i / N * Math.PI * 2;
+    const r = R * (1 + a1 * Math.sin(3 * th + p) + a2 * Math.sin(5 * th - p * 1.7));
+    pts.push([C + r * Math.cos(th), C + r * Math.sin(th)]);
+  }
+  let d = 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+  for(let i = 0; i < N; i++){
+    const p0 = pts[(i - 1 + N) % N], p1 = pts[i], p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
+    d += ' C' + (p1[0] + (p2[0] - p0[0]) / 6).toFixed(1) + ' ' + (p1[1] + (p2[1] - p0[1]) / 6).toFixed(1) +
+      ' ' + (p2[0] - (p3[0] - p1[0]) / 6).toFixed(1) + ' ' + (p2[1] - (p3[1] - p1[1]) / 6).toFixed(1) +
+      ' ' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1);
+  }
+  return d + 'Z';
+}
+function aiLayer(R, a1, a2, dur, fill, stroke, sw, fo){
+  const d0 = aiBlobPath(R, a1, a2, 0);
+  const an = AI_STILL ? '' : '<animate attributeName="d" dur="' + dur + 's" repeatCount="indefinite" calcMode="spline"' +
+    ' keyTimes="0;0.33;0.66;1" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1" values="' +
+    [d0, aiBlobPath(R * 1.05, a2, a1, 1.9), aiBlobPath(R * 0.94, a1 * 1.4, a2 * 0.6, 3.6), d0].join(';') + '"/>';
+  return '<path d="' + d0 + '" fill="' + fill + '" fill-opacity="' + fo + '" stroke="' + stroke + '" stroke-width="' + (sw * 5) + '" stroke-opacity=".06">' + an + '</path>' +
+    '<path d="' + d0 + '" fill="none" stroke="' + stroke + '" stroke-width="' + (sw * 2) + '" stroke-opacity=".16">' + an + '</path>' +
+    '<path d="' + d0 + '" fill="none" stroke="' + stroke + '" stroke-width="' + sw + '" stroke-opacity=".95" class="pu">' + an + '</path>';
+}
+function aiOrb(px){
+  const small = px < 80, sw = small ? 4 : 1.5;
+  return '<svg class="aiorb" width="' + px + '" height="' + px + '" viewBox="0 0 200 200" aria-hidden="true">' +
+    (small ? '' : '<g class="t3">' + aiLayer(74, .06, .09, 12.5, '#E0B412', '#E0B412', 1, .05) + '</g>') +
+    '<g class="t1">' + aiLayer(66, .09, .05, 7.5, '#F5E23A', '#FFE94A', sw, small ? .12 : .07) + '</g>' +
+    '<g class="t2">' + aiLayer(small ? 48 : 52, .13, .07, 9.8, '#FFF7B0', '#FFF7B0', small ? sw - 1 : 1.2, small ? .1 : .06) + '</g>' +
+    '<circle cx="100" cy="100" r="' + (small ? 16 : 14) + '" fill="#FFF7B0" opacity=".16" class="pu"/>' +
+    '<circle cx="100" cy="100" r="' + (small ? 7 : 6) + '" fill="#FFF7B0" opacity=".5" class="pu2"/></svg>';
+}
+function aiWait(line, sub, px){
+  return '<div class="aiwait">' + aiOrb(px || 90) + '<div class="ln">' + esc(line) + '</div>' +
+    (sub ? '<div class="sb">' + esc(sub) + '</div>' : '') + '</div>';
+}
 function cselBar(){
   const n = CSEL.ids.length;
   return '<div class="pickbar"><span>' + n + ' picked</span>' +
@@ -1876,12 +1933,14 @@ function matchApply(rows){
   (rows || []).forEach(r => { const p = by[r.id]; if(!p) return;
     p.match_pct = r.match_pct; p.match_json = r.match_json; p.matched_at = r.matched_at; });
 }
+const MSCAN = { on:false, se:'', done:0, total:0 };
 async function runMatch(search_id, candidate_id){
   if(MRUN){ toast('Still matching. Give it a moment.'); return; }
   const todo = candidate_id ? 1 : matchTodo(search_id);
   MRUN = search_id;
   let done = 0, errs = [];
-  toast(candidate_id ? 'Reading one person against the role.' : (todo ? 'Reading ' + todo + ' against the role.' : 'Checking the role.'));
+  MSCAN.on = true; MSCAN.se = String(search_id); MSCAN.done = 0; MSCAN.total = todo || 1;
+  paintSheet();
   /* small chunks so one function call never runs past the 150s idle limit. A chunk that fails is retried one
      person at a time, and five failures in a row stop the run instead of looping on a broken resume. */
   let fails = 0, limit = 4;
@@ -1892,18 +1951,18 @@ async function runMatch(search_id, candidate_id){
       try{ r = await fnCall('match-score', b); fails = 0; if(limit < 4) limit++; }
       catch(e){ fails++; errs.push(e.message); limit = 1; if(candidate_id || fails >= 5) throw e; continue; }
       matchApply(r.rows); done += r.scored || 0;
+      MSCAN.done = done; MSCAN.total = done + (r.remaining || 0);
       if(r.errors) errs = errs.concat(r.errors);
       paintSheet(); draw();
       if(!r.remaining) break;
       if(!r.scored){ fails++; if(fails >= 5) break; limit = 1; continue; }
-      toast(done + ' of ' + (done + r.remaining) + ' scored.');
     }
     drawNav();
     toast(done ? 'Matched ' + done + (done === 1 ? ' candidate.' : ' candidates.') + (errs.length ? ' ' + errs.length + ' did not read.' : '')
                : 'Everyone already has a percent. Nothing was read again.', !!errs.length);
     if(errs.length) console.warn('match-score', errs);
   }catch(e){ toast(e.message, true); }
-  MRUN = null;
+  MSCAN.on = false; MRUN = null; paintSheet();
 }
 
 function pipeRow(p){
@@ -2165,6 +2224,8 @@ function vIntake(){
   const held = INTAKE.filter(x => x.status === 'held').length;
   const busy = INTAKE.some(x => x.status === 'reading' || x.status === 'uploading');
   const done = INTAKE.filter(x => x.status === 'saved').length;
+  const reading = INTAKE.filter(x => x.status === 'reading').length;
+  const waiting = INTAKE.filter(x => x.status === 'pending' || x.status === 'uploading').length;
   const cards = INTAKE.map((x, i) => {
     const f = x.fields || {};
     const st = x.status === 'uploading' ? '<span class="muted small">Uploading</span>'
@@ -2259,6 +2320,8 @@ function vIntake(){
       (done ? '<button class="btn ghost" id="iclear">Clear ' + done + ' saved</button>' : '')) +
     '<datalist id="indlist">' + inds.map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>' +
     '<datalist id="deptlist">' + DEPARTMENTS.map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>' +
+    (reading ? aiWait(reading === 1 ? 'Reading the resume' : 'Reading ' + reading + ' resumes',
+      waiting ? waiting + ' still to go' : 'Pulling out the name, the history and the department') : '') +
     stamp +
     '<div id="idrop" style="border:2px dashed var(--line);padding:28px;text-align:center;cursor:pointer;background:var(--paper);margin-bottom:18px">' +
       '<b>Drop up to a hundred resume PDFs here, or click to pick them</b><br>' +
@@ -3053,7 +3116,10 @@ function sheetSearch(){
     const left = rows.length - scored;
     const MCAP = 40, showAll = !!MALL[idOf(s)];
     const shown = showAll ? ranked : ranked.slice(0, MCAP);
-    body = (ranked.length ? shown.map(p => {
+    const mgo = MSCAN.on && String(MSCAN.se) === String(idOf(s));
+    body = (mgo ? aiWait('Scoring against the role',
+        MSCAN.total ? MSCAN.done + ' of ' + MSCAN.total + ' read so far' : 'Reading the first few') : '') +
+      (ranked.length ? shown.map(p => {
         const c = cand(p.candidate_id) || {};
         const prem = c[MAP.candidate.premier] === true;
         return '<div class="mrow"><div class="mh">' +
@@ -4642,13 +4708,22 @@ function guideWait(name){
     '.m{color:#fff;opacity:.72;font:600 11px/1 Manrope,Arial,sans-serif;letter-spacing:.22em;text-transform:uppercase}' +
     'h1{font:800 clamp(38px,6vw,64px)/1 Manrope,Arial,sans-serif;letter-spacing:-.03em;margin:80px 0 16px}' +
     'p{color:#6E6961;max-width:52ch}' +
-    '.bar{height:5px;background:#E7E1D8;margin-top:40px;overflow:hidden}' +
-    '.bar i{display:block;height:5px;width:34%;background:#F2C632;animation:s 1.5s ease-in-out infinite}' +
-    '@keyframes s{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}</style></head><body>' +
+    '.orbwrap{margin:44px 0 0;display:flex;align-items:center;gap:20px}' +
+    '.orbwrap .st{font:600 15px/1.4 Manrope,Arial,sans-serif}' +
+    '.orbwrap .st small{display:block;color:#6E6961;font-weight:400;font-size:13px}' +
+    '.aiorb .t1{transform-origin:100px 100px;animation:aiturn 19s linear infinite}' +
+    '.aiorb .t2{transform-origin:100px 100px;animation:aiturnb 13s linear infinite}' +
+    '.aiorb .t3{transform-origin:100px 100px;animation:aiturn 27s linear infinite}' +
+    '.aiorb .pu{animation:aipuls 3.4s ease-in-out infinite}' +
+    '.aiorb .pu2{animation:aipuls2 2.6s ease-in-out infinite}' +
+    '@keyframes aiturn{to{transform:rotate(360deg)}}@keyframes aiturnb{to{transform:rotate(-360deg)}}' +
+    '@keyframes aipuls{0%,100%{opacity:.35}50%{opacity:1}}@keyframes aipuls2{0%,100%{opacity:.9}50%{opacity:.25}}' +
+    '@media (prefers-reduced-motion:reduce){.aiorb g,.aiorb .pu,.aiorb .pu2{animation:none!important}}</style></head><body>' +
     '<div class="band"><div class="w"><b>LIVE<i> | </i>WORK</b><span class="m">Interview guide</span></div></div>' +
     '<div class="w"><h1>Writing.</h1><p>Reading the file for ' + esc(name || 'this candidate') +
     ', the brief, and every screen note on record, then writing the questions against them. Half a minute, near enough.</p>' +
-    '<div class="bar"><i></i></div></div></body></html>';
+    '<div class="orbwrap">' + aiOrb(96) + '<div class="st">Writing the guide<small>The file, the brief and the screen notes, all at once.</small></div></div>' +
+    '</div></body></html>';
 }
 function guideFail(msg){
   return '<!doctype html><html><head><meta charset="utf-8"><title>No guide</title>' +
