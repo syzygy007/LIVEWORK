@@ -364,6 +364,13 @@ body{background:var(--paper)}
 .ctbl .r .gold{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a6d1f;
   background:var(--yellow);border-radius:99px;padding:2px 8px}
 .ctbl input[type=checkbox]{width:18px;height:18px;accent-color:var(--yellow);cursor:pointer;margin:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;height:42px}
+.seg button{border:0;background:var(--white);color:var(--stone);font:inherit;font-size:13px;font-weight:600;padding:0 14px;cursor:pointer;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.ctbl .h > div[data-csort]{cursor:pointer;user-select:none;display:flex;gap:5px;align-items:center}
+.ctbl .h .cv{width:12px;height:12px;opacity:.35;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.ctbl .h .cv.on{opacity:1}
 .cmore{display:flex;justify-content:center;padding:18px 0 4px;color:var(--stone);font-size:13px}
 @media (max-width:900px){
   .ctools{top:calc(54px + env(safe-area-inset-top));padding-top:8px}
@@ -882,7 +889,7 @@ const NAV = [
 let VIEW = 'today';
 let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted',
   fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fDept:'', fSkill:'', fState:'', fSort:'best',
-  cTab:'all', cDept:'', cLoc:'', cStat:'', cSort:'rank' };
+  cTab:'all', cDept:'', cLoc:'', cStat:'', cSort:'rank', cDir:1 };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -1566,7 +1573,8 @@ function vCandidates(){
   const q = Q.cand.toLowerCase();
   const all = S.candidates.filter(c => {
     if(q && !candHay(c).includes(q)) return false;
-    if(Q.prem && c[MAP.candidate.premier] !== true) return false;
+    if(Q.prem === 'y' && c[MAP.candidate.premier] !== true) return false;
+    if(Q.prem === 'n' && c[MAP.candidate.premier] === true) return false;
     if(Q.tag && !tagNames(idOf(c)).includes(Q.tag)) return false;
     if(Q.cDept && String(F(c,'department') || '').toLowerCase() !== Q.cDept.toLowerCase()) return false;
     if(Q.cLoc && String(F(c,'location') || '') !== Q.cLoc) return false;
@@ -1576,11 +1584,17 @@ function vCandidates(){
     if(Q.cTab === 'due'){ const f = candFollow(c); if(!f || dayDiff(f) > 0) return false; }
     return true;
   });
-  const sorted = Q.cSort === 'name'
-    ? all.slice().sort((a,b) => String(F(a,'name','full_name')).localeCompare(String(F(b,'name','full_name'))))
-    : Q.cSort === 'new'
-    ? all.slice().sort((a,b) => new Date(F(b,'created_at') || 0) - new Date(F(a,'created_at') || 0))
-    : all.map(c => ({ c, r: candRank(c) })).sort((a,b) => a.r - b.r).map(x => x.c);
+  /* the default is neglect first, so the list opens on the people nobody has touched.
+     Pressing a column heading takes over and the caret says which way it runs. */
+  const txt = (c, k) => String(k === 'name' ? F(c,'name','full_name') : k === 'dept' ? (F(c,'department') || '')
+    : k === 'loc' ? (F(c,'location') || '') : k === 'stat' ? candStage(c) : '').toLowerCase();
+  const sorted = Q.cSort === 'rank'
+    ? all.map(c => ({ c, r: candRank(c) })).sort((a,b) => a.r - b.r).map(x => x.c)
+    : Q.cSort === 'touch'
+    ? all.slice().sort((a,b) => { const x = candTouch(a), y = candTouch(b);
+        if(!x && !y) return 0; if(!x) return 1; if(!y) return -1;
+        return (new Date(y) - new Date(x)) * Q.cDir; })
+    : all.slice().sort((a,b) => txt(a, Q.cSort).localeCompare(txt(b, Q.cSort)) * Q.cDir);
 
   const tags = S.tags.map(t => F(t,'name','label')).filter(Boolean);
   const depts = DEPARTMENTS.slice();
@@ -1608,18 +1622,26 @@ function vCandidates(){
         sel('cloc', 'Any location', locs, Q.cLoc) +
         sel('cstat', 'Any status', ['New'].concat(STAGES), Q.cStat) +
         sel('ctag', 'Any industry', tags, Q.tag) +
-        '<button class="chip ' + (Q.prem?'on':'') + '" data-prem="' + (Q.prem?'':'1') + '">Premier</button>' +
+        '<div class="seg">' + [['','All'],['y','Premier'],['n','Non premier']].map(([v,l]) =>
+          '<button data-prem="' + v + '" class="' + (String(Q.prem || '') === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
       '</div>' +
     '</div>' +
     (shown.length
       ? '<div class="tbl ctbl">' +
-          '<div class="r h"><div></div><div>Candidate</div><div>Department</div><div>Location</div><div>Status</div><div>Last contact</div></div>' +
+          '<div class="r h"><div></div>' + [['name','Candidate'],['dept','Department'],['loc','Location'],['stat','Status'],['touch','Last contact']]
+            .map(([k,l]) => '<div data-csort="' + k + '">' + l + CARET(k) + '</div>').join('') + '</div>' +
           shown.map(candLine).join('') + '</div>' +
         (sorted.length > shown.length
           ? '<div class="cmore" id="cmore">Showing ' + shown.length + ' of ' + sorted.length + '</div>'
           : '<div class="cmore">All ' + sorted.length + '</div>')
       : '<div class="tbl"><div class="empty">' + (on ? 'Nobody matches that. Clear a filter.' : 'Nobody here yet. Add a candidate, or drop resumes in.') + '</div></div>') +
     (CSEL.ids.length ? cselBar() : '');
+}
+function CARET(k){
+  const on = Q.cSort === k;
+  const d = on && Q.cDir < 0;
+  return '<svg class="cv' + (on ? ' on' : '') + '" viewBox="0 0 24 24" aria-hidden="true">' +
+    (d ? '<path d="M6 9.5 12 15.5 18 9.5"/>' : '<path d="M6 14.5 12 8.5 18 14.5"/>') + '</svg>';
 }
 function cselBar(){
   const n = CSEL.ids.length;
@@ -4997,6 +5019,11 @@ function wire(){
   if(qc) qc.oninput = () => { Q.cand = qc.value; CANDN = CANDPAGE; const p = qc.selectionStart; draw();
     const n = document.getElementById('qcand'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
   m.querySelectorAll('[data-ctab]').forEach(b => b.onclick = () => { Q.cTab = b.dataset.ctab; CANDN = CANDPAGE; draw(); });
+  m.querySelectorAll('[data-csort]').forEach(h => h.onclick = () => {
+    const k = h.dataset.csort;
+    if(Q.cSort === k) Q.cDir = -Q.cDir; else { Q.cSort = k; Q.cDir = k === 'touch' ? -1 : 1; }
+    CANDN = CANDPAGE; draw();
+  });
   [['cdept','cDept'],['cloc','cLoc'],['cstat','cStat'],['ctag','tag']].forEach(([id, k]) => {
     const el = document.getElementById(id);
     if(el) el.onchange = () => { Q[k] = el.value; CANDN = CANDPAGE; draw(); };
