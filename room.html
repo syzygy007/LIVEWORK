@@ -130,7 +130,8 @@ function door(){
       <p>Sign in with the work email your recruiter invited. We send a six digit code, no password. Not a client yet? <a href="index.html#contact">Start a conversation</a>.</p>
       <div class="field"><label for="em">Work email</label><input id="em" type="email" placeholder="you@company.com" value="${esc(pendingEmail||(LIVE?'':ME.email))}"></div>
       ${err?`<p class="err">${esc(err)}</p>`:''}
-      <button class="btn" id="go">Send my code</button>`
+      <button class="btn" id="go">Send my code</button>
+      <p class="small">By entering, you agree the room and everything in it is confidential to your company and LIVEWORK. No sharing, screenshots, copying or reverse engineering of the tools or the candidate profiles.</p>`
     :`<div class="hl"><span class="bar"></span><h1>Check your email.</h1></div>
       <p>If ${esc(pendingEmail)} was invited by your recruiter, a six digit code is on its way. Enter it here.</p>
       <p class="small">No code in a minute? Client room access is set up by your recruiter. Write to <a href="mailto:team@livework.inc">team@livework.inc</a> and we will open your room.</p>

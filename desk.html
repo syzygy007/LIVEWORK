@@ -1763,14 +1763,20 @@ async function runMatch(search_id, candidate_id){
   MRUN = search_id;
   let done = 0, errs = [];
   toast(candidate_id ? 'Reading one person against the role.' : (todo ? 'Reading ' + todo + ' against the role.' : 'Checking the role.'));
+  /* small chunks so one function call never runs past the 150s idle limit. A chunk that fails is retried one
+     person at a time, and five failures in a row stop the run instead of looping on a broken resume. */
+  let fails = 0, limit = 4;
   try{
-    for(let guard = 0; guard < 40; guard++){
-      const b = candidate_id ? { search_id, candidate_id } : { search_id, limit: 12 };
-      const r = await fnCall('match-score', b);
+    for(let guard = 0; guard < 400; guard++){
+      const b = candidate_id ? { search_id, candidate_id } : { search_id, limit };
+      let r;
+      try{ r = await fnCall('match-score', b); fails = 0; if(limit < 4) limit++; }
+      catch(e){ fails++; errs.push(e.message); limit = 1; if(candidate_id || fails >= 5) throw e; continue; }
       matchApply(r.rows); done += r.scored || 0;
       if(r.errors) errs = errs.concat(r.errors);
       paintSheet(); draw();
-      if(!r.remaining || !r.scored) break;
+      if(!r.remaining) break;
+      if(!r.scored){ fails++; if(fails >= 5) break; limit = 1; continue; }
       toast(done + ' of ' + (done + r.remaining) + ' scored.');
     }
     drawNav();
