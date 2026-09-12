@@ -355,7 +355,7 @@ body{background:var(--paper)}
 .fbar .search.big{position:relative}
 .fkb{flex:none;font:600 12px/1 Manrope,Arial,sans-serif;color:var(--stone);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--wall);white-space:nowrap}
 @media (max-width:900px){ .fkb{display:none} }
-.fmore{display:inline-flex;align-items:center;gap:9px;height:50px;padding:0 15px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);color:var(--ink);
+.fmore{justify-self:start;display:inline-flex;align-items:center;gap:9px;height:50px;padding:0 15px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);color:var(--ink);
   font:600 15px/1 Manrope,Arial,sans-serif;cursor:pointer;white-space:nowrap}
 .fmore.on{border-color:var(--ink)}
 .fmore svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round}
@@ -601,6 +601,22 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 .pp-st.active{background:rgba(29,185,84,.12)}.pp-st.pending{background:rgba(217,164,0,.16)}
 .pp-foot{padding:14px 20px;font-size:13px;color:var(--stone)}
 @media (max-width:900px){.pp-tools .btn.ghost{margin-left:0}}
+/* People: every cell may shrink, the email never spills into the avatar */
+.tbl .r.pp > *{min-width:0}
+.pp-email,.pp-mail{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pp-mail{font-size:13px}
+.pp-mail{display:none}
+@media (min-width:901px) and (max-width:1500px){
+  /* the Email column folds under the name until the window is wide enough */
+  .pptbl .r{grid-template-columns:minmax(220px,2.2fr) 150px 110px 70px 70px 120px 130px!important}
+  .pptbl .r > :nth-child(2){display:none}
+  .pp-mail{display:block}
+}
+@media (min-width:901px) and (max-width:1200px){
+  /* narrower still: the open role counts go too, the money stays */
+  .pptbl .r{grid-template-columns:minmax(200px,2.2fr) 140px 110px 110px 120px!important}
+  .pptbl .r > :nth-child(5),.pptbl .r > :nth-child(6){display:none}
+}
 /* ---------- help ---------- */
 .hbtn{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:30;height:46px;padding:0 18px 0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--yellow);color:#000;font:600 15px/1 var(--font);display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .hbtn svg{width:18px;height:18px;fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -2989,7 +3005,7 @@ function vPeople(){
   const counts = { all: list.length };
   list.forEach(x => { const k = statusOf(x); counts[k] = (counts[k] || 0) + 1; });
 
-  const GRID = '2.2fr 1.6fr 150px 110px 70px 70px 120px 130px';
+  const GRID = 'minmax(240px,2.2fr) minmax(0,1.6fr) 150px 110px 70px 70px 120px 130px';
   const rows = shown.map(x => {
     const id = idOf(x), self = String(id) === String(meId());
     const lines = ytd(id);
@@ -3000,8 +3016,9 @@ function vPeople(){
       '<div class="pp-who"><span class="pp-av">' + esc(initials(F(x,'name','email'))) + '</span>' +
         '<div><b>' + esc(F(x,'name','email')) + '</b>' +
         '<span class="pp-sub">' + (self ? 'You' : esc(roleLabel(roleOf(x)))) + '</span>' +
+        '<span class="pp-mail muted">' + esc(F(x,'email')) + '</span>' +
         accDot(F(x,'email')) + '</div></div>' +
-      '<span class="muted">' + esc(F(x,'email')) + '</span>' +
+      '<span class="muted pp-email">' + esc(F(x,'email')) + '</span>' +
       (canSetRole(x) ? '<select class="rolesel" data-staff="' + id + '">' + grantable(x) + '</select>'
                      : '<span class="chip" title="' + (self ? 'You cannot change your own role' : 'Only a Root can change a Root') + '">' +
                        esc(roleLabel(roleOf(x))) + '</span>') +
@@ -3024,7 +3041,7 @@ function vPeople(){
       '<div class="pp-chips">' + chip('all','All') + chip('active','Active') + chip('pending','Pending') + chip('off','Off') + '</div>' +
       '<button class="btn ghost" id="ppExport">Export</button></div>' +
     table(['Person','Email','Tier','Status','As AM','As Rec','Net fees YTD','Commission YTD'], rows, GRID,
-      { empty: q ? 'Nobody matches that.' : 'Nobody here.' }) +
+      { cls:'pptbl', empty: q ? 'Nobody matches that.' : 'Nobody here.' }) +
     '<div class="pp-foot">' + shown.length + (shown.length === 1 ? ' person' : ' people') + (shown.length !== list.length ? ' of ' + list.length : '') + '</div>' +
     '<div class="sec"><h2>What each tier reaches.</h2></div>' +
     '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
