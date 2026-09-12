@@ -350,7 +350,17 @@ body{background:var(--paper)}
 .pfil.ffil .search{grid-column:auto;padding:0 15px}
 .pfil.ffil .search input{font:600 15px/1 Manrope,Arial,sans-serif}
 .fsort{display:inline-flex;gap:6px;margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
-@media (min-width:901px){ .pfil.ffil{grid-template-columns:repeat(6,minmax(0,1fr))} }
+@media (min-width:901px){ .pfil.ffil{grid-template-columns:repeat(7,minmax(0,1fr))} }
+.pickbox{position:absolute;top:10px;right:10px;width:22px;height:22px;accent-color:var(--yellow);cursor:pointer}
+.card,.plist .p{position:relative}
+.card.picked,.plist .p.picked{outline:2px solid var(--yellow);outline-offset:-2px}
+.pickbar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:19;background:var(--solid);color:var(--solid-ink);border-radius:var(--r);padding:12px 14px 12px 18px;display:flex;gap:12px;align-items:center;font-weight:600;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:min(560px,94vw)}
+.pickbar .btn{height:36px;padding:0 14px}
+.pickbar .btn.y{background:var(--yellow);color:#111;border-color:var(--yellow)}
+.pickbar .btn.ghost{background:transparent;color:var(--solid-ink);border-color:rgba(255,255,255,.35)}
+.prow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.prow:first-child{border-top:0}
+.prow select{height:40px;width:100%}
 @media (max-width:900px){ .fsort{margin-left:0;padding-left:0;border-left:0;width:100%} }
 @media (max-width:900px){ .fbar .search.big{height:56px;padding:0 4px} .fbar .search.big input{font-size:19px} }
 .pfil select{-webkit-appearance:none;appearance:none;width:100%;height:50px;padding:0 36px 0 15px;
@@ -850,7 +860,7 @@ const NAV = [
 ];
 let VIEW = 'today';
 let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted',
-  fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fSkill:'', fState:'', fSort:'best' };
+  fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fDept:'', fSkill:'', fState:'', fSort:'best' };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -1545,6 +1555,7 @@ function vFind(){
     if(terms.length){ const h = candHay(c); if(!terms.every(t => h.includes(t))) return false; }
     if(Q.fInd && !tagNames(idOf(c)).includes(Q.fInd)) return false;
     if(Q.fRole && String(F(c,'role_type') || '') !== Q.fRole) return false;
+    if(Q.fDept && String(F(c,'department') || '').toLowerCase() !== Q.fDept.toLowerCase()) return false;
     if(skill && !skillsOf(c).some(x => x.includes(skill)) && !candHay(c).includes(skill)) return false;
     const seIds = candSearchIds(c);
     if(Q.fSe && seIds.indexOf(String(Q.fSe)) < 0) return false;
@@ -1576,13 +1587,15 @@ function vFind(){
   const roles = ROLETYPES.slice();
   S.candidates.forEach(c => { const r = F(c,'role_type'); if(r && roles.indexOf(r) < 0) roles.push(r); });
   const inds = S.tags.map(t => F(t,'name','label')).filter(Boolean);
+  const depts = DEPARTMENTS.slice();
+  S.candidates.forEach(c => { const d = F(c,'department'); if(d && !depts.some(x => x.toLowerCase() === String(d).toLowerCase())) depts.push(d); });
   const skillCount = {};
   S.candidates.forEach(c => skillsOf(c).forEach(x => { skillCount[x] = (skillCount[x] || 0) + 1; }));
   const skills = Object.keys(skillCount).sort((a,b) => skillCount[b] - skillCount[a]).slice(0, 400);
   const sel = (id, first, list, val, label) => '<select id="' + id + '"><option value="">' + first + '</option>' +
     list.map(x => { const v = label ? String(idOf(x)) : x, l = label ? label(x) : x;
       return '<option value="' + esc(v) + '"' + (String(val) === String(v) ? ' selected' : '') + '>' + esc(l) + '</option>'; }).join('') + '</select>';
-  const on = !!(terms.length || skill || Q.fCo || Q.fSe || Q.fCamp || Q.fRole || Q.fInd || Q.fState);
+  const on = !!(terms.length || skill || Q.fCo || Q.fSe || Q.fCamp || Q.fRole || Q.fInd || Q.fDept || Q.fState);
   const chip = (v, l) => '<button class="chip ' + (Q.fState === v ? 'on' : '') + '" data-fstate="' + v + '">' + l + '</button>';
   return head('Search.', on ? '<button class="btn ghost" id="fclear">Clear</button>' : '') +
     '<p class="lede" style="margin-bottom:22px">One line over the whole pool. Every word in every resume counts, then narrow it down by subject.</p>' +
@@ -1593,6 +1606,7 @@ function vFind(){
       sel('fcamp', 'Any campaign', campList, Q.fCamp, x => (F(x,'name') || F(x,'channel') || 'Campaign') + ' · ' + sname(x.search_id)) +
       sel('frole', 'Any role type', roles, Q.fRole) +
       sel('find', 'Any industry', inds, Q.fInd) +
+      sel('fdept', 'Any department', depts, Q.fDept) +
       '<div class="search"><input id="fskill" list="skilllist" placeholder="Skill" value="' + esc(Q.fSkill) + '"></div>' +
       '<datalist id="skilllist">' + skills.map(x => '<option value="' + esc(x) + '">').join('') + '</datalist>' +
     '</div>' +
@@ -1773,7 +1787,7 @@ function pipeRow(p){
   const rel = isReleased(p);
   const st = pipeStatus(p);
   const where = [cname(se.company_id), F(se,'location')].filter(Boolean).join(' \u00b7 ');
-  return '<div class="p' + (rel ? ' rel' : '') + '" data-pipe="' + id + '">' +
+  return '<div class="p' + (rel ? ' rel' : '') + pickCls(p) + '" data-pipe="' + id + '">' + pickBox(p) +
     '<div class="bd">' +
       '<div class="ph"><b>' + esc(pname(p.candidate_id)) + '</b>' + RCHEV + '</div>' +
       '<div class="m">' + esc(sname(p.search_id)) + '</div>' +
@@ -1838,7 +1852,7 @@ function vPipeline(){
   const cols = STAGES.map(st => {
     const rows = shown.filter(p => stageOf(p) === st);
     return '<div class="col"><h4><span>' + st + '</span><span>' + rows.length + '</span></h4>' +
-      rows.map(p => '<div class="card ' + (isReleased(p)?'rel':'') + '" data-pipe="' + idOf(p) + '">' +
+      rows.map(p => '<div class="card ' + (isReleased(p)?'rel':'') + pickCls(p) + '" data-pipe="' + idOf(p) + '">' + pickBox(p) +
         '<b>' + esc(pname(p.candidate_id)) + '</b>' +
         '<span class="m">' + esc(sname(p.search_id)) + '</span>' +
         '<span class="m">' + esc(cname((search(p.search_id)||{}).company_id)) + '</span>' +
@@ -1855,8 +1869,9 @@ function vPipeline(){
           (stageOf(p) !== 'Placed' ? '<button data-mvrole="' + idOf(p) + '">Move to role</button>' : '') +
         '</div></div>').join('') + '</div>';
   }).join('');
-  return head('Pipeline.', '<button class="btn pill" data-new="pipeline"><span class="p">+</span>Submit</button>') +
-    fil +
+  return head('Pipeline.', '<button class="btn ghost" id="pickon">' + (PICK.on ? 'Done picking' : 'Present up to 5') + '</button>' +
+      '<button class="btn pill" data-new="pipeline"><span class="p">+</span>Submit</button>') +
+    fil + (PICK.on ? pickBar() : '') +
     '<div class="pphone">' + phone + '</div>' +
     '<p class="lede pdesk" style="margin-bottom:20px">A yellow edge means released. Released is exactly what the client sees in their room, nothing else.</p>' +
     '<div class="board">' + cols + '</div>';
@@ -1918,12 +1933,65 @@ function timeToFill(p){
 /* ---------- Intake: drop up to a hundred resumes, one queue, dedupe, batch stamp ---------- */
 const INTAKE = [];
 const INTAKE_CAP = 100;
+
+/* ---------- Present up to 5: pick candidates on one role, one email, one PDF pack ---------- */
+const PICK = { on:false, ids:[] };
+const PICK_CAP = 5;
+function pickSeId(){ const p = PICK.ids.length ? byId(S.pipeline, PICK.ids[0]) : null; return p ? String(p.search_id) : ''; }
+function pickToggle(id){
+  const i = PICK.ids.indexOf(String(id));
+  if(i >= 0){ PICK.ids.splice(i, 1); return; }
+  const p = byId(S.pipeline, id); if(!p) return;
+  if(PICK.ids.length && String(p.search_id) !== pickSeId()) return toast('One role at a time. These go to ' + sname(pickSeId()) + '.', true);
+  if(PICK.ids.length >= PICK_CAP) return toast('Five is the cap for one email.', true);
+  PICK.ids.push(String(id));
+}
+function pickBar(){
+  const n = PICK.ids.length;
+  return '<div class="pickbar" id="pickbar"><span>' + (n ? n + ' picked' + (n > 1 ? '' : '') + ' for ' + esc(sname(pickSeId())) : 'Tick up to five on one role') + '</span>' +
+    '<button class="btn y" id="pickgo"' + (n ? '' : ' disabled') + '>Present ' + (n || '') + '</button>' +
+    '<button class="btn ghost" id="pickoff">Cancel</button></div>';
+}
+function pickBox(p){
+  if(!PICK.on || stageOf(p) === 'Placed' || stageOf(p) === 'Passed') return '';
+  return '<input type="checkbox" class="pickbox" data-pick="' + idOf(p) + '"' + (PICK.ids.indexOf(String(idOf(p))) >= 0 ? ' checked' : '') + ' aria-label="Pick">';
+}
+function pickCls(p){ return PICK.ids.indexOf(String(idOf(p))) >= 0 ? ' picked' : ''; }
+/* the draft names every person. Edit it before it goes. */
+function presentDraft(pipes, toName){
+  const s = search((byId(S.pipeline, pipes[0]) || {}).search_id) || {};
+  const role = F(s,'title','role') || 'the role';
+  const people = pipes.map(id => cand((byId(S.pipeline, id) || {}).candidate_id)).filter(Boolean);
+  const lines = people.map(c => '\u2022 ' + F(c,'name') + (F(c,'title') ? ', currently ' + F(c,'title') : '') + (F(c,'location') ? ' (' + F(c,'location') + ')' : ''));
+  return { subject: people.length + ' candidates for ' + role,
+    body: firstName(toName) + ',\n\nI am sending you ' + people.length + ' people for the ' + role + ' search.\n\n' + lines.join('\n') +
+      '\n\nTheir profiles are attached in one PDF' + '. If you want time with any of them, send me two windows that work and I will set it up.' };
+}
+let PDFLIB = null;
+async function pdfLib(){
+  if(PDFLIB) return PDFLIB;
+  if(window.PDFLib){ PDFLIB = window.PDFLib; return PDFLIB; }
+  await new Promise((res, rej) => { const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'; s.onload = res; s.onerror = () => rej(new Error('could not load the PDF stitcher')); document.head.appendChild(s); });
+  PDFLIB = window.PDFLib; return PDFLIB;
+}
+async function pdfBytes(url){
+  const r = await fetch(url); if(!r.ok) throw new Error('could not fetch a PDF (' + r.status + ')');
+  return new Uint8Array(await r.arrayBuffer());
+}
 const INDUSTRIES = ['Electrical','Construction','Finance','IT','Sales','Operations','Engineering','Logistics','Manufacturing','HR','Marketing','Legal','Healthcare','Other'];
 const ROLETYPES = ['Outside Sales','Inside Sales','Estimating','Project Management','Operations','Engineering','Field and Trades','Warehouse','Accounting and Finance','Administrative','IT','Executive','Other'];
 const SOURCES = ['LinkedIn','Indeed','Referral','Sourced','Direct apply','Career site','Other'];
-let BATCH = { id: null, company_id:'', search_id:'', source:'', role_type:'', campaign:'', campaign_id:'', ack:false, ack_role:'', industry:'' };
+/* the area of expertise, saved on the candidate. Finance, Sales, IT and so on, not the industry they sat in */
+const DEPARTMENTS = ['Finance','Accounting','Sales','Marketing','Operations','IT','Engineering','HR','Legal','Customer Service','Supply Chain','Purchasing','Executive','Administration','Construction','Field Service','Other'];
+const ROLE2DEPT = { 'Outside Sales':'Sales', 'Inside Sales':'Sales', 'Estimating':'Construction', 'Project Management':'Operations', 'Operations':'Operations',
+  'Engineering':'Engineering', 'Field and Trades':'Field Service', 'Warehouse':'Supply Chain', 'Accounting and Finance':'Finance', 'Administrative':'Administration',
+  'IT':'IT', 'Executive':'Executive' };
+let BATCH = { id: null, company_id:'', search_id:'', source:'', role_type:'', campaign:'', campaign_id:'', ack:false, ack_role:'', industry:'', department:'' };
 /* the industry every card in this drop starts with: what was typed in the batch bar, else the client's industry */
 function batchIndustry(){ return BATCH.industry || (BATCH.company_id ? String(F(company(BATCH.company_id) || {}, 'industry') || '') : ''); }
+/* the department every card starts with: typed in the batch bar, else guessed from the role type */
+function batchDept(){ return BATCH.department || ROLE2DEPT[BATCH.role_type] || ''; }
 function batchCamp(){ return BATCH.campaign_id ? byId(S.campaigns, BATCH.campaign_id) : null; }
 function batchId(){ if(!BATCH.id) BATCH.id = uuid(); return BATCH.id; }
 function uuid(){ return (crypto.randomUUID ? crypto.randomUUID()
@@ -1998,8 +2066,10 @@ function vIntake(){
       (x.fields ? '<div class="form">' +
         '<div class="two">' + inp('name','Name') + inp('title','Current title') + '</div>' +
         '<div class="two">' + inp('email','Email') + inp('phone','Phone') + '</div>' +
-        '<div class="two">' + inp('location','Location','City, ST') +
-          '<div class="field"><label>Industry</label><input data-ik="industry" data-ii="' + i + '" list="indlist" placeholder="Pick one or type it" value="' + esc(f.industry || '') + '"' + dis + '></div></div>' +
+        '<div class="two">' + inp('location','Location','City, ST') + inp('employer','Most recent employer') + '</div>' +
+        '<div class="two">' +
+          '<div class="field"><label>Industry' + (x.tagged && x.tagged.industry && f.industry === x.tagged.industry && f.employer ? ' <span class="muted">from ' + esc(f.employer) + '</span>' : '') + '</label><input data-ik="industry" data-ii="' + i + '" list="indlist" placeholder="Pick one or type it" value="' + esc(f.industry || '') + '"' + dis + '></div>' +
+          '<div class="field"><label>Department</label><input data-ik="department" data-ii="' + i + '" list="deptlist" placeholder="Finance, Sales, IT" value="' + esc(f.department || '') + '"' + dis + '></div></div>' +
         '<div class="field"><label>Summary</label><textarea data-ik="summary" data-ii="' + i + '"' + dis + '>' + esc(f.summary || '') + '</textarea></div>' +
         (x.maybe && x.status !== 'saved' ? '<label class="toggle" style="margin-top:4px"><input type="checkbox" data-isame="' + i + '"' + (x.same ? ' checked' : '') + '><span>Same person as ' + esc(pname(idOf(x.maybe))) + ', fill their record instead of making a new one</span></label>' : '') +
         (x.parsed && x.parsed.tags && x.parsed.tags.length ? '<div class="muted small">Skills read: ' + esc(x.parsed.tags.join(', ')) + '</div>' : '') +
@@ -2038,8 +2108,12 @@ function vIntake(){
       '<div class="field"><label>How they came</label><select data-bk="source">' + opts(POOLSRC, BATCH.source) + '</select></div>' +
       '<div class="field"><label>Role type</label><select data-bk="role_type">' + opts(ROLETYPES, BATCH.role_type) + '</select></div>' +
     '</div>' +
-    '<div class="field"><label>Industry tag for every one</label><input data-bk="industry" list="indlist" placeholder="Pick one or type it" value="' + esc(batchIndustry()) + '">' +
-      '<div class="muted small">Fills the industry on every resume in this drop. Change it on a card if one is different.</div></div>' +
+    '<div class="two">' +
+      '<div class="field"><label>Industry tag for every one</label><input data-bk="industry" list="indlist" placeholder="Pick one or type it" value="' + esc(batchIndustry()) + '">' +
+        '<div class="muted small">The reader fills each card from the most recent employer. This is the fallback.</div></div>' +
+      '<div class="field"><label>Department for every one</label><input data-bk="department" list="deptlist" placeholder="Finance, Sales, IT" value="' + esc(batchDept()) + '">' +
+        '<div class="muted small">Area of expertise, saved on the person. Typed here it wins over the reader.</div></div>' +
+    '</div>' +
     (amCampaigns() ? '<div class="field"><button class="btn ghost" data-new="campaign" style="width:100%">New campaign</button></div>' : '') +
     '<div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px">' +
       '<label class="toggle" style="display:flex;gap:10px;align-items:flex-start">' +
@@ -2056,6 +2130,7 @@ function vIntake(){
       (ready ? '<button class="btn" id="isaveall">Save all ' + ready + '</button> ' : '') +
       (done ? '<button class="btn ghost" id="iclear">Clear ' + done + ' saved</button>' : '')) +
     '<datalist id="indlist">' + inds.map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>' +
+    '<datalist id="deptlist">' + DEPARTMENTS.map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>' +
     stamp +
     '<div id="idrop" style="border:2px dashed var(--line);padding:28px;text-align:center;cursor:pointer;background:var(--paper);margin-bottom:18px">' +
       '<b>Drop up to a hundred resume PDFs here, or click to pick them</b><br>' +
@@ -2094,7 +2169,8 @@ function intakeRestore(){
 }
 function fieldsFrom(p){
   return { name: p.name || '', title: p.title || '', email: String(p.email || '').toLowerCase(),
-    phone: p.phone || '', location: p.location || '', summary: p.summary || '', industry: batchIndustry() };
+    phone: p.phone || '', location: p.location || '', summary: p.summary || '', industry: batchIndustry(),
+    employer: '', department: batchDept() };
 }
 function matchExisting(p){
   const em = String(p.email || '').toLowerCase();
@@ -2168,6 +2244,7 @@ async function intakeRead(x){
     const p = j.parsed || {};
     x.parsed = p; x.source = p.source || 'model';
     x.fields = fieldsFrom(p);
+    await intakeTagRead(x);
     x.existing = matchExisting(p);
     x.maybe = matchMaybe(p);
     x.status = 'ready';
@@ -2177,6 +2254,22 @@ async function intakeRead(x){
     await queueWrite(x, { status: 'error', error: String(err.message).slice(0, 300) });
   }
   if(VIEW === 'intake') draw();
+}
+/* the second read: most recent employer, its industry, the department. The model's industry beats the batch fallback
+   unless one was typed in the batch bar. A typed batch department beats the model, the model beats the role type guess. */
+async function intakeTagRead(x){
+  const p = x.parsed || {};
+  const text = [p.name, p.title, p.summary, (p.sections || []).map(s => typeof s === 'string' ? s : [s.title || s.heading || '', s.body || s.text || (s.items || []).join('\n')].join('\n')).join('\n\n'),
+    (p.tags || []).join(', ')].filter(Boolean).join('\n\n').slice(0, 60000);
+  if(!text.trim()) return;
+  try{
+    const t = await Promise.race([fnCall('resume-tag', { text }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('tag timeout')), 45000))]);
+    x.tagged = t || {};
+    if(t.employer) x.fields.employer = t.employer;
+    if(t.industry && !BATCH.industry) x.fields.industry = t.industry;
+    if(t.department && !BATCH.department) x.fields.department = t.department;
+  }catch(err){ console.warn('resume-tag', err.message); }
 }
 let INTAKE_BUSY = false;
 async function intakeReadAll(){
@@ -2201,7 +2294,7 @@ async function intakeTag(cid, industry){
 /* a reapply never overwrites what a recruiter typed. blanks only, plus a new document and a line on the file. */
 function fillBlanks(existing, f, x){
   const want = { name: f.name, title: f.title, email: f.email, phone: f.phone, location: f.location,
-    summary: f.summary, linkedin: (x.parsed || {}).linkedin || '' };
+    summary: f.summary, department: f.department || '', linkedin: (x.parsed || {}).linkedin || '' };
   const row = {};
   for(const k in want){ if(want[k] && !F(existing, k)) row[k] = want[k]; }
   if(!F(existing,'profile_json') && x.parsed) row.profile_json = { tags: x.parsed.tags || [], sections: x.parsed.sections || [] };
@@ -2244,7 +2337,7 @@ async function intakeSaveAll(){
         x.ref = F(c,'reference_code','ref_code') || 'updated';
       }else{
         const row = clean({ name: f.name, title: f.title, email: f.email, phone: f.phone, location: f.location,
-          summary: f.summary, linkedin: (x.parsed || {}).linkedin || undefined,
+          summary: f.summary, department: f.department || undefined, linkedin: (x.parsed || {}).linkedin || undefined,
           resume_path: x.path, resume_read_at: new Date().toISOString(), file_hash: x.hash || undefined,
           profile_json: { tags: (x.parsed || {}).tags || [], sections: (x.parsed || {}).sections || [] },
           source: BATCH.source || 'intake', source_company_id: BATCH.company_id || undefined,
@@ -2877,6 +2970,7 @@ function sheetCandidate(){
   let body = '';
   if(T===0) body = spec([
       ['Title', esc(F(c,'title','headline'))],
+      ['Department', esc(F(c,'department'))],
       ['Location', esc(F(c,'location'))],
       ['Email', F(c,'email') ? '<a href="mailto:' + esc(F(c,'email')) + '">' + esc(F(c,'email')) + '</a>' : ''],
       ['Phone', F(c,'phone') ? '<a href="tel:' + esc(String(F(c,'phone')).replace(/[^0-9+]/g,'')) + '">' + esc(F(c,'phone')) + '</a>' : ''],
@@ -3014,7 +3108,7 @@ function prefill(kind, r){
     setv('f_am', r.am_id || ''); setv('f_rec', r.recruiter_id || ''); setv('f_ad', r.ad_spend != null ? String(r.ad_spend) : '');
     SK.must = skSplit(r.must_haves); SK.nice = skSplit(r.nice_to_haves); skPaint(); }
   if(kind === 'candidate'){ setv('f_name', F(r,'name','full_name')); setv('f_title', F(r,'title','headline'));
-    setv('f_email', F(r,'email')); setv('f_phone', F(r,'phone')); setv('f_loc', F(r,'location')); setv('f_notes', F(r,'notes','summary')); }
+    setv('f_email', F(r,'email')); setv('f_phone', F(r,'phone')); setv('f_loc', F(r,'location')); setv('f_dept', F(r,'department')); setv('f_notes', F(r,'notes','summary')); }
   if(kind === 'expense'){ setv('f_amt', F(r,'amount') != null && F(r,'amount') !== '' ? String(F(r,'amount')) : ''); setv('f_co', r.company_id);
     setv('f_cat', F(r,'category') || 'Other'); setv('f_date', F(r,'spent_on') || today()); setv('f_merch', F(r,'merchant'));
     setv('f_se', r.search_id || ''); setv('f_note', F(r,'note')); }
@@ -3079,7 +3173,9 @@ function form(kind, ctx){
       '<div class="field"><label for="f_title">Current title</label><input id="f_title"></div></div>' +
       '<div class="two"><div class="field"><label for="f_email">Email</label><input id="f_email" type="email"></div>' +
       '<div class="field"><label for="f_phone">Phone</label><input id="f_phone"></div></div>' +
-      '<div class="field"><label for="f_loc">Location</label><input id="f_loc"></div>' +
+      '<div class="two"><div class="field"><label for="f_loc">Location</label><input id="f_loc"></div>' +
+      '<div class="field"><label for="f_dept">Department</label><input id="f_dept" list="deptlist2" placeholder="Finance, Sales, IT"></div></div>' +
+      '<datalist id="deptlist2">' + DEPARTMENTS.map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>' +
       '<div class="field"><label for="f_notes">Notes</label><textarea id="f_notes"></textarea></div>'],
     pipeline: [ctx.cand && !ctx.se ? 'Add to a role.' : 'Submit a candidate.',
       ctx.cand && !ctx.se ? 'Tick every open role this person should sit on. They land at Sourced, held back, nobody told.' : 'Submitting is internal. Releasing is what the client sees.',
@@ -3239,6 +3335,23 @@ function form(kind, ctx){
       '<div class="two"><div class="field"><label for="f_merch">Where</label><input id="f_merch" placeholder="Uber, Delta, the restaurant"></div>' +
       '<div class="field"><label for="f_se">Role, if one</label><select id="f_se">' + opts(S.searches.filter(isOpen), s => F(s,'title','role') + ' \u00b7 ' + cname(s.company_id), ctx.se) + '</select></div></div>' +
       '<div class="field"><label for="f_note">In your words</label><textarea id="f_note" placeholder="Lunch with the hiring manager about the fleet role."></textarea></div>'],
+    present: ['Present ' + (ctx.pipes || []).length + ' to the client.', 'One email, every profile stitched into one PDF. Pick what goes for each person.',
+      (() => { const s = search((byId(S.pipeline, (ctx.pipes || [])[0]) || {}).search_id) || {};
+        ctx.se = s ? String(idOf(s) || '') : ''; ctx.co = s ? s.company_id : '';
+        return '<div class="two"><div class="field"><label for="f_who">To</label><select id="f_who">' + mailPeople({ co: ctx.co }) + '</select></div>' +
+      '<div class="field"><label for="f_toe">Or type an address</label><input id="f_toe" type="email" placeholder="someone@company.com"></div></div>' +
+      '<div class="field"><label for="f_subj">Subject</label><input id="f_subj"></div>' +
+      '<div class="field"><label for="f_body">Message</label><textarea id="f_body" style="min-height:220px"></textarea></div>' +
+      '<div class="field"><label>What goes for each person</label><div>' + (ctx.pipes || []).map(id => { const p = byId(S.pipeline, id) || {}; const c = cand(p.candidate_id) || {};
+        const g = S.interview_guides.some(x => String(x.candidate_id) === String(p.candidate_id));
+        return '<div class="prow"><div><b>' + esc(F(c,'name')) + '</b><div class="muted small">' + esc(F(c,'title') || '') + '</div></div>' +
+          '<select data-patt="' + id + '">' +
+            '<option value="client">Client copy, no contact details</option>' +
+            (g ? '<option value="client+guide">Client copy + interview guide</option>' : '') +
+            '<option value="full">Full profile</option>' +
+            (g ? '<option value="guide">Guide only</option>' : '') +
+            '<option value="">Nothing</option></select></div>'; }).join('') + '</div></div>' +
+      '<div class="field"><label><input type="checkbox" id="f_advance" checked style="height:auto;width:auto;margin-right:8px">Move them to Submitted when it sends</label></div>'; })()],
     premier: ['Premier.', 'A human call, so it needs a reason.',
       '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
   }[kind];
@@ -3246,7 +3359,7 @@ function form(kind, ctx){
   const editing = ctx.edit ? editRow(kind, ctx.edit) : null;
   shell(editing ? 'Edit.' : F_[0], editing ? 'Change what is wrong and save it.' : F_[1],
     '<div class="form">' + F_[2] + '<button class="btn" id="fsave">' +
-      (kind === 'mail' ? 'Send' : kind === 'agreement' ? 'Create it' : kind === 'expense' && ctx.req ? 'Ask for it' : editing ? 'Save changes' : 'Save') + '</button></div>');
+      (kind === 'mail' || kind === 'present' ? 'Send' : kind === 'agreement' ? 'Create it' : kind === 'expense' && ctx.req ? 'Ask for it' : editing ? 'Save changes' : 'Save') + '</button></div>');
   if(editing) prefill(kind, editing);
   const first = $('#sheet').querySelector('input,select,textarea'); if(first) first.focus();
   $('#fsave').onclick = () => save(kind, ctx);
@@ -3260,6 +3373,13 @@ function form(kind, ctx){
   }
   if(kind === 'document') wireDocForm();
   if(kind === 'expense') wireExpenseForm(ctx);
+  if(kind === 'present'){
+    const who = $('#f_who'), subj = $('#f_subj'), body = $('#f_body');
+    if(who && who.options.length > 1) who.selectedIndex = 1;
+    const fill = () => { const d = presentDraft(ctx.pipes, who && who.value ? who.value.split('|')[1] : ''); subj.value = d.subject; body.value = d.body; };
+    fill();
+    if(who) who.onchange = () => { if(!body.value.trim() || confirm('Rewrite the draft for this person?')) fill(); };
+  }
   if(kind === 'campaign' && ctx.camp){
     const x = byId(S.campaigns, ctx.camp);
     if(x){ setv('f_se', x.search_id); setv('f_chan', F(x,'channel')); setv('f_name', F(x,'name'));
@@ -3875,7 +3995,7 @@ async function save(kind, ctx){
       profile_json: { tags: RESUME.parsed.tags || [], sections: RESUME.parsed.sections || [] } } : {};
     r = await put('candidates', clean({ [M.candidate.name]: val('f_name'), [M.candidate.title]: val('f_title'),
       [M.candidate.email]: val('f_email').toLowerCase(), [M.candidate.phone]: val('f_phone'), [M.candidate.location]: val('f_loc'),
-      [M.candidate.notes]: val('f_notes'), ...extra }), ctx, ctx.edit ? 'Candidate updated.' : 'Candidate added.');
+      [M.candidate.notes]: val('f_notes'), department: val('f_dept'), ...extra }), ctx, ctx.edit ? 'Candidate updated.' : 'Candidate added.');
     if(r && RESUME){
       try{ const pj = await fnCall('profile-pdf', { candidate_id: idOf(r) }); toast('Branded profile ready, ' + pj.ref + '.'); }
       catch(err){ toast('Saved, but the branded PDF failed. ' + err.message, true); }
@@ -4029,6 +4149,64 @@ async function save(kind, ctx){
     return;
   }
 
+  if(kind === 'present'){
+    const sel = val('f_who'), typed = val('f_toe').trim();
+    const to = typed || (sel ? sel.split('|')[0] : '');
+    const toName = typed ? '' : (sel ? sel.split('|')[1] : '');
+    if(!to) return toast('Who is it going to?', true);
+    if(!val('f_subj')) return toast('It needs a subject.', true);
+    if(!val('f_body').trim()) return toast('It needs a message.', true);
+    const pipes = ctx.pipes || [];
+    const b = $('#fsave'); if(b){ b.disabled = true; b.textContent = 'Building the pack'; }
+    try{
+      const parts = [];
+      for(const id of pipes){
+        const p = byId(S.pipeline, id); if(!p) continue;
+        const mode = ($('[data-patt="' + id + '"]') || {}).value || '';
+        if(!mode) continue;
+        if(mode === 'client' || mode === 'client+guide' || mode === 'full'){
+          const pj = await fnCall('profile-pdf', { candidate_id: p.candidate_id, redact: mode !== 'full' });
+          if(pj && pj.url) parts.push(await pdfBytes(pj.url));
+        }
+        if(mode === 'guide' || mode === 'client+guide'){
+          const gj = await fnCall('guide-pdf', { candidate_id: p.candidate_id, search_id: p.search_id || null, redact: true });
+          if(gj && gj.url) parts.push(await pdfBytes(gj.url));
+        }
+      }
+      let attach_path, attach_name;
+      if(parts.length){
+        const L = await pdfLib();
+        const out = await L.PDFDocument.create();
+        for(const bytes of parts){ const d = await L.PDFDocument.load(bytes, { ignoreEncryption: true });
+          const pages = await out.copyPages(d, d.getPageIndices()); pages.forEach(pg => out.addPage(pg)); }
+        const merged = await out.save();
+        const s = search(ctx.se) || {};
+        const safe = String(F(s,'title','role') || 'candidates').replace(/[^A-Za-z0-9]+/g, '-').toLowerCase();
+        attach_path = 'branded/client/packs/' + Date.now() + '-' + safe + '.pdf';
+        attach_name = safe + '-' + parts.length + '-livework.pdf';
+        const up = await fetch(LW.url + '/storage/v1/object/resumes/' + attach_path, { method:'POST',
+          headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/pdf', 'x-upsert':'true' }, body: merged });
+        if(!up.ok) throw new Error('pack upload refused. ' + (await up.text()).slice(0, 120));
+      }
+      if(b) b.textContent = 'Sending';
+      await fnCall('mail-send', clean({ to_email: to, to_name: toName, subject: val('f_subj'), body: val('f_body'),
+        template: 'presentation', company_id: ctx.co || undefined, search_id: ctx.se || undefined,
+        attach_path, attach_name }));
+      const adv = $('#f_advance') && $('#f_advance').checked;
+      let moved = 0;
+      for(const id of pipes){
+        const p = byId(S.pipeline, id); if(!p) continue;
+        if(adv && stageIx(p) < STAGES.indexOf('Submitted')){ try{ await patch('pipeline', idOf(p), { [M.pipeline.stage]: dbStage('Submitted') }); moved++; }catch(e){ console.warn(e); } }
+        try{ await insert('activity', clean({ type: 'email', kind: 'email', title: 'Presented', candidate_id: p.candidate_id, company_id: ctx.co || undefined, search_id: p.search_id || undefined,
+          body: 'Presented to ' + (toName || to) + ' with ' + (pipes.length - 1) + ' other' + (pipes.length === 2 ? '' : 's') + (attach_name ? ' · ' + attach_name : ''),
+          occurred_at: new Date().toISOString() })); }catch(e){ console.warn(e); }
+      }
+      toast('Sent to ' + (toName || to) + '.' + (moved ? ' ' + moved + ' moved to Submitted.' : ''));
+      PICK.on = false; PICK.ids = [];
+      closeSheet(); await loadAll(); drawNav(); draw();
+    }catch(e){ toast('Did not send. ' + e.message, true); if(b){ b.disabled = false; b.textContent = 'Send'; } }
+    return;
+  }
   if(kind === 'premier'){
     if(!val('f_why')) return toast('Premier needs a reason.', true);
     r = await tryWrite(() => patch('candidates', ctx.cand, clean({ [MAP.candidate.premier]: true, [MAP.candidate.premier_reason]: val('f_why'), [MAP.candidate.premier_by]: meId() })), 'Premier on.');
@@ -4511,9 +4689,17 @@ function wire(){
     await loadAll(); drawNav(); draw();
   });
   m.querySelectorAll('[data-pipe]').forEach(c => c.onclick = e => {
-    if(e.target.closest('button[data-adv],button[data-rel],button[data-pass],button[data-note],button[data-mail],button[data-guide],button[data-guidemail],button[data-mvstage],button[data-setstage]')) return;
+    if(e.target.closest('button[data-adv],button[data-rel],button[data-pass],button[data-note],button[data-mail],button[data-guide],button[data-guidemail],button[data-mvstage],button[data-setstage],input[data-pick]')) return;
+    if(PICK.on){ const p0 = byId(S.pipeline, c.dataset.pipe); if(p0 && stageOf(p0) !== 'Placed' && stageOf(p0) !== 'Passed'){ pickToggle(c.dataset.pipe); draw(); return; } }
     const p = byId(S.pipeline, c.dataset.pipe); if(p) openSheet('candidate', p.candidate_id);
   });
+  m.querySelectorAll('input[data-pick]').forEach(cb => cb.onchange = e => { e.stopPropagation(); pickToggle(cb.dataset.pick); draw(); });
+  const pon = document.getElementById('pickon');
+  if(pon) pon.onclick = () => { PICK.on = !PICK.on; if(!PICK.on) PICK.ids = []; draw(); };
+  const poff = document.getElementById('pickoff');
+  if(poff) poff.onclick = () => { PICK.on = false; PICK.ids = []; draw(); };
+  const pgo = document.getElementById('pickgo');
+  if(pgo) pgo.onclick = () => { if(PICK.ids.length) form('present', { pipes: PICK.ids.slice() }); };
   const pco = m.querySelector('#pco');
   if(pco) pco.onchange = () => { Q.pipeCo = pco.value; Q.pipeSe = ''; draw(); };
   const pse = m.querySelector('#pse');
@@ -4561,7 +4747,7 @@ function wire(){
       if(x && x.qid) await queueWrite(x, { status: 'skipped' });
       INTAKE.splice(+b.dataset.irm, 1); draw(); });
     m.querySelectorAll('[data-isame]').forEach(cb => cb.onchange = () => { const x = INTAKE[+cb.dataset.isame]; if(x) x.same = cb.checked; draw(); });
-    let wasInd = batchIndustry();
+    let wasInd = batchIndustry(), wasDept = batchDept();
     m.querySelectorAll('[data-bk]').forEach(el => el.onchange = async () => {
       BATCH[el.dataset.bk] = el.value;
       if(el.dataset.bk === 'campaign_id'){
@@ -4576,6 +4762,9 @@ function wire(){
       const ind = batchIndustry();
       INTAKE.forEach(x => { if(x.fields && x.status !== 'saved' && (!x.fields.industry || x.fields.industry === wasInd)) x.fields.industry = ind; });
       wasInd = ind;
+      const dep = batchDept();
+      INTAKE.forEach(x => { if(x.fields && x.status !== 'saved' && (!x.fields.department || x.fields.department === wasDept)) x.fields.department = dep; });
+      wasDept = dep;
       draw(); await stampAll(); });
     m.querySelectorAll('[data-bk="ack_role"]').forEach(el => el.oninput = () => { BATCH.ack_role = el.value; });
     m.querySelectorAll('[data-ack]').forEach(cb => cb.onchange = () => {
@@ -4632,14 +4821,14 @@ function wire(){
   const fsk = document.getElementById('fskill');
   if(fsk) fsk.oninput = fsk.onchange = () => { Q.fSkill = fsk.value; const p = fsk.selectionStart; draw();
     const n = document.getElementById('fskill'); if(n){ n.focus(); if(p !== null) n.setSelectionRange(p,p); } };
-  [['fco','fCo'],['fse','fSe'],['fcamp','fCamp'],['frole','fRole'],['find','fInd']].forEach(([id, k]) => {
+  [['fco','fCo'],['fse','fSe'],['fcamp','fCamp'],['frole','fRole'],['find','fInd'],['fdept','fDept']].forEach(([id, k]) => {
     const el = document.getElementById(id);
     if(el) el.onchange = () => { Q[k] = el.value; if(k === 'fCo'){ Q.fSe = ''; Q.fCamp = ''; } if(k === 'fSe') Q.fCamp = ''; draw(); };
   });
   m.querySelectorAll('[data-fstate]').forEach(b => b.onclick = () => { Q.fState = b.dataset.fstate; draw(); });
   m.querySelectorAll('[data-fsort]').forEach(b => b.onclick = () => { Q.fSort = b.dataset.fsort; draw(); });
   const fcl = document.getElementById('fclear');
-  if(fcl) fcl.onclick = () => { Q.fq = ''; Q.fCo = ''; Q.fSe = ''; Q.fCamp = ''; Q.fRole = ''; Q.fInd = ''; Q.fSkill = ''; Q.fState = ''; draw(); };
+  if(fcl) fcl.onclick = () => { Q.fq = ''; Q.fCo = ''; Q.fSe = ''; Q.fCamp = ''; Q.fRole = ''; Q.fInd = ''; Q.fDept = ''; Q.fSkill = ''; Q.fState = ''; draw(); };
   m.querySelectorAll('[data-tag]').forEach(b => b.onclick = () => { Q.tag = b.dataset.tag; draw(); });
   m.querySelectorAll('[data-prem]').forEach(b => b.onclick = () => { Q.prem = b.dataset.prem; draw(); });
   m.querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
