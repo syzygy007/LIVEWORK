@@ -351,6 +351,27 @@ body{background:var(--paper)}
 .pfil.ffil .search input{font:600 15px/1 Manrope,Arial,sans-serif}
 .fsort{display:inline-flex;gap:6px;margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
 @media (min-width:901px){ .pfil.ffil{grid-template-columns:repeat(7,minmax(0,1fr))} }
+.ctools{position:sticky;top:0;z-index:6;background:var(--paper);padding:10px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.ctabs{display:flex;gap:22px;margin-bottom:12px;overflow-x:auto}
+.ctabs button{border:0;background:transparent;padding:0 0 10px;font:inherit;font-size:14px;font-weight:600;color:var(--stone);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
+.ctabs button.on{color:var(--ink);border-bottom-color:var(--yellow)}
+.cfil{display:grid;grid-template-columns:minmax(220px,2fr) repeat(4,minmax(0,1fr)) auto;gap:10px;align-items:center}
+.cfil select{height:42px}
+.ctbl .r{grid-template-columns:26px 2fr 1.1fr 1.2fr 110px 120px}
+.ctbl .r .nm{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.ctbl .r .nm b{font-size:15px}
+.ctbl .r .sub{display:block;font-size:13px;color:var(--stone);margin-top:2px}
+.ctbl .r .gold{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a6d1f;
+  background:var(--yellow);border-radius:99px;padding:2px 8px}
+.ctbl input[type=checkbox]{width:18px;height:18px;accent-color:var(--yellow);cursor:pointer;margin:0}
+.cmore{display:flex;justify-content:center;padding:18px 0 4px;color:var(--stone);font-size:13px}
+@media (max-width:900px){
+  .ctools{top:calc(54px + env(safe-area-inset-top));padding-top:8px}
+  .cfil{grid-template-columns:1fr 1fr}
+  .cfil .search{grid-column:1/-1}
+  .ctbl .r{grid-template-columns:26px 1fr!important;align-items:start}
+  .ctbl .r .cb{grid-row:span 5}
+}
 .pickbox{position:absolute;top:10px;right:10px;width:22px;height:22px;accent-color:var(--yellow);cursor:pointer}
 .card,.plist .p{position:relative}
 .card.picked,.plist .p.picked{outline:2px solid var(--yellow);outline-offset:-2px}
@@ -860,7 +881,8 @@ const NAV = [
 ];
 let VIEW = 'today';
 let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted',
-  fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fDept:'', fSkill:'', fState:'', fSort:'best' };
+  fq:'', fCo:'', fSe:'', fCamp:'', fRole:'', fInd:'', fDept:'', fSkill:'', fState:'', fSort:'best',
+  cTab:'all', cDept:'', cLoc:'', cStat:'', cSort:'rank' };
 
 function counts(k){
   if(k==='today') return S.tasks.filter(t => !t.done).length;
@@ -1511,26 +1533,101 @@ function candHay(c){
     F(c,'summary'), (pj.tags || []).join(' '), secs].join(' ').toLowerCase();
   return c.__hay;
 }
+function candStage(c){
+  const stages = rowsFor(idOf(c)).map(stageOf).filter(x => x !== 'Passed');
+  return stages.length ? stages[stages.length - 1] : 'New';
+}
+function candMine(c){
+  const me = meId();
+  if(!me) return false;
+  return rowsFor(idOf(c)).some(p => String(p[MAP.pipeline.added_by]) === String(me)) ||
+    S.activity.some(a => String(a.candidate_id) === String(idOf(c)) && String(a.staff_id) === String(me));
+}
+/* the row is the scan, so it carries only what decides whether to open it:
+   who they are, where they sit, what stage, and how cold they have gone */
+function candLine(c){
+  const id = idOf(c);
+  const prem = c[MAP.candidate.premier] === true;
+  const t = candTouch(c);
+  const f = candFollow(c);
+  const d = f ? dayDiff(f) : null;
+  const late = d !== null && d <= 0;
+  return '<div class="r" data-cand="' + id + '">' +
+    '<div class="cb"><input type="checkbox" data-csel="' + id + '"' + (CSEL.ids.indexOf(String(id)) >= 0 ? ' checked' : '') + ' aria-label="Pick"></div>' +
+    '<div><div class="nm"><b>' + esc(F(c,'name','full_name')) + '</b>' + (prem ? '<span class="gold">Premier</span>' : '') + '</div>' +
+      (F(c,'title','headline') ? '<span class="sub">' + esc(F(c,'title','headline')) + '</span>' : '') + '</div>' +
+    '<div class="muted">' + esc(F(c,'department') || '') + '</div>' +
+    '<div class="muted">' + esc(F(c,'location') || '') + '</div>' +
+    '<div><span class="st ' + (candStage(c) === 'Placed' ? 'placed' : 'open') + '">' + esc(candStage(c)) + '</span></div>' +
+    '<div class="muted' + (late ? ' warn' : '') + '">' + (f ? (late ? 'Follow up due' : 'Follow up ' + short(f)) : t ? ago(t) : 'Never') + '</div>' +
+  '</div>';
+}
 function vCandidates(){
   const q = Q.cand.toLowerCase();
   const all = S.candidates.filter(c => {
     if(q && !candHay(c).includes(q)) return false;
     if(Q.prem && c[MAP.candidate.premier] !== true) return false;
     if(Q.tag && !tagNames(idOf(c)).includes(Q.tag)) return false;
+    if(Q.cDept && String(F(c,'department') || '').toLowerCase() !== Q.cDept.toLowerCase()) return false;
+    if(Q.cLoc && String(F(c,'location') || '') !== Q.cLoc) return false;
+    if(Q.cStat && candStage(c) !== Q.cStat) return false;
+    if(Q.cTab === 'mine' && !candMine(c)) return false;
+    if(Q.cTab === 'cold' && candTouch(c)) return false;
+    if(Q.cTab === 'due'){ const f = candFollow(c); if(!f || dayDiff(f) > 0) return false; }
     return true;
   });
+  const sorted = Q.cSort === 'name'
+    ? all.slice().sort((a,b) => String(F(a,'name','full_name')).localeCompare(String(F(b,'name','full_name'))))
+    : Q.cSort === 'new'
+    ? all.slice().sort((a,b) => new Date(F(b,'created_at') || 0) - new Date(F(a,'created_at') || 0))
+    : all.map(c => ({ c, r: candRank(c) })).sort((a,b) => a.r - b.r).map(x => x.c);
+
   const tags = S.tags.map(t => F(t,'name','label')).filter(Boolean);
-  const rows = all.map(c => ({ c, r: candRank(c) })).sort((a,b) => a.r - b.r).map(x => candRow(x.c));
-  return head('Candidates.',
+  const depts = DEPARTMENTS.slice();
+  S.candidates.forEach(c => { const d = F(c,'department');
+    if(d && !depts.some(x => x.toLowerCase() === String(d).toLowerCase())) depts.push(d); });
+  const locCount = {};
+  S.candidates.forEach(c => { const l = F(c,'location'); if(l) locCount[l] = (locCount[l] || 0) + 1; });
+  const locs = Object.keys(locCount).sort((a,b) => locCount[b] - locCount[a] || a.localeCompare(b)).slice(0, 60);
+  const sel = (id, first, list, v) => '<select id="' + id + '"><option value="">' + first + '</option>' +
+    list.map(x => '<option value="' + esc(x) + '"' + (String(v) === String(x) ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>';
+  const tab = (k, l) => '<button data-ctab="' + k + '" class="' + (Q.cTab === k ? 'on' : '') + '">' + l + '</button>';
+  const on = !!(q || Q.prem || Q.tag || Q.cDept || Q.cLoc || Q.cStat || Q.cTab !== 'all');
+
+  CANDN = Math.min(Math.max(CANDN, CANDPAGE), Math.max(sorted.length, CANDPAGE));
+  const shown = sorted.slice(0, CANDN);
+
+  return head('Candidates.', '<span class="muted" style="margin-right:auto;padding-left:14px">' + all.length + (on ? ' of ' + S.candidates.length : '') + '</span>' +
       '<button class="btn ghost" data-new="candidate">Add candidate</button>' +
       '<button class="btn" data-v="intake">Import r\u00e9sum\u00e9s</button>') +
-    '<div class="tools"><div class="search">' + SRCH + '<input id="qcand" placeholder="Name, title, or any word in the resume" value="' + esc(Q.cand) + '"></div>' +
-      '<button class="chip ' + (Q.prem?'on':'') + '" data-prem="' + (Q.prem?'':'1') + '">Premier</button>' +
-      '<button class="chip ' + (Q.tag?'':'on') + '" data-tag="">All</button>' +
-      tags.map(t => '<button class="chip ' + (Q.tag===t?'on':'') + '" data-tag="' + esc(t) + '">' + esc(t) + '</button>').join('') +
+    '<div class="ctools">' +
+      '<div class="ctabs">' + tab('all','All candidates') + tab('mine','My candidates') + tab('cold','Never contacted') + tab('due','Follow up due') + '</div>' +
+      '<div class="cfil">' +
+        '<div class="search">' + SRCH + '<input id="qcand" placeholder="Name, title, or any word in the resume" value="' + esc(Q.cand) + '"></div>' +
+        sel('cdept', 'Any department', depts, Q.cDept) +
+        sel('cloc', 'Any location', locs, Q.cLoc) +
+        sel('cstat', 'Any status', ['New'].concat(STAGES), Q.cStat) +
+        sel('ctag', 'Any industry', tags, Q.tag) +
+        '<button class="chip ' + (Q.prem?'on':'') + '" data-prem="' + (Q.prem?'':'1') + '">Premier</button>' +
+      '</div>' +
     '</div>' +
-    (rows.length ? '<div class="clist">' + rows.join('') + '</div>'
-                 : '<div class="tbl"><div class="empty">Nobody here yet. Add a candidate, or drop resumes in.</div></div>');
+    (shown.length
+      ? '<div class="tbl ctbl">' +
+          '<div class="r h"><div></div><div>Candidate</div><div>Department</div><div>Location</div><div>Status</div><div>Last contact</div></div>' +
+          shown.map(candLine).join('') + '</div>' +
+        (sorted.length > shown.length
+          ? '<div class="cmore" id="cmore">Showing ' + shown.length + ' of ' + sorted.length + '</div>'
+          : '<div class="cmore">All ' + sorted.length + '</div>')
+      : '<div class="tbl"><div class="empty">' + (on ? 'Nobody matches that. Clear a filter.' : 'Nobody here yet. Add a candidate, or drop resumes in.') + '</div></div>') +
+    (CSEL.ids.length ? cselBar() : '');
+}
+function cselBar(){
+  const n = CSEL.ids.length;
+  return '<div class="pickbar"><span>' + n + ' picked</span>' +
+    '<button class="btn y" id="cadd">Add to a role</button>' +
+    '<button class="btn y" id="cpool">Add to a pool</button>' +
+    (n >= 2 && n <= 5 ? '<button class="btn y" id="cpres">Present</button>' : '') +
+    '<button class="btn ghost" id="cclear">Clear</button></div>';
 }
 
 /* ---------- Search ----------
@@ -1941,6 +2038,9 @@ const INTAKE = [];
 const INTAKE_CAP = 100;
 
 /* ---------- Present up to 5: pick candidates on one role, one email, one PDF pack ---------- */
+const CSEL = { ids: [] };
+let CANDN = 60;
+const CANDPAGE = 60;
 const PICK = { on:false, ids:[] };
 const PICK_CAP = 5;
 function pickSeId(){ const p = PICK.ids.length ? byId(S.pipeline, PICK.ids[0]) : null; return p ? String(p.search_id) : ''; }
@@ -3358,6 +3458,14 @@ function form(kind, ctx){
             (g ? '<option value="guide">Guide only</option>' : '') +
             '<option value="">Nothing</option></select></div>'; }).join('') + '</div></div>' +
       '<div class="field"><label><input type="checkbox" id="f_advance" checked style="height:auto;width:auto;margin-right:8px">Move them to Submitted when it sends</label></div>'; })()],
+    bulkrole: [(ctx.then === 'present' ? 'Present ' : 'Add ') + (ctx.ids || []).length + ' to a role.',
+      ctx.then === 'present' ? 'They go on the role first, then the email goes out.' : 'Anyone already on it is left alone.',
+      '<div class="field"><label for="f_se">Role</label><select id="f_se">' +
+        opts(S.searches.filter(isOpen), s => F(s,'title','role') + ' \u00b7 ' + cname(s.company_id)) + '</select></div>' +
+      '<div class="field"><label>Who goes</label><div>' + (ctx.ids || []).map(id => { const c = cand(id) || {};
+        return '<div class="prow"><div><b>' + esc(F(c,'name')) + '</b><div class="muted small">' + esc(F(c,'title') || '') + '</div></div><div></div></div>'; }).join('') + '</div></div>'],
+    bulkpool: ['Add ' + (ctx.ids || []).length + ' to a pool.', 'A pool is a list you keep, not a stage.',
+      '<div class="field"><label for="f_pool">Pool</label><select id="f_pool">' + opts(S.pools, p => F(p,'name')) + '</select></div>'],
     premier: ['Premier.', 'A human call, so it needs a reason.',
       '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
   }[kind];
@@ -3365,7 +3473,8 @@ function form(kind, ctx){
   const editing = ctx.edit ? editRow(kind, ctx.edit) : null;
   shell(editing ? 'Edit.' : F_[0], editing ? 'Change what is wrong and save it.' : F_[1],
     '<div class="form">' + F_[2] + '<button class="btn" id="fsave">' +
-      (kind === 'mail' || kind === 'present' ? 'Send' : kind === 'agreement' ? 'Create it' : kind === 'expense' && ctx.req ? 'Ask for it' : editing ? 'Save changes' : 'Save') + '</button></div>');
+      (kind === 'mail' || kind === 'present' ? 'Send' : kind === 'bulkrole' ? (ctx.then === 'present' ? 'Next' : 'Add them') :
+       kind === 'bulkpool' ? 'Add them' : kind === 'agreement' ? 'Create it' : kind === 'expense' && ctx.req ? 'Ask for it' : editing ? 'Save changes' : 'Save') + '</button></div>');
   if(editing) prefill(kind, editing);
   const first = $('#sheet').querySelector('input,select,textarea'); if(first) first.focus();
   $('#fsave').onclick = () => save(kind, ctx);
@@ -4155,6 +4264,43 @@ async function save(kind, ctx){
     return;
   }
 
+  if(kind === 'bulkrole'){
+    const seId = val('f_se');
+    if(!seId) return toast('Pick the role.', true);
+    const ids = ctx.ids || [];
+    const b = $('#fsave'); if(b){ b.disabled = true; b.textContent = 'Working'; }
+    const pipes = [];
+    try{
+      for(const cid of ids){
+        const had = S.pipeline.filter(p => String(p.candidate_id) === String(cid) && String(p.search_id) === String(seId))[0];
+        if(had){ pipes.push(String(idOf(had))); continue; }
+        const row = await insert('pipeline', clean({ [M.pipeline.search]: seId, [M.pipeline.candidate]: cid,
+          [M.pipeline.stage]: dbStage('Sourced'), [M.pipeline.added_by]: meId() }));
+        if(row) pipes.push(String(idOf(row)));
+      }
+      await loadAll(); drawNav();
+      CSEL.ids = [];
+      if(ctx.then === 'present'){ closeSheet(); draw(); form('present', { pipes }); return; }
+      toast(ids.length + ' added to ' + sname(seId) + '.');
+      closeSheet(); draw();
+    }catch(e){ toast('Did not add them. ' + e.message, true); if(b){ b.disabled = false; b.textContent = 'Add them'; } }
+    return;
+  }
+  if(kind === 'bulkpool'){
+    const pid = val('f_pool');
+    if(!pid) return toast('Pick the pool.', true);
+    const ids = ctx.ids || [];
+    try{
+      for(const cid of ids){
+        const had = S.pool_members.some(x => String(x.pool_id) === String(pid) && String(x.candidate_id) === String(cid));
+        if(!had) await insert('pool_members', { [M.poolmem.pool]: pid, [M.poolmem.candidate]: cid });
+      }
+      CSEL.ids = [];
+      toast(ids.length + ' added to the pool.');
+      closeSheet(); await loadAll(); drawNav(); draw();
+    }catch(e){ toast('Did not add them. ' + e.message, true); }
+    return;
+  }
   if(kind === 'present'){
     const sel = val('f_who'), typed = val('f_toe').trim();
     const to = typed || (sel ? sel.split('|')[0] : '');
@@ -4848,8 +4994,30 @@ function wire(){
     if(r){ await loadAll(); draw(); }
   });
   const qc = document.getElementById('qcand');
-  if(qc) qc.oninput = () => { Q.cand = qc.value; const p = qc.selectionStart; draw();
+  if(qc) qc.oninput = () => { Q.cand = qc.value; CANDN = CANDPAGE; const p = qc.selectionStart; draw();
     const n = document.getElementById('qcand'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
+  m.querySelectorAll('[data-ctab]').forEach(b => b.onclick = () => { Q.cTab = b.dataset.ctab; CANDN = CANDPAGE; draw(); });
+  [['cdept','cDept'],['cloc','cLoc'],['cstat','cStat'],['ctag','tag']].forEach(([id, k]) => {
+    const el = document.getElementById(id);
+    if(el) el.onchange = () => { Q[k] = el.value; CANDN = CANDPAGE; draw(); };
+  });
+  m.querySelectorAll('input[data-csel]').forEach(cb => cb.onclick = e => {
+    e.stopPropagation();
+    const id = String(cb.dataset.csel), i = CSEL.ids.indexOf(id);
+    if(i >= 0) CSEL.ids.splice(i, 1); else CSEL.ids.push(id);
+    draw();
+  });
+  const cc = document.getElementById('cclear'); if(cc) cc.onclick = () => { CSEL.ids = []; draw(); };
+  const ca = document.getElementById('cadd'); if(ca) ca.onclick = () => form('bulkrole', { ids: CSEL.ids.slice() });
+  const cp = document.getElementById('cpool'); if(cp) cp.onclick = () => form('bulkpool', { ids: CSEL.ids.slice() });
+  const cpr = document.getElementById('cpres'); if(cpr) cpr.onclick = () => form('bulkrole', { ids: CSEL.ids.slice(), then: 'present' });
+  /* the list keeps going instead of paging: the footer line loads the next block when it comes into view */
+  const more = document.getElementById('cmore');
+  if(more && 'IntersectionObserver' in window){
+    const io = new IntersectionObserver(es => { if(es.some(x => x.isIntersecting)){ io.disconnect(); CANDN += CANDPAGE; draw(); } },
+      { rootMargin: '600px' });
+    io.observe(more);
+  }
   const qo = document.getElementById('qco');
   if(qo) qo.oninput = () => { Q.co = qo.value; const p = qo.selectionStart; draw();
     const n = document.getElementById('qco'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
