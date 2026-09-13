@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIVEWORK · The hour before the interview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#000000;
+  --paper:#FAF7F1;
+  --wall:#F0EBE1;
+  --line:#D9D2C5;
+  --stone:#6E6A62;
+  --yellow:#F2C632;
+  --good:#2E9E6B;
+  --flag:#C8442F;
+  --r:2px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  overflow-x:hidden;
+  background:var(--paper);color:var(--ink);
+  font-family:Manrope,"Helvetica Neue",Arial,sans-serif;
+  font-weight:400;font-size:17px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:740px;margin:0 auto;padding:0 24px 140px}
+
+/* masthead */
+.top{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff}
+.top .in{max-width:740px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.mark{font-weight:800;letter-spacing:-.04em;font-size:19px;display:flex;align-items:center;gap:6px}
+.mark i{display:block;width:3px;height:17px;background:var(--yellow);transform:translateY(1px)}
+.top .who{margin-left:auto;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#9C978E;text-align:right;line-height:1.35}
+
+/* progress rail */
+.rail{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--ink);padding:0 24px 12px}
+.rail .in{max-width:740px;margin:0 auto;width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.railwrap{background:var(--ink);padding:0 24px 14px}
+.railwrap .rail{max-width:740px;margin:0 auto;padding:0}
+.step{border-top:2px solid #333;padding-top:7px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6d6862}
+.step.on{border-top-color:#fff;color:#fff}
+.step.done{border-top-color:#fff;color:#9C978E}
+
+/* pages */
+.page{display:none;animation:in .34s ease both}
+.plate{background:var(--ink);color:#fff;width:100vw;margin-left:calc(50% - 50vw);padding:64px 24px 58px}
+.plate .pin{max-width:740px;margin:0 auto;padding:0 24px}
+@media(max-width:560px){.plate{padding:44px 0 40px}}
+.plate .eyebrow{color:#8f8a82}
+.plate .lede{color:#D8D3CB}
+.plate h1{margin-bottom:22px}
+.body{padding-top:44px}
+.page.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.page{animation:none}}
+
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--stone);margin-bottom:18px}
+h1{font-weight:800;letter-spacing:-.035em;line-height:.96;margin:0 0 20px;font-size:clamp(42px,8.2vw,74px)}
+h2{font-weight:800;letter-spacing:-.03em;line-height:1.03;margin:54px 0 14px;font-size:clamp(28px,4.6vw,38px)}
+.lede{font-size:19px;line-height:1.5;max-width:34em;color:#2a2822;margin:0 0 26px}
+p{max-width:34em}
+.thin{color:var(--stone);font-size:15px;line-height:1.5;max-width:34em}
+
+/* spec rows */
+.spec{border-top:1px solid var(--line);margin:26px 0}
+.spec .row{display:grid;grid-template-columns:150px 1fr;gap:16px;border-bottom:1px solid var(--line);padding:13px 0;align-items:baseline}
+.spec .k{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--stone)}
+.spec .v{font-size:16px}
+@media(max-width:560px){.spec .row{grid-template-columns:1fr;gap:4px}}
+
+/* fields */
+label.f{display:block;margin:26px 0 0}
+label.f .q{font-weight:800;font-size:19px;letter-spacing:-.01em;line-height:1.3;display:block;margin-bottom:4px}
+label.f .h{display:block;color:var(--stone);font-size:14px;line-height:1.45;margin-bottom:10px;max-width:34em}
+input[type=text],input[type=date],textarea,select{
+  width:100%;font-family:inherit;font-size:17px;line-height:1.5;color:var(--ink);
+  background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px 13px;
+}
+textarea{resize:vertical;min-height:104px}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--yellow);outline-offset:1px;border-color:#b8b0a2}
+.cnt{font-size:12px;color:var(--stone);margin-top:6px;letter-spacing:.02em}
+.cnt b{color:var(--ink);font-weight:600}
+.cnt.ok b{color:var(--good)}
+
+/* the pressure pass */
+.press{margin:18px 0 0;border-left:3px solid var(--ink);background:var(--wall);padding:16px 18px}
+.press.clean{border-left-color:var(--good)}
+.press h4{margin:0 0 10px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);font-weight:600}
+.press ul{margin:0;padding:0;list-style:none}
+.press li{padding:9px 0;border-top:1px solid var(--line);font-size:16px;line-height:1.45}
+.press li:first-child{border-top:0;padding-top:0}
+.press li b{font-weight:800}
+.press li.good b{color:var(--good)}
+.press li.bad b{color:var(--flag)}
+
+/* buttons */
+.btn{display:inline-block;font-family:inherit;font-size:16px;font-weight:800;letter-spacing:-.01em;
+  background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:999px;padding:13px 26px;cursor:pointer}
+.btn.y{background:var(--yellow);border-color:var(--yellow);color:#000}
+.btn.g{background:transparent;color:var(--ink)}
+.btn:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:34px;align-items:center}
+.btns .note{font-size:13px;color:var(--stone)}
+
+/* drill */
+.drill{border-top:1px solid var(--line);padding:20px 0}
+.drill .q{font-weight:800;font-size:18px;line-height:1.32;margin-bottom:12px;max-width:34em}
+.opt{display:block;width:100%;text-align:left;font-family:inherit;font-size:16px;line-height:1.4;
+  background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;margin-bottom:7px;cursor:pointer}
+.opt:hover{border-color:#b8b0a2}
+.opt.pick{border-color:var(--ink);border-width:2px;padding:10px 12px}
+.opt.right{border-color:var(--good);border-width:2px;padding:10px 12px;background:#F3FAF6}
+.opt.wrong{border-color:var(--flag);border-width:2px;padding:10px 12px;background:#FCF3F1}
+.why{font-size:15px;line-height:1.5;color:#2a2822;margin-top:10px;max-width:34em}
+
+/* record cards */
+.rec{border:1px solid var(--line);background:#fff;border-radius:var(--r);padding:18px 18px 22px;margin:22px 0}
+.rec .n{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);margin-bottom:2px}
+
+/* manager line */
+.mline{background:var(--ink);color:#fff;padding:18px 20px;border-radius:var(--r);margin:22px 0 0;max-width:34em}
+.mline .who{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8f8a82;margin-bottom:6px}
+.mline p{margin:0;font-size:19px;line-height:1.4}
+
+/* output */
+.brief{background:#fff;border:1px solid var(--line);padding:30px;margin-top:26px}
+.brief h3{font-weight:800;font-size:13px;letter-spacing:.15em;text-transform:uppercase;margin:26px 0 8px;color:var(--stone)}
+.brief h3:first-child{margin-top:0}
+.brief p{font-size:16px;line-height:1.55;margin:0 0 10px;white-space:pre-wrap}
+.brief .em{font-weight:800;font-size:18px}
+.hr{height:1px;background:var(--line);margin:34px 0}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:12px 20px;border-radius:999px;font-size:15px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.toast.on{opacity:1}
+
+/* thinking */
+.think{margin:18px 0 0;background:var(--ink);color:#fff;padding:20px 22px;border-radius:var(--r)}
+.think .lab{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--yellow);margin-bottom:12px;display:flex;align-items:center;gap:9px}
+.think .lab i{width:7px;height:7px;background:var(--yellow);border-radius:50%;display:block;animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+.think ol{margin:0;padding:0;list-style:none}
+.think li{font-size:16px;line-height:1.5;color:#8f8a82;padding:3px 0;opacity:0;transform:translateY(4px);animation:tin .38s ease forwards}
+.think li.now{color:#fff}
+.think li.was{color:#57534d}
+@keyframes tin{to{opacity:1;transform:none}}
+.press li{opacity:0;animation:tin .34s ease forwards}
+.lock{display:flex;gap:9px;align-items:flex-start;margin-top:12px;font-size:13px;line-height:1.45;color:var(--stone);max-width:34em}
+.lock svg{flex:0 0 auto;margin-top:2px}
+.priv{border:1px solid var(--line);background:var(--wall);padding:18px 20px;margin:30px 0 0;max-width:34em}
+.priv b{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);margin-bottom:7px}
+.priv p{font-size:15px;line-height:1.5;margin:0 0 8px}
+.priv p:last-child{margin-bottom:0}
+.wipe{background:none;border:0;padding:0;font-family:inherit;font-size:13px;color:var(--stone);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.wipe:hover{color:var(--flag)}
+@media (prefers-reduced-motion:reduce){.think li,.press li{animation:none;opacity:1;transform:none}.think .lab i{animation:none}}
+@media(max-width:560px){.top .who{font-size:10px;max-width:150px}.top .who .co{display:none}}
+@media print{
+  .top,.railwrap,.btns,.press,.cnt{display:none!important}
+  .page{display:none!important}
+  .page.on{display:block!important;padding-top:0}
+  body{background:#fff}
+  .brief{border:0;padding:0}
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="in">
+    <span class="mark">LIVE<i></i>WORK</span>
+    <span class="who" id="who"></span>
+  </div>
+</div>
+<div class="railwrap">
+  <div class="in rail" style="padding:0">
+    <div class="step" data-s="1">Story</div>
+    <div class="step" data-s="2">Numbers</div>
+    <div class="step" data-s="3">Listening</div>
+    <div class="step" data-s="4">The idea</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- 0 SETUP -->
+<section class="page on" id="p0">
+  <div class="plate"><div class="pin">
+  <div class="eyebrow">Interview preparation</div>
+  <h1>Four things,<br>and they go<br>in order.</h1>
+  <p class="lede">Know your story. Know your numbers. Show respect by listening. Leave one idea behind. Everything else people tell you about interviews is decoration on those four.</p>
+  </div></div>
+  <div class="body">
+  <div class="priv"><b>Before you start</b>
+  <p>Everything you write stays in this browser, on this device. Nothing is uploaded, nothing is sent to a recruiter, and nothing is sent to a hiring manager. There is no account and no login, so there is nobody to share it with unless you copy it and send it yourself.</p>
+  <p>Which means you can be honest in here. The parts you would not say out loud yet are exactly the parts worth writing down.</p>
+  <p style="margin-top:12px"><button class="wipe" id="wipe">Erase everything on this device</button></p></div>
+
+  <label class="f"><span class="q">First, what should this page call you?</span>
+    <input type="text" id="s_name" placeholder="First name"></label>
+  <label class="f"><span class="q">What role are you interviewing for?</span>
+    <input type="text" id="s_role" placeholder="Senior Controller"></label>
+  <label class="f"><span class="q">Where?</span>
+    <input type="text" id="s_co" placeholder="Company name"></label>
+  <label class="f"><span class="q">Who are you meeting?</span>
+    <span class="h">First name is enough. If you do not know yet, write the title.</span>
+    <input type="text" id="s_mgr" placeholder="Hiring manager"></label>
+  <label class="f"><span class="q">When?</span>
+    <input type="date" id="s_when"></label>
+
+  <div class="btns">
+    <button class="btn y" data-go="1">Start with the story</button>
+    <span class="note">About 60 minutes if you do all four.</span>
+  </div>
+</div></section>
+
+<!-- 1 STORY -->
+<section class="page" id="p1">
+  <div class="plate"><div class="pin">
+  <div class="eyebrow">One of four, about 15 minutes</div>
+  <h1>Your story is<br>not your<br>resume out loud.</h1>
+  <p class="lede">They have already read the resume. The only new information in the room is the part that is not on it: what you noticed, what you decided, what you got wrong and what changed your mind.</p>
+  </div></div>
+  <div class="body">
+  <p class="thin">A story is not a chronology. It is a thread, and the thread is how you make decisions, because that is what they are actually buying. They are not hiring what you did. They are hiring what you will do in a situation nobody has described yet.</p>
+
+  <label class="f"><span class="q">Where are you now, professionally, in one line?</span>
+    <span class="h">Not your title. What you are responsible for.</span>
+    <textarea id="a_now" data-count="25"></textarea><div class="cnt" data-for="a_now"></div></label>
+
+  <label class="f"><span class="q">One experience that changed how you work.</span>
+    <span class="h">Something that happened to you, not a job you held. What did it teach you that you still use?</span>
+    <textarea id="a_turn" data-count="90"></textarea><div class="cnt" data-for="a_turn"></div></label>
+
+  <label class="f"><span class="q">What did you once have wrong, and what changed your mind?</span>
+    <span class="h">This is the question most people skip and it is the one that makes you a person instead of a candidate.</span>
+    <textarea id="a_wrong" data-count="70"></textarea><div class="cnt" data-for="a_wrong"></div></label>
+
+  <label class="f"><span class="q">Why does this role follow from that?</span>
+    <span class="h">Make the next step sound inevitable rather than available.</span>
+    <textarea id="a_next" data-count="50"></textarea><div class="cnt" data-for="a_next"></div></label>
+
+  <h2>Now say it in thirty seconds.</h2>
+  <p class="thin">Pull the four answers above into one spoken paragraph. Thirty seconds is roughly 75 to 90 words. Write it the way you talk, contractions and all.</p>
+  <label class="f"><span class="q">The thirty second version.</span>
+    <textarea id="a_30" style="min-height:150px" data-count="82"></textarea><div class="cnt" data-for="a_30"></div></label>
+
+  <div class="btns">
+    <button class="btn" id="press1">Put it under pressure</button>
+    <button class="btn g" data-go="2">Next, the numbers</button>
+  </div>
+  <div id="out1"></div>
+</div></section>
+
+<!-- 2 NUMBERS -->
+<section class="page" id="p2">
+  <div class="plate"><div class="pin">
+  <div class="eyebrow">Two of four, about 20 minutes</div>
+  <h1>Know where<br>you moved<br>the needle.</h1>
+  <p class="lede">Your responsibilities describe the work you were handed. Your contribution is what got better because you were there. Almost nobody can tell those apart out loud, and the ones who can get hired.</p>
+  </div></div>
+  <div class="body">
+
+  <h2>First, three things people get wrong.</h2>
+  <p class="thin">Every one of these has cost somebody an offer, because the interviewer knew and the candidate did not.</p>
+  <div id="drill"></div>
+
+  <h2>Now build three records.</h2>
+  <p class="thin">One is not enough, because the second question is always another example. Three is the number that makes you look like a pattern instead of an accident. Fill in what you can; the empty boxes are the interview.</p>
+  <div id="recs"></div>
+
+  <div class="btns">
+    <button class="btn" id="press2">Put them under pressure</button>
+    <button class="btn g" data-go="3">Next, listening</button>
+  </div>
+  <div id="out2"></div>
+</div></section>
+
+<!-- 3 RESPECT -->
+<section class="page" id="p3">
+  <div class="plate"><div class="pin">
+  <div class="eyebrow">Three of four, about 12 minutes</div>
+  <h1>Respect is<br>demonstrated,<br>never announced.</h1>
+  <p class="lede">Telling someone you could learn a lot from them is a claim about a person you met forty minutes ago, and every manager has heard it. Asking them a question only someone who was listening could ask does the same job and cannot be faked.</p>
+  </div></div>
+  <div class="body">
+  <p class="thin">Being listened to closely is rarer than being admired. That is the whole mechanism. You are not flattering them, you are paying attention to them, and they will feel the difference without being able to name it.</p>
+
+  <h2>Three questions you actually want answered.</h2>
+  <p class="thin">Test for each one: could you ask it of any company in the country? If yes, it is filler and they know it. Aim it at this role, this team, this quarter.</p>
+  <label class="f"><span class="q">Question one.</span><input type="text" id="q_1"></label>
+  <label class="f"><span class="q">Question two.</span><input type="text" id="q_2"></label>
+  <label class="f"><span class="q">Question three.</span><input type="text" id="q_3"></label>
+  <label class="f"><span class="q">And one about how they work.</span>
+    <span class="h">Aimed at the manager, not the company. "What do the people who earn your trust quickly tend to do?" is the shape.</span>
+    <input type="text" id="q_m"></label>
+
+  <h2>The follow up is the whole thing.</h2>
+  <p class="thin">Anyone can ask a prepared question. The move nobody prepares for is the second one, built out of the words they just used. Try it.</p>
+  <div class="mline"><div class="who">The manager says</div><p id="mtxt"></p></div>
+  <label class="f"><span class="q">Your next sentence.</span>
+    <span class="h">One sentence. It should end in a question mark and use their words.</span>
+    <input type="text" id="q_follow"></label>
+
+  <div class="btns">
+    <button class="btn" id="press3">Put it under pressure</button>
+    <button class="btn g" id="newline">Give me a different one</button>
+    <button class="btn g" data-go="4">Next, the idea</button>
+  </div>
+  <div id="out3"></div>
+</div></section>
+
+<!-- 4 IDEA -->
+<section class="page" id="p4">
+  <div class="plate"><div class="pin">
+  <div class="eyebrow">Four of four, about 15 minutes</div>
+  <h1>Leave one<br>idea behind,<br>for free.</h1>
+  <p class="lede">This is the part that puts you in the room already working there. Not a plan, not a critique of a business you have never seen from the inside. One thing you would want to look at first, and how you would find out whether you were right.</p>
+  </div></div>
+  <div class="body">
+  <p class="thin">The trap is confidence. Walking in and diagnosing their operation from the outside reads as arrogance to the person who has been living in it for six years. The version that lands is the one that shows your method while admitting you do not have their data yet.</p>
+
+  <label class="f"><span class="q">What would you want to look at first?</span>
+    <span class="h">Something they mentioned, something in the job posting, or something that is true of most companies like theirs.</span>
+    <textarea id="i_prob" data-count="45"></textarea><div class="cnt" data-for="i_prob"></div></label>
+
+  <label class="f"><span class="q">What would you need to see before you had an opinion?</span>
+    <span class="h">Name the number or the record. This sentence is the one that separates you from everyone else in the pile.</span>
+    <textarea id="i_base" data-count="35"></textarea><div class="cnt" data-for="i_base"></div></label>
+
+  <label class="f"><span class="q">What small thing would you try first?</span>
+    <span class="h">Small enough that being wrong costs a week, not a quarter.</span>
+    <textarea id="i_test" data-count="40"></textarea><div class="cnt" data-for="i_test"></div></label>
+
+  <label class="f"><span class="q">What must not get worse while you try it?</span>
+    <span class="h">Customers, quality, safety, someone else's workload, a control that exists for a reason. Naming this is what makes you safe to hand things to.</span>
+    <textarea id="i_guard" data-count="30"></textarea><div class="cnt" data-for="i_guard"></div></label>
+
+  <label class="f"><span class="q">Say it out loud in four sentences.</span>
+    <span class="h">Start with what they told you. End with a question.</span>
+    <textarea id="i_say" style="min-height:140px" data-count="80"></textarea><div class="cnt" data-for="i_say"></div></label>
+
+  <div class="btns">
+    <button class="btn" id="press4">Put it under pressure</button>
+    <button class="btn g" data-go="5">Build my page</button>
+  </div>
+  <div id="out4"></div>
+</div></section>
+
+<!-- 5 BRIEF -->
+<section class="page" id="p5">
+  <div class="plate"><div class="pin">
+  <div class="eyebrow">Your page</div>
+  <h1>Read this<br>in the car.</h1>
+  <p class="lede">Not to memorize. To remind yourself that you already know what you are going to say, which is the only thing that actually settles nerves.</p>
+  </div></div>
+  <div class="body">
+  <div class="brief" id="brief"></div>
+  <div class="btns">
+    <button class="btn y" id="copy">Copy it</button>
+    <button class="btn g" id="print">Print it</button>
+    <button class="btn g" data-go="1">Back to the story</button>
+  </div>
+  <div class="priv"><b>Yours only</b>
+  <p>This page was built in your browser and never left it. Copy it, print it, mail it to yourself if you want it on your phone. If you would rather it did not exist, erase it and it is gone.</p>
+  <p style="margin-top:12px"><button class="wipe" id="wipe2">Erase everything on this device</button></p></div>
+  <div class="hr"></div>
+  <p class="thin">One last thing. The four are in order for a reason. The story earns their attention, the numbers earn their trust, the listening makes them comfortable, and the idea makes them picture you there. Skip the first and the rest has nothing to stand on.</p>
+</div></section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- tiny helpers ---------- */
+var $=function(s){return document.querySelector(s)};
+var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+var val=function(id){var e=document.getElementById(id);return e?e.value.trim():""};
+var words=function(t){return t?t.split(/\s+/).filter(Boolean).length:0};
+var has=function(t,list){t=" "+t.toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ")+" ";for(var i=0;i<list.length;i++){if(t.indexOf(list[i])>-1)return list[i]}return null};
+var digits=function(t){return /\d/.test(t)};
+var money=function(t){return /\$\s?\d|\bdollars?\b|\bk\b|\bmillion\b/i.test(t)};
+
+/* ---------- state ---------- */
+var KEY="lw_prep_v1", S={};
+try{S=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){S={}}
+function save(){
+  $$("input,textarea").forEach(function(el){if(el.id)S[el.id]=el.value});
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+}
+function restore(){
+  $$("input,textarea").forEach(function(el){if(el.id&&S[el.id])el.value=S[el.id]});
+}
+
+/* ---------- navigation ---------- */
+var cur=0;
+function go(n){
+  cur=n;
+  $$(".page").forEach(function(p){p.classList.remove("on")});
+  var p=document.getElementById("p"+n); if(p)p.classList.add("on");
+  $$(".step").forEach(function(s){
+    var i=+s.getAttribute("data-s");
+    s.classList.toggle("on",i===n);
+    s.classList.toggle("done",i<n);
+  });
+  window.scrollTo(0,0);
+  head();
+  if(n===5)buildBrief();
+  save();
+}
+document.addEventListener("click",function(e){
+  var g=e.target.closest("[data-go]");
+  if(g){go(+g.getAttribute("data-go"))}
+});
+
+function head(){
+  var r=val("s_role"), c=val("s_co"), w=val("s_when");
+  var bits=[];
+  if(r)bits.push(r);
+  if(c)bits.push(c);
+  var line=bits.join(" at ");
+  if(line)line='<span class="co">'+line+'</span>';
+  if(w){
+    var d=new Date(w+"T12:00:00");
+    var days=Math.round((d-new Date())/86400000);
+    if(!isNaN(days)){
+      if(days>1)line+= (line?"<br>":"")+days+" days out";
+      else if(days===1)line+=(line?"<br>":"")+"tomorrow";
+      else if(days===0)line+=(line?"<br>":"")+"today";
+    }
+  }
+  $("#who").innerHTML=line;
+}
+
+/* ---------- live counts ---------- */
+function counts(){
+  $$("[data-count]").forEach(function(el){
+    var t=+el.getAttribute("data-count"), n=words(el.value);
+    var box=document.querySelector('[data-for="'+el.id+'"]');
+    if(!box)return;
+    var ok=n>=Math.round(t*0.6)&&n<=Math.round(t*1.5);
+    box.className="cnt"+(ok?" ok":"");
+    if(el.id==="a_30"){
+      var secs=Math.round(n/2.6);
+      box.innerHTML="<b>"+n+" words</b>, about "+secs+" seconds out loud. Aim for 75 to 90.";
+    }else{
+      box.innerHTML="<b>"+n+"</b> words. Around "+t+" is about right.";
+    }
+  });
+}
+
+/* ---------- the pressure pass ---------- */
+var LOCK='<div class="lock"><svg width="13" height="15" viewBox="0 0 13 15" fill="none"><rect x="1" y="6" width="11" height="8" rx="1.5" stroke="#6E6A62" stroke-width="1.4"/><path d="M3.6 6V4.2a2.9 2.9 0 0 1 5.8 0V6" stroke="#6E6A62" stroke-width="1.4"/></svg><span>Only you saw this. It was worked out in your browser and nothing left the device.</span></div>';
+var REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function panel(target,items,lines){
+  var box=document.getElementById(target);
+  var clean=!items.some(function(i){return i.bad});
+  if(!items.length)items=[{good:1,t:"<b>Nothing to flag.</b> Say it out loud once before you trust that."}];
+
+  function render(){
+    var h='<div class="press'+(clean?" clean":"")+'"><h4>What a hiring manager hears</h4><ul>';
+    items.forEach(function(i,k){h+='<li class="'+(i.bad?"bad":"good")+'" style="animation-delay:'+(REDUCED?0:k*90)+'ms">'+i.t+"</li>"});
+    h+="</ul>"+LOCK+"</div>";
+    box.innerHTML=h;
+  }
+  if(REDUCED||!lines||!lines.length){render();box.scrollIntoView({behavior:"smooth",block:"nearest"});return}
+
+  var h='<div class="think"><div class="lab"><i></i>Reading it the way they will</div><ol id="tk"></ol></div>';
+  box.innerHTML=h;
+  box.scrollIntoView({behavior:"smooth",block:"nearest"});
+  var ol=document.getElementById("tk"), i=0;
+  (function next(){
+    if(i>0)ol.children[i-1].className="was";
+    if(i>=lines.length){setTimeout(render,340);return}
+    var li=document.createElement("li");
+    li.className="now"; li.textContent=lines[i];
+    ol.appendChild(li); i++;
+    setTimeout(next,330+Math.random()*260);
+  })();
+}
+function you(){var n=val("s_name");return n?n.split(" ")[0]:""}
+
+var CLICHE=[" passionate "," hard worker "," team player "," detail oriented "," self starter "," go getter "," results driven "," fast paced "," wear many hats "," think outside "," synergy "," dynamic "];
+var DECIDE=[" decided "," chose "," noticed "," realized "," pushed "," refused "," argued "," rewrote "," proposed "," flagged "," convinced "," insisted "," rebuilt "," scrapped "," volunteered "];
+
+$("#press1").onclick=function(){
+  save();
+  var out=[], s30=val("a_30"), all=[val("a_now"),val("a_turn"),val("a_wrong"),val("a_next"),s30].join(" ");
+  var n=words(s30);
+
+  if(!s30){out.push({bad:1,t:"<b>There is no story yet"+(you()?", "+you():"")+".</b> The four answers above are raw material. The thirty second version is the thing you will actually say, so write it before you leave this page."});}
+  else{
+    if(n>115)out.push({bad:1,t:"<b>Too long by "+(n-95)+" words.</b> At "+Math.round(n/2.6)+" seconds they stop listening and start waiting. Cut the setup, keep the turn."});
+    else if(n<55)out.push({bad:1,t:"<b>Too thin at "+n+" words.</b> You have about "+Math.round(n/2.6)+" seconds of material and they are expecting thirty. One more specific moment, not one more adjective."});
+    else out.push({good:1,t:"<b>Length is right.</b> About "+Math.round(n/2.6)+" seconds, which is the window before a listener starts drifting."});
+
+    var years=(s30.match(/\b(19|20)\d{2}\b/g)||[]).length;
+    if(years>=2)out.push({bad:1,t:"<b>This is your resume out loud.</b> "+years+" dates in thirty seconds means you are walking them through a timeline they already read. Pick one moment and spend the whole thirty seconds inside it."});
+
+    var dec=DECIDE.filter(function(v){return (" "+s30.toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ")+" ").indexOf(v)>-1});
+    if(!dec.length)out.push({bad:1,t:"<b>Nothing in here is a decision you made.</b> They are listening for judgment, not history. Somewhere in this paragraph you should say what you chose to do when it was not obvious."});
+    else out.push({good:1,t:"<b>There is a decision in here.</b> That is the part they will remember, because it is the only part a resume could not tell them."});
+
+    if(!/\bI\b/.test(s30))out.push({bad:1,t:"<b>You never say I.</b> Modesty reads as vagueness in a thirty second answer. They cannot hire the team."});
+  }
+
+  var c=has(all,CLICHE);
+  if(c)out.push({bad:1,t:'<b>"'+c.trim()+'" is doing no work.</b> Every candidate says it, so it carries no information. Replace it with the thing that made you believe it about yourself.'});
+
+  if(!val("a_wrong"))out.push({bad:1,t:"<b>You skipped what you had wrong.</b> It is the question people avoid and the one that makes you three dimensional. You will get asked a version of it anyway, so choose which version."});
+  else out.push({good:1,t:"<b>You have a changed my mind story.</b> Keep it. It is the strongest thing on this page and most candidates arrive without one."});
+
+  if(val("a_next")&&val("s_role")&&val("a_next").toLowerCase().indexOf(val("s_role").toLowerCase().split(" ")[0])===-1&&words(val("a_next"))>0){
+    out.push({bad:1,t:"<b>The ending does not reach this job.</b> The last sentence should land on the role you are sitting in, by name, so the step sounds inevitable rather than available."});
+  }
+  panel("out1",out,[
+    "Reading your thirty seconds the way a stranger would.",
+    "Timing it out loud.",
+    "Counting how much of this is already on your resume.",
+    "Looking for a decision you made when it was not obvious.",
+    "Checking whether you ever say I."
+  ]);
+};
+
+/* ---------- drill ---------- */
+var DRILL=[
+ {q:"A tool you introduce frees five hours a week. Nobody is let go and nobody works fewer hours. Is that payroll savings?",
+  o:["Yes, five hours at their hourly rate","No, it is released capacity until an actual cost falls","Only if you calculate it annually"],a:1,
+  why:"Time freed is capacity, not money, until a real expense goes away or that time produces something new. Say it that way and a finance person relaxes, because you just proved you will not hand them a fake number."},
+ {q:"Gross margin on two million in sales moves from 20 percent to 21 percent. What happened?",
+  o:["Profit rose about one percent","Gross profit rose about twenty thousand dollars","Sales rose about twenty thousand dollars"],a:1,
+  why:"One percentage point on two million is twenty thousand dollars of gross profit. It is a point, not a percent, and it is gross, not net. Mixing those up in a room with an operator ends the conversation quietly."},
+ {q:"You brought in a hundred thousand dollars of new sales. How much profit did you make the company?",
+  o:["A hundred thousand","Whatever is left after the cost of delivering it","Impossible to say without the share price"],a:1,
+  why:"Revenue is not profit. If you claim a sales number as profit you have told them you have never seen a P&L. If you say the margin on it was about X, you have told them you have."}
+];
+(function(){
+  var h="";
+  DRILL.forEach(function(d,i){
+    h+='<div class="drill" data-d="'+i+'"><div class="q">'+d.q+"</div>";
+    d.o.forEach(function(o,j){h+='<button class="opt" data-d="'+i+'" data-o="'+j+'">'+o+"</button>"});
+    h+='<div class="why" style="display:none"></div></div>';
+  });
+  $("#drill").innerHTML=h;
+})();
+$("#drill").addEventListener("click",function(e){
+  var b=e.target.closest(".opt"); if(!b)return;
+  var i=+b.getAttribute("data-d"), j=+b.getAttribute("data-o"), d=DRILL[i];
+  var box=$('.drill[data-d="'+i+'"]');
+  box.querySelectorAll(".opt").forEach(function(o,k){
+    o.className="opt"+(k===d.a?" right":(k===j&&j!==d.a?" wrong":""));
+  });
+  var w=box.querySelector(".why");
+  w.style.display="block";
+  w.textContent=d.why;
+  S["drill"+i]=(j===d.a?1:0); save();
+});
+
+/* ---------- records ---------- */
+var RF=[
+ ["b","What was true before? Put a number on it.","Errors a month, days to close, hours a week, backlog, whatever was being counted."],
+ ["p","Over what period, and at what volume?",""],
+ ["d","What did you personally do?","Your actions and your decisions. Not the team's."],
+ ["e","Who else made it happen?","Naming them costs you nothing and makes the rest believable."],
+ ["r","What was true after? Put a number on that too.",""],
+ ["v","How do you know? Where does the number come from?","A report, a system, an estimate you can walk through."],
+ ["c","What can you not claim?","The part that was luck, timing, someone else, or the market."]
+];
+(function(){
+  var h="";
+  for(var i=1;i<=3;i++){
+    h+='<div class="rec"><div class="n">Record '+i+'</div>';
+    h+='<label class="f" style="margin-top:10px"><span class="q">What was the situation?</span><input type="text" id="r'+i+'_t" placeholder="One line so you can find it again"></label>';
+    RF.forEach(function(f){
+      h+='<label class="f"><span class="q">'+f[1]+"</span>"+(f[2]?'<span class="h">'+f[2]+"</span>":"")+'<textarea id="r'+i+"_"+f[0]+'" style="min-height:76px"></textarea></label>';
+    });
+    h+="</div>";
+  }
+  $("#recs").innerHTML=h;
+})();
+
+$("#press2").onclick=function(){
+  save();
+  var out=[], filled=0;
+  for(var i=1;i<=3;i++){
+    var t=val("r"+i+"_t"), b=val("r"+i+"_b"), d=val("r"+i+"_d"), r=val("r"+i+"_r"),
+        p=val("r"+i+"_p"), v=val("r"+i+"_v"), c=val("r"+i+"_c");
+    var any=[t,b,d,r,p,v,c].some(Boolean);
+    if(!any)continue;
+    filled++;
+    var tag="Record "+i+(t?", "+t.slice(0,42):"")+": ";
+    if(!digits(b))out.push({bad:1,t:"<b>"+tag+"</b>no number on the before. Without a baseline the after is a claim, not a result. If you truly cannot get one, say what it felt like and label it an estimate."});
+    if(!digits(r))out.push({bad:1,t:"<b>"+tag+"</b>no number on the after. Fewer returns, shorter queue, faster close, a deadline you started hitting. It does not have to be dollars, it has to be countable."});
+    if(digits(b)&&digits(r)&&!p)out.push({bad:1,t:"<b>"+tag+"</b>you have two numbers and no period. The first follow up is always over what timeframe, and pausing there undoes the whole answer."});
+    if(money(r)&&!v)out.push({bad:1,t:"<b>"+tag+"</b>you put a dollar figure in without saying where it came from. Be ready to do the arithmetic out loud, slowly, or drop the dollars and keep the rate."});
+    if(d&&!/\bI\b/.test(d)&&/\b(we|our|the team)\b/i.test(d))out.push({bad:1,t:"<b>"+tag+"</b>your own actions are written as we. A good interviewer will pull that thread until they find out what you personally did, and it is better if you offer it."});
+    if(d&&/\bI\b/.test(d)&&!c)out.push({bad:1,t:"<b>"+tag+"</b>nothing you are declining to claim. Saying I cannot attribute all of it to me makes everything else you said more believable, not less."});
+    if(digits(b)&&digits(r)&&p&&d&&/\bI\b/.test(d)&&v)out.push({good:1,t:"<b>"+tag+"</b>this one holds up. Baseline, period, your part, the result and where the number came from. That is a record, not a story."});
+  }
+  if(!filled)out.push({bad:1,t:"<b>Nothing filled in yet.</b> Start with the one you are proudest of, then do the harder two, because the second question is always another example."});
+  else if(filled<3)out.push({bad:1,t:"<b>Only "+filled+" of 3.</b> One example is an anecdote. Three is a pattern, and a pattern is what gets you hired."});
+  var done=[0,1,2].filter(function(i){return S["drill"+i]!==undefined});
+  var wrong=done.filter(function(i){return S["drill"+i]===0}).length;
+  if(wrong)out.push({bad:1,t:"<b>You missed "+wrong+" of the questions up top.</b> Read why again. Those are the mistakes that make a finance person stop believing everything else you said."});
+  else if(done.length<3)out.push({bad:1,t:"<b>You skipped "+(3-done.length)+" of the three questions up top.</b> They take a minute each and they are the ones that get people caught."});
+  panel("out2",out,[
+    "Reading your records the way a finance person would.",
+    "Looking for a baseline behind each result.",
+    "Checking every number for a period and a source.",
+    "Separating what you did from what the team did.",
+    "Testing what happens if they ask one more question."
+  ]);
+};
+
+/* ---------- listening drill ---------- */
+var LINES=[
+ "Honestly, I spend too much of my week chasing people for updates.",
+ "The last person in this seat was good, but everything still came through me.",
+ "We closed the books four days late last quarter and I still do not know why.",
+ "The team is fine. The handoffs between the team are where things fall apart.",
+ "We grew fast and the process never caught up."
+];
+var li=Math.floor(Math.random()*LINES.length);
+function setLine(){$("#mtxt").textContent=LINES[li]}
+setLine();
+$("#newline").onclick=function(){li=(li+1)%LINES.length;setLine();$("#out3").innerHTML=""};
+
+$("#press3").onclick=function(){
+  save();
+  var out=[], qs=[val("q_1"),val("q_2"),val("q_3")].filter(Boolean), f=val("q_follow");
+  var NOUNS=["report","close","month end","quarter","system","process","handoff","vendor","customer","client","invoice","forecast","audit","headcount","budget","margin","backlog","deadline","spreadsheet","erp","team member","onboard","ticket","order","inventory","payroll","cash","collection","reconcil","board","stakeholder","first 90","ninety days","priorit","metric","measure","trust","own"];
+  var GEN=[" day to day "," typical day "," company culture "," biggest challenge "," where do you see "," what do you look for "," growth opportunities "," room for growth "," tell me about the team "];
+  var role=val("s_role").toLowerCase().split(" ")[0]||"", co=val("s_co").toLowerCase().split(" ")[0]||"";
+
+  if(qs.length<3)out.push({bad:1,t:"<b>Only "+qs.length+" of 3 questions.</b> When they ask what you want to know and you have one, it reads as mild interest. Three is the tell that you thought about the job."});
+  qs.forEach(function(q,i){
+    var g=has(q,GEN);
+    if(g)out.push({bad:1,t:'<b>Question '+(i+1)+' is filler.</b> "'+g.trim()+'" could be asked of any company in the country, so it tells them nothing about you except that you prepared the minimum.'});
+    else{
+      var ql=q.toLowerCase(), hit=NOUNS.some(function(n){return ql.indexOf(n)>-1});
+      if(role&&ql.indexOf(role)>-1)hit=true;
+      if(co&&ql.indexOf(co)>-1)hit=true;
+      if(!hit)out.push({bad:1,t:"<b>Question "+(i+1)+" floats free.</b> Nothing in it names a real thing at this company. One concrete noun, a report, a close, a customer, a handoff, and it stops sounding like a list you found."});
+      else out.push({good:1,t:"<b>Question "+(i+1)+" is aimed.</b> It names something real, so it could not be asked of just anyone."});
+    }
+  });
+  if(!val("q_m"))out.push({bad:1,t:"<b>Nothing aimed at the manager.</b> One question about how they work, not how the company works, is where the conversation turns into two people talking."});
+
+  if(!f)out.push({bad:1,t:"<b>No follow up written.</b> This is the rep that matters. Anyone can ask a prepared question; almost nobody can ask the second one."});
+  else{
+    if(f.indexOf("?")===-1)out.push({bad:1,t:"<b>Your follow up is a statement.</b> A statement moves the conversation back to you. A question keeps it on them, which is where you want it."});
+    var stop={the:1,a:1,and:1,of:1,to:1,in:1,is:1,it:1,i:1,my:1,we:1,you:1,that:1,for:1,on:1,too:1,still:1,was:1,are:1,but:1,how:1,what:1,do:1,does:1,me:1,so:1,all:1,much:1,where:1,when:1,which:1,there:1,their:1,this:1,they:1,them:1,then:1,into:1,from:1,with:1,have:1,been:1,just:1,like:1,really:1,honestly:1,everything:1,something:1,week:1,seat:1,last:1,even:1,came:1,know:1,why:1,fine:1,good:1,never:1};
+    var theirs=LINES[li].toLowerCase().replace(/[^a-z ]/g," ").split(/\s+/).filter(function(w){return w.length>3&&!stop[w]});
+    var mine=f.toLowerCase();
+    var echo=theirs.filter(function(w){return mine.indexOf(w.slice(0,Math.max(4,w.length-2)))>-1});
+    if(!echo.length)out.push({bad:1,t:"<b>Nothing of theirs is in your sentence.</b> Reuse one of their own words and they hear that you were listening. Ask something adjacent and they hear that you were waiting for your turn."});
+    else out.push({good:1,t:'<b>You used their word "'+echo[0]+'".</b> That is the entire move. They will not consciously notice it and they will feel heard anyway.'});
+    if(words(f)>28)out.push({bad:1,t:"<b>The follow up is "+words(f)+" words.</b> Long questions are statements wearing a question mark. Twelve words is plenty and the silence after it does real work."});
+    if(/learn a lot|honou?red|admire|look up to|someone like you/i.test(f))
+      out.push({bad:1,t:"<b>That is admiration, not attention.</b> Every manager has heard it from a stranger and it lands as technique. Ask about the thing they just told you instead and the respect is implied."});
+  }
+  panel("out3",out,[
+    "Reading your questions as the person being asked.",
+    "Testing each one against any company in the country.",
+    "Comparing your follow up with what they actually said.",
+    "Listening for whether you were present or waiting your turn."
+  ]);
+};
+
+/* ---------- idea ---------- */
+$("#press4").onclick=function(){
+  save();
+  var out=[], say=val("i_say"), prob=val("i_prob"), base=val("i_base"), test=val("i_test"), guard=val("i_guard");
+  var SURE=["they need to","you need to","obviously","clearly","the problem is","you should","i would fix","the issue is","all you have to"];
+  var t=(prob+" "+say).toLowerCase();
+  var sure=SURE.filter(function(w){return t.indexOf(w)>-1})[0];
+
+  if(!prob)out.push({bad:1,t:"<b>No idea yet.</b> It does not have to be clever. Something they mentioned, something in the posting, or something that is true of most companies their size."});
+  if(sure)out.push({bad:1,t:'<b>"'+sure+'" is a diagnosis.</b> You are describing a business you have seen from the outside to someone who has lived in it for years. Say what you would want to understand first and the same idea becomes an asset instead of a risk.'});
+  if(!base)out.push({bad:1,t:"<b>You did not say what you would need to see.</b> This sentence is the one that separates you from everyone who arrives with opinions. Name the number or the record you would ask for."});
+  else out.push({good:1,t:"<b>You named what you would need to see.</b> That is the sentence an operator remembers, because it is how they think."});
+  if(!test)out.push({bad:1,t:"<b>No small test.</b> Big proposals put the burden on them. A one week version they can say yes to costs nothing to hear."});
+  if(!guard)out.push({bad:1,t:"<b>Nothing you are protecting.</b> Saying what must not get worse is what makes you safe to hand things to. Leave it out and an experienced manager quietly files you as a risk."});
+  else out.push({good:1,t:"<b>You named the guardrail.</b> Most candidates never do, and the ones who do get handed real problems in month two."});
+  if(say&&say.indexOf("?")===-1)out.push({bad:1,t:"<b>You end on a statement.</b> End on a question and it becomes a conversation about the work, which is the moment you stop being interviewed."});
+  if(say&&words(say)>120)out.push({bad:1,t:"<b>That is a presentation, not a remark.</b> "+words(say)+" words with nobody interrupting is a monologue. Cut it to four sentences and let them pull."});
+  panel("out4",out,[
+    "Reading your idea as the person who has run this for years.",
+    "Separating what you know from what you are assuming.",
+    "Looking for what you would need to see first.",
+    "Checking what you are protecting while you try it."
+  ]);
+};
+
+/* ---------- brief ---------- */
+function buildBrief(){
+  save();
+  var h="", esc=function(t){return (t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;")};
+  var role=val("s_role"), co=val("s_co"), mgr=val("s_mgr");
+  h+='<h3>The room</h3><p>'+esc([role,co].filter(Boolean).join(" at ")||"Your interview")+(mgr?"\nMeeting "+esc(mgr):"")+"</p>";
+  if(val("a_30"))h+='<h3>Your thirty seconds</h3><p class="em">'+esc(val("a_30"))+"</p>";
+  var any=false;
+  for(var i=1;i<=3;i++){
+    var t=val("r"+i+"_t"),b=val("r"+i+"_b"),d=val("r"+i+"_d"),r=val("r"+i+"_r"),p=val("r"+i+"_p"),c=val("r"+i+"_c");
+    if(![t,b,d,r].some(Boolean))continue;
+    if(!any){h+="<h3>Your three</h3>";any=true}
+    var line=[];
+    if(b)line.push("Before: "+b);
+    if(p)line.push("Over: "+p);
+    if(d)line.push("I did: "+d);
+    if(r)line.push("After: "+r);
+    if(c)line.push("I cannot claim: "+c);
+    h+="<p><b>"+esc(t||"Record "+i)+"</b>\n"+esc(line.join("\n"))+"</p>";
+  }
+  var qs=[val("q_1"),val("q_2"),val("q_3"),val("q_m")].filter(Boolean);
+  if(qs.length)h+="<h3>What you want to know</h3><p>"+esc(qs.join("\n"))+"</p>";
+  if(val("i_say"))h+="<h3>The idea you are leaving behind</h3><p>"+esc(val("i_say"))+"</p>";
+  h+='<h3>Before you walk in</h3><p>One moment, not a timeline. Say I, not we. Put a number on it and say where the number came from. Ask about the thing they just said. Leave one idea and a question.</p>';
+  $("#brief").innerHTML=h;
+}
+$("#copy").onclick=function(){
+  var t=$("#brief").innerText;
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(toast)}
+  else{var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(e){}a.remove();toast()}
+};
+function toast(){var e=$("#toast");e.textContent="Copied. Paste it anywhere.";e.classList.add("on");setTimeout(function(){e.classList.remove("on")},1800)}
+$("#print").onclick=function(){window.print()};
+function wipe(){
+  if(!confirm("Erase every answer on this device? This cannot be undone."))return;
+  try{localStorage.removeItem(KEY)}catch(e){}
+  S={};
+  $$("input,textarea").forEach(function(el){el.value=""});
+  $$("[id^=out]").forEach(function(el){el.innerHTML=""});
+  counts(); head(); go(0);
+  var t=$("#toast"); t.textContent="Erased. Nothing is left."; t.classList.add("on");
+  setTimeout(function(){t.classList.remove("on")},2200);
+}
+var w1=$("#wipe"), w2=$("#wipe2");
+if(w1)w1.onclick=wipe; if(w2)w2.onclick=wipe;
+
+/* ---------- wire ---------- */
+restore();
+document.addEventListener("input",function(e){
+  if(e.target&&e.target.matches&&e.target.matches("input,textarea")){counts();save();
+    if(["s_role","s_co","s_when","s_name"].indexOf(e.target.id)>-1)head();}
+});
+counts(); head(); go(0);
+})();
+</script>
+</body>
+</html>
