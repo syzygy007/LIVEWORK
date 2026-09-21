@@ -879,7 +879,8 @@ async function tryWrite(fn, okMsg){
 const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_tags:[], candidates:[],
   candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
   automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[], interview_guides:[],
-  pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[], desk_acceptances:[], expenses:[] };
+  pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[], desk_acceptances:[], expenses:[],
+  lw_payouts:[], lw_commission_lines:[], commission_runs:[], comp_plans:[], company_owners:[] };
 let ME = null;
 
 async function loadAll(){
@@ -2222,7 +2223,7 @@ function vPlacements(){
       '<div class="stat y"><b>' + S.placements.filter(p => daysBetween(F(p,'start_date','created_at')) <= 90).length + '</b><span>Inside the ninety day guarantee</span></div>' +
       '<div class="stat"><b>' + money(S.placements.length ? S.placements.reduce((n,p) => n + num(F(p,'salary')), 0) / S.placements.length : 0) + '</b><span>Average salary placed</span></div>' +
     '</div>' +
-    table(['Candidate','Client','Started','Salary','Fee','Campaign cost','Time to fill','Guarantee'],
+    table(['Candidate','Client','Started','Salary','Fee','Campaign cost','Time to fill','Guarantee',''],
       S.placements.slice().sort((a,b) => String(F(b,'start_date','created_at')).localeCompare(String(F(a,'start_date','created_at')))).map(p => {
         const d = daysBetween(F(p,'start_date','created_at'));
         const pct = Math.min(100, Math.round(d / 90 * 100));
@@ -2234,10 +2235,13 @@ function vPlacements(){
           '<span>' + money(F(p,'salary')) + '</span><span>' + money(F(p,'fee')) + '</span>' +
           '<span class="muted" title="Spend on every campaign run for this search">' + (cost === null ? '<span class="small">No campaign</span>' : money(cost)) + '</span>' +
           '<span class="muted" title="From the search opening to the placement being recorded">' + (ttf === null ? '<span class="small">No open date</span>' : ttf + (ttf === 1 ? ' day' : ' days')) + '</span>' +
-          '<div><span class="muted small">' + (d >= 90 ? 'Cleared' : (90 - d) + (90 - d === 1 ? ' day left' : ' days left')) + '</span><div class="gbar"><i style="width:' + pct + '%"></i></div></div></div>';
+          '<div><span class="muted small">' + (d >= 90 ? 'Cleared' : (90 - d) + (90 - d === 1 ? ' day left' : ' days left')) + '</span><div class="gbar"><i style="width:' + pct + '%"></i></div></div>' +
+          (p.replaces_placement_id ? '<span class="chip">Replacement · no fee</span>'
+            : p.fell_off_at ? '<span class="muted small">Fell off ' + dshort(p.fell_off_at) + '</span>'
+            : '<button class="btn sm ghost" data-falloff="' + idOf(p) + '">Fell off</button>') + '</div>';
       }), PL_GRID);
 }
-const PL_GRID = '1.2fr 1.2fr 110px 105px 100px 115px 100px 1fr';
+const PL_GRID = '1.2fr 1.2fr 110px 105px 100px 115px 100px 1fr 120px';
 /* campaign cost on one search: the spend on every campaign tied to it. null when no campaign was run */
 function campSpendOnSe(seId){
   const xs = S.campaigns.filter(x => String(x.search_id) === String(seId));
@@ -2879,6 +2883,161 @@ function vMail(){
 }
 
 /* ---------- Reports ---------- */
+/* ---------- Commission. One month at a time, the way payroll runs it. ----------
+   Every line says who, which client, which invoice, the rate and which part of it.
+   The math lives in the database (Patch 36). This screen only shows it. */
+const CM_SIDE = { am:'BD', recruiter:'Placement' };
+const lwToday = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10); };
+const lwPlus = n => { const d = new Date(lwToday() + 'T12:00'); d.setDate(d.getDate() + n); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10); };
+const dday = d => d ? day(String(d).slice(0,10) + 'T12:00') : '';
+const dshort = d => d ? short(String(d).slice(0,10) + 'T12:00') : '';
+const ym = d => String(d || '').slice(0,7);
+const ymLabel = k => { const p = String(k).split('-').map(Number); return new Date(p[0], p[1] - 1, 1).toLocaleDateString('en-US', { month:'long', year:'numeric' }); };
+const cmRun = k => (S.commission_runs || []).filter(r => ym(r.period) === k)[0] || null;
+function cmMonths(){
+  const s = new Set([ym(lwToday())]);
+  (S.lw_payouts || []).forEach(x => { if(x.period) s.add(ym(x.period)); });
+  (S.commission_runs || []).forEach(r => s.add(ym(r.period)));
+  return Array.from(s).sort().reverse();
+}
+/* payroll runs on the month that just finished */
+function cmDefault(){ const cur = ym(lwToday()); return cmMonths().filter(k => k < cur)[0] || cur; }
+function cmRows(k){
+  const run = cmRun(k);
+  const src = run && Array.isArray(run.lines) ? run.lines : (S.lw_payouts || []).filter(x => ym(x.period) === k);
+  return src.filter(x => isAdmin() || String(x.staff_id) === String(meId())).slice().sort((a,b) =>
+    String(a.staff_name || '').localeCompare(String(b.staff_name || '')) || String(a.due_on).localeCompare(String(b.due_on)));
+}
+const CM_GRID = '1.1fr 90px 1.5fr 90px 100px 1.6fr 1.2fr 80px 100px';
+const cmRole = x => esc(x.search_title || '') + '<span class="muted small" style="display:block">' + esc(x.company || '') + '</span>';
+function cmSection(){
+  const admin = isAdmin(), me = String(meId()), cur = ym(lwToday());
+  const k = Q.cmonth || cmDefault();
+  const months = cmMonths(); if(months.indexOf(k) < 0) months.unshift(k);
+  const run = cmRun(k);
+  const rows = cmRows(k);
+  const per = {};
+  rows.forEach(x => { const n = x.staff_name || 'Unassigned'; per[n] = (per[n] || 0) + Number(x.amount || 0); });
+  const total = rows.reduce((t,x) => t + Number(x.amount || 0), 0);
+  const lines = rows.map(x =>
+    '<div class="r" style="grid-template-columns:' + CM_GRID + '">' +
+      '<b>' + esc(x.staff_name || 'Unassigned') + '</b>' +
+      '<span class="muted small">' + (CM_SIDE[x.side] || esc(x.side)) + '</span>' +
+      '<span>' + cmRole(x) + '</span>' +
+      '<span class="muted small">' + esc(x.invoice_no || '') + '</span>' +
+      '<span class="muted small">' + usd(x.fee_net) + '</span>' +
+      '<span class="small">' + esc(x.band_text || '') + '<span class="muted small" style="display:block">Plan ' + esc(x.plan_label || '') + '</span></span>' +
+      '<span class="small">' + esc(x.trig || '') + (x.late ? ' <span class="chip" title="The money came in during a month that was already locked, so it lands here">Late</span>' : '') + '</span>' +
+      '<span class="muted small">' + dshort(x.due_on) + '</span>' +
+      '<b>' + usd(x.amount) + '</b></div>')
+    .concat(Object.keys(per).sort().map(n =>
+      '<div class="r" style="grid-template-columns:' + CM_GRID + ';background:var(--paper)"><b>' + esc(n) + '</b><span></span>' +
+      '<span class="muted">To payroll</span><span></span><span></span><span></span><span></span><span></span><b>' + usd(per[n]) + '</b></div>'));
+
+  const L = (S.lw_commission_lines || []).filter(l => admin || String(l.staff_id) === me);
+  const WG = '1.1fr 90px 1.5fr 90px 100px 1.6fr 100px';
+  const wait = L.filter(l => !l.reason && Number(l.commission) > 0 && !l.paid_on).map(l => {
+    const held = l.client_proven ? Number(l.commission) - Math.round(Number(l.commission) * 75) / 100 : Number(l.commission);
+    return '<div class="r" style="grid-template-columns:' + WG + '">' +
+      '<b>' + esc(l.staff_name || '') + '</b><span class="muted small">' + (CM_SIDE[l.side] || '') + '</span>' +
+      '<span>' + cmRole(l) + '</span><span class="muted small">' + esc(l.invoice_no || '') + '</span>' +
+      '<span class="muted small">Sent ' + dshort(l.invoiced_on) + '</span>' +
+      '<span class="small">' + (l.client_proven ? 'The 25% comes when they pay' : 'First invoice. All of it comes when they pay') +
+        (l.paid_no_date ? ' <span class="chip">Marked paid with no date</span>' : '') + '</span>' +
+      '<b>' + usd(held) + '</b></div>'; });
+  const ZG = '1.1fr 90px 1.5fr 90px 100px 2fr';
+  const zero = L.filter(l => l.reason && ym(l.invoiced_on) === k).map(l =>
+    '<div class="r" style="grid-template-columns:' + ZG + '">' +
+      '<b>' + esc(l.staff_name || 'Nobody') + '</b><span class="muted small">' + (CM_SIDE[l.side] || '') + '</span>' +
+      '<span>' + cmRole(l) + '</span><span class="muted small">' + esc(l.invoice_no || '') + '</span>' +
+      '<span class="muted small">' + usd(l.fee_net) + '</span><span class="small">' + esc(l.reason) + '</span></div>');
+
+  const status = run ? 'Locked ' + dday(run.locked_at) + ' by ' + esc(whoName(run.locked_by)) + '. This is what went to payroll.'
+    : k < cur ? (admin ? 'Open. Lock it once payroll has been run.' : 'Paid with the first payroll after the month closes.')
+    : 'Still running. Lines land as invoices go out and money comes in.';
+  return '<div class="sec"><h2>Commission.</h2><span class="muted small">' + status + '</span></div>' +
+    '<div class="tools" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">' +
+      '<select id="cmonth">' + months.map(m => '<option value="' + m + '"' + (m === k ? ' selected' : '') + '>' + ymLabel(m) + (cmRun(m) ? ' · locked' : '') + '</option>').join('') + '</select>' +
+      '<b style="margin-left:auto">' + usd(total) + '</b>' +
+      '<button class="btn ghost" id="cmcsv">Export CSV</button>' +
+      (admin && !run && k < cur ? '<button class="btn" id="cmlock" data-m="' + k + '">Lock ' + esc(ymLabel(k)) + '</button>' : '') +
+    '</div>' +
+    table(['Person','Side','Role','Invoice','Net fee','Rate','Part','Date','Amount'], lines, CM_GRID,
+      { empty: 'No commission lands in ' + esc(ymLabel(k)) + '.' }) +
+    (wait.length ? '<div class="sec"><h2>Waiting on clients to pay.</h2><span class="muted small">Each lands in the month the money comes in.</span></div>' +
+      table(['Person','Side','Role','Invoice','Invoiced','What is held','Held'], wait, WG) : '') +
+    (zero.length ? '<div class="sec"><h2>No commission.</h2><span class="muted small">Invoiced in ' + esc(ymLabel(k)) + ', and why nothing is owed.</span></div>' +
+      table(['Person','Side','Role','Invoice','Net fee','Why'], zero, ZG) : '');
+}
+function wireCommission(m){
+  const sel = m.querySelector('#cmonth'); if(sel) sel.onchange = () => { Q.cmonth = sel.value; draw(); };
+  const lk = m.querySelector('#cmlock');
+  if(lk) lk.onclick = async () => {
+    const k = lk.dataset.m;
+    if(!confirm('Lock ' + ymLabel(k) + '?\n\nThe lines are saved as they stand. Nothing that fed them can change after this.')) return;
+    lk.disabled = true;
+    try{
+      const t = await rest('rpc/lw_lock_month', { method:'POST', body: JSON.stringify({ p: k + '-01' }) });
+      toast(ymLabel(k) + ' locked at ' + usd(t) + '.');
+      await loadAll(); draw();
+    }catch(e){ toast('Not locked. ' + e.message, true); lk.disabled = false; }
+  };
+  const cx = m.querySelector('#cmcsv');
+  if(cx) cx.onclick = () => {
+    const k = Q.cmonth || cmDefault();
+    const cols = [['person','staff_name'],['side','side'],['role','search_title'],['client','company'],['invoice','invoice_no'],
+      ['invoiced_on','invoiced_on'],['paid_on','paid_on'],['fee','fee_gross'],['advertising','ad_cost'],['net_fee','fee_net'],
+      ['plan','plan_label'],['rate','band_text'],['line_commission','commission'],['part','trig'],['due_on','due_on'],['late','late'],['amount','amount']];
+    const csv = [cols.map(c => c[0]).join(',')].concat(cmRows(k).map(x =>
+      cols.map(c => '"' + String(x[c[1]] == null ? '' : (c[1] === 'side' ? (CM_SIDE[x.side] || x.side) : x[c[1]])).replace(/"/g,'""') + '"').join(','))).join('\n');
+    const b = new Blob([csv], { type:'text/csv' }); const u = URL.createObjectURL(b);
+    const t = document.createElement('a'); t.href = u; t.download = 'commission-' + k + '.csv';
+    document.body.appendChild(t); t.click(); t.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+  };
+}
+
+/* ---------- Client owners and plans ---------- */
+const ownersOf = coId => (S.company_owners || []).filter(o => String(o.company_id) === String(coId))
+  .sort((a,b) => String(a.starts_on).localeCompare(String(b.starts_on)));
+function ownerNow(coId){ const d = lwToday();
+  return ownersOf(coId).filter(o => o.starts_on <= d && (!o.ends_on || d < o.ends_on)).pop() || null; }
+function ownerLine(coId){
+  const xs = ownersOf(coId);
+  if(!xs.length) return 'Nobody on file. Business development goes to the Account Manager on each role until an owner is set.';
+  const now = ownerNow(coId), next = xs.filter(o => o.starts_on > lwToday())[0];
+  return (now ? whoName(now.staff_id) + ' since ' + dday(now.starts_on) : 'Nobody today') +
+    (next ? '. Moves to ' + whoName(next.staff_id) + ' on ' + dday(next.starts_on) : '') + '.';
+}
+function ownerStart(coId){
+  const cur = ownersOf(coId).filter(o => !o.ends_on).pop();
+  if(!cur) return lwToday();
+  const st = byId(S.staff, cur.staff_id) || {};
+  return st.ended_on && st.ended_on <= lwToday() ? lwToday() : lwPlus(30);
+}
+const pctTxt = r => (Math.round(Number(r) * 10000) / 100) + '%';
+function planLabel(p){
+  if(!p) return '';
+  const r2 = p.r2 == null ? p.r1 : p.r2, r3 = p.r3 == null ? r2 : p.r3;
+  if(p.b1 == null || (Number(r2) === Number(p.r1) && Number(r3) === Number(p.r1))) return pctTxt(p.r1) + ' flat';
+  if(p.b2 == null) return pctTxt(p.r1) + ' to ' + usd(p.b1) + ', ' + pctTxt(r2) + ' above';
+  return pctTxt(p.r1) + ' to ' + usd(p.b1) + ', ' + pctTxt(r2) + ' to ' + usd(p.b2) + ', ' + pctTxt(r3) + ' above';
+}
+const PLAN_DEFAULT = { am: { r1:.05, b1:500000, r2:.075, b2:750000, r3:.10 }, recruiter: { r1:.05, b1:500000, r2:.06, b2:750000, r3:.07 } };
+function planOf(staffId, side){
+  const d = lwToday();
+  return (S.comp_plans || []).filter(p => String(p.staff_id) === String(staffId) && p.side === side && p.effective_on <= d)
+    .sort((a,b) => String(b.effective_on).localeCompare(String(a.effective_on)))[0] || null;
+}
+function planSpec(staffId){
+  const row = side => { const p = planOf(staffId, side);
+    return p ? planLabel(p) + ' since ' + dday(p.effective_on) + (side === 'am' && p.needs_owner ? ' · assigned clients only' : '')
+             : planLabel(PLAN_DEFAULT[side]) + ' <span class="muted small">(the standard plan)</span>'; };
+  const future = (S.comp_plans || []).filter(p => String(p.staff_id) === String(staffId) && p.effective_on > lwToday());
+  const st = byId(S.staff, staffId) || {};
+  return spec([['Placement', row('recruiter')], ['Business development', row('am')],
+    future.length ? ['Coming', future.map(p => esc(CM_SIDE[p.side]) + ' ' + planLabel(p) + ' from ' + dday(p.effective_on)).join('<br>')] : null,
+    ['Last day', st.ended_on ? dday(st.ended_on) : '<span class="muted">Still employed</span>']]);
+}
 function vReports(){
   const total = S.pipeline.length || 1;
   const funnel = STAGES.slice(0,5).map(st => {
@@ -2916,47 +3075,12 @@ function vReports(){
       '<span class="muted small">' + sub + '</span><span class="muted small">' + int + '</span></div>';
   });
 
-  /* ---- Commission payable. The ladder and the holdback come from the view. ---- */
-  const P = (S.lw_payable || []).filter(x => admin || String(x.staff_id) === meS);
-  const due = [];
-  P.forEach(x => {
-    if(Number(x.advance_amt) > 0) due.push({ who: x.staff_name, role: x.role, what: x.search_title,
-      co: x.company, net: x.fee_net, amt: Number(x.advance_amt),
-      why: 'Collected · 75%', when: x.advance_due });
-    due.push({ who: x.staff_name, role: x.role, what: x.search_title, co: x.company, net: x.fee_net,
-      amt: Number(x.release_amt), when: x.release_due,
-      why: x.client_proven ? 'Guarantee expired · 25%' : 'First deal · held to guarantee' });
-  });
-  const today_ = today();
-  const nowDue = due.filter(d => d.when && String(d.when) <= today_);
-  const later  = due.filter(d => !d.when || String(d.when) > today_);
-  const byPerson = {};
-  nowDue.forEach(d => byPerson[d.who || 'Unassigned'] = (byPerson[d.who || 'Unassigned'] || 0) + d.amt);
-  const payRows = nowDue.map(d =>
-    '<div class="r" style="grid-template-columns:1.2fr .8fr 1.5fr 1.1fr 110px 1.2fr 110px">' +
-      '<b>' + esc(d.who || 'Unassigned') + '</b>' +
-      '<span class="muted small">' + (d.role === 'am' ? 'AM' : 'Recruiter') + '</span>' +
-      '<span>' + esc(d.what || '') + '</span>' +
-      '<span class="muted">' + esc(d.co || '') + '</span>' +
-      '<span class="muted small">' + usd(d.net) + '</span>' +
-      '<span class="muted small">' + esc(d.why) + '</span>' +
-      '<b>' + usd(d.amt) + '</b></div>')
-    .concat(Object.keys(byPerson).sort().map(k =>
-      '<div class="r" style="grid-template-columns:1.2fr .8fr 1.5fr 1.1fr 110px 1.2fr 110px">' +
-        '<b>' + esc(k) + '</b><span class="muted small"></span>' +
-        '<span class="muted">To payroll</span><span></span><span></span><span></span>' +
-        '<b>' + usd(byPerson[k]) + '</b></div>'));
-
   return head('Reports.', '') +
     '<div class="sec"><h2>' + (admin ? 'Open searches.' : 'My open searches.') + '</h2>' +
       '<span class="muted small">Both names on every role, so nobody has to ask who is on it.</span></div>' +
     table(['Search','Client','AM','Recruiter','Status','Days','Sub','Int'], dayRows,
       '1.7fr 1.1fr 1fr 1fr 110px 80px 70px 70px', { empty: 'No open roles with your name on them.' }) +
-    '<div class="sec"><h2>Commission payable.</h2>' +
-      '<span class="muted small">Earned on collection and on the guarantee running out. ' +
-      later.length + ' not due yet.</span></div>' +
-    table(['Person','Side','Search','Client','Net fee','Trigger','This run'], payRows,
-      '1.2fr .8fr 1.5fr 1.1fr 110px 1.2fr 110px', { empty: 'Nothing payable this run.' }) +
+    cmSection() +
     '<div class="sec"><h2>Funnel.</h2></div><div class="bars">' + funnel + '</div>' +
     '<div class="sec"><h2>Fill rate by client.</h2></div>' +
     table(['Client','Searches','Filled','Rate'],
@@ -2985,7 +3109,7 @@ function vPeople(){
 
   const openAM  = id => S.searches.filter(x => isOpen(x) && String(x.am_id) === String(id)).length;
   const openRec = id => S.searches.filter(x => isOpen(x) && String(x.recruiter_id) === String(id)).length;
-  const ytd = id => (S.lw_payable || []).filter(x => String(x.staff_id) === String(id) &&
+  const ytd = id => (S.lw_commission_lines || []).filter(x => String(x.staff_id) === String(id) && !x.reason &&
     String(x.plan_year) === String(new Date().getFullYear()));
   const grantable = who => ROLES.filter(r => r !== 'owner' || isOwner())
     .map(r => '<option value="' + r + '"' + (roleOf(who) === r ? ' selected' : '') + '>' +
@@ -3005,7 +3129,7 @@ function vPeople(){
   const counts = { all: list.length };
   list.forEach(x => { const k = statusOf(x); counts[k] = (counts[k] || 0) + 1; });
 
-  const GRID = 'minmax(240px,2.2fr) minmax(0,1.6fr) 150px 110px 70px 70px 120px 130px';
+  const GRID = 'minmax(240px,2.2fr) minmax(0,1.6fr) 150px 110px 70px 70px 120px 130px 90px';
   const rows = shown.map(x => {
     const id = idOf(x), self = String(id) === String(meId());
     const lines = ytd(id);
@@ -3026,7 +3150,8 @@ function vPeople(){
       '<span class="muted">' + openAM(id) + '</span>' +
       '<span class="muted">' + openRec(id) + '</span>' +
       '<span class="muted">' + usd(fees) + '</span>' +
-      '<b>' + usd(comm) + '</b></div>';
+      '<b>' + usd(comm) + '</b>' +
+      '<button class="btn sm ghost" data-plan="' + id + '">' + ((S.comp_plans || []).some(p => String(p.staff_id) === String(id)) ? 'Plan' : 'Set plan') + '</button></div>';
   });
 
   const unstaffed = S.searches.filter(x => isOpen(x) && (!x.am_id || !x.recruiter_id)).length;
@@ -3040,7 +3165,7 @@ function vPeople(){
     '<div class="tools pp-tools"><div class="search">' + SRCH + '<input id="qpeople" placeholder="Search people, email, or tier" value="' + esc(Q.people || '') + '"></div>' +
       '<div class="pp-chips">' + chip('all','All') + chip('active','Active') + chip('pending','Pending') + chip('off','Off') + '</div>' +
       '<button class="btn ghost" id="ppExport">Export</button></div>' +
-    table(['Person','Email','Tier','Status','As AM','As Rec','Net fees YTD','Commission YTD'], rows, GRID,
+    table(['Person','Email','Tier','Status','As AM','As Rec','Net fees YTD','Commission YTD','Plan'], rows, GRID,
       { cls:'pptbl', empty: q ? 'Nobody matches that.' : 'Nobody here.' }) +
     '<div class="pp-foot">' + shown.length + (shown.length === 1 ? ' person' : ' people') + (shown.length !== list.length ? ' of ' + list.length : '') + '</div>' +
     '<div class="sec"><h2>What each tier reaches.</h2></div>' +
@@ -3057,6 +3182,7 @@ function wirePeople(m){
   if(qi) qi.oninput = () => { Q.people = qi.value; const p = qi.selectionStart; draw();
     const n = document.getElementById('qpeople'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
   m.querySelectorAll('[data-ptab]').forEach(b => b.onclick = () => { Q.peopleTab = b.dataset.ptab; draw(); });
+  m.querySelectorAll('[data-plan]').forEach(b => b.onclick = e => { e.stopPropagation(); form('plan', { staff: b.dataset.plan }); });
   const ex = m.querySelector('#ppExport');
   if(ex) ex.onclick = () => {
     const keys = ['name','email','role','active'];
@@ -3148,6 +3274,8 @@ function sheetCompany(){
       ['Fee', esc(F(c,'fee','fee_pct') || '20% of first year base')],
       ['Guarantee', '90 days'],
       ['Owner', esc(ownerName(F(c,'owner_id')))],
+      ['Commission owner', esc(ownerLine(idOf(c))) + (isAdmin() ? ' <a data-new="owner" data-co="' + idOf(c) + '" style="cursor:pointer;text-decoration:underline">' + (ownersOf(idOf(c)).length ? 'Move' : 'Set') + '</a>' : '')],
+      ['Commission', c.commission_excluded ? 'Main Electric affiliate · no commission' : 'Commissionable'],
       ['Legal name', esc(F(c,'legal_name') || 'Not on file')],
       ['Address', esc(F(c,'address') || 'Not on file')],
       ['Notices to', esc(F(c,'notice_email') || 'Not on file')],
@@ -3431,7 +3559,8 @@ function setv(id, v){ const e = $('#' + id); if(!e) return;
 function prefill(kind, r){
   if(kind === 'company'){ setv('f_name', F(r,'name')); setv('f_city', F(r,'city','location')); setv('f_ind', F(r,'industry'));
     setv('f_kind', F(r,'kind','engagement_type')); setv('f_status', F(r,'status')); setv('f_notes', F(r,'notes','bio'));
-    setv('f_legal', F(r,'legal_name')); setv('f_addr', F(r,'address')); setv('f_notice', F(r,'notice_email')); }
+    setv('f_legal', F(r,'legal_name')); setv('f_addr', F(r,'address')); setv('f_notice', F(r,'notice_email'));
+    setv('f_excl', r.commission_excluded === true); }
   if(kind === 'contact'){ setv('f_co', r.company_id); setv('f_name', F(r,'name')); setv('f_title', F(r,'title'));
     setv('f_email', F(r,'email')); setv('f_phone', F(r,'phone'));
     setv('f_room', r[MAP.contact.room] === true); setv('f_bill', r[MAP.contact.billing] === true); }
@@ -3470,7 +3599,8 @@ function form(kind, ctx){
       '<div class="field"><label for="f_legal">Legal name, as it signs</label><input id="f_legal" placeholder="Northwind Logistics, Inc."></div>' +
       '<div class="two"><div class="field"><label for="f_addr">Address for notices</label><input id="f_addr"></div>' +
       '<div class="field"><label for="f_notice">Notice email</label><input id="f_notice" type="email"></div></div>' +
-      '<div class="field"><label for="f_notes">Notes</label><textarea id="f_notes"></textarea></div>'],
+      '<div class="field"><label for="f_notes">Notes</label><textarea id="f_notes"></textarea></div>' +
+      (isAdmin() ? '<div class="field"><label><input type="checkbox" id="f_excl" style="height:auto;width:auto;margin-right:8px">Main Electric affiliate. No commission on hires here</label></div>' : '')],
     contact: ['Add a contact.', 'Turn on room access and they can sign in to the client room.',
       '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
       '<div class="two"><div class="field"><label for="f_name">Name</label><input id="f_name"></div>' +
@@ -3569,10 +3699,15 @@ function form(kind, ctx){
       '<div class="field"><label for="f_cand">Candidate</label><select id="f_cand">' + opts(S.candidates, c => F(c,'name','full_name'), ctx.cand) + '</select><div class="muted small" id="f_candn"></div></div>' +
       '<div class="two"><div class="field"><label for="f_start">Start date</label><input id="f_start" type="date"></div>' +
       '<div class="field"><label for="f_sal">Base salary</label><input id="f_sal" inputmode="numeric"></div></div>' +
-      '<div class="field"><label for="f_fee">Fee</label><input id="f_fee" inputmode="numeric" placeholder="20% of base"></div>'],
+      '<div class="field"><label for="f_fee">Fee</label><input id="f_fee" inputmode="numeric" placeholder="20% of base"></div>' +
+      (S.placements.some(p => p.fell_off_at && !S.placements.some(q => String(q.replaces_placement_id) === String(idOf(p))))
+        ? '<div class="field"><label for="f_repl">Free replacement for</label><select id="f_repl">' +
+          opts(S.placements.filter(p => p.fell_off_at && !S.placements.some(q => String(q.replaces_placement_id) === String(idOf(p)))),
+            p => pname(p.candidate_id) + ' · ' + cname(p.company_id) + ' · fell off ' + dday(p.fell_off_at)) + '</select>' +
+          '<div class="muted small">Pick one and the fee is zero. No commission on a replacement.</div></div>' : '')],
     invoice: ['Raise an invoice.', 'It saves as a draft. Send it from the Invoices screen when you are ready.',
       '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
-      '<div class="field"><label for="f_place">Placement, if any</label><select id="f_place">' + opts(S.placements, p => pname(p.candidate_id) + ' · ' + cname(p.company_id), ctx.place) + '</select></div>' +
+      '<div class="field"><label for="f_place">Placement, if any</label><select id="f_place">' + opts(S.placements.filter(p => !p.replaces_placement_id), p => pname(p.candidate_id) + ' · ' + cname(p.company_id), ctx.place) + '</select></div>' +
       '<div class="field"><label for="f_desc">What it is for</label><input id="f_desc" placeholder="Pick the placement above and this fills itself"></div>' +
       '<div class="two"><div class="field"><label for="f_amt">Amount</label><input id="f_amt" inputmode="numeric"></div>' +
       '<div class="field"><label for="f_due">Due</label><input id="f_due" type="date" value="' + plusDays(30) + '"></div></div>' +
@@ -3670,7 +3805,7 @@ function form(kind, ctx){
       '<div class="field"><label for="f_note">In your words</label><textarea id="f_note" placeholder="Lunch with the hiring manager about the fleet role."></textarea></div>'],
     present: ['Present ' + (ctx.pipes || []).length + ' to the client.', 'One email, every profile stitched into one PDF. Pick what goes for each person.',
       (() => { const s = search((byId(S.pipeline, (ctx.pipes || [])[0]) || {}).search_id) || {};
-        ctx.se = s ? String(idOf(s) || '') : ''; ctx.co = s ? s.company_id : '';
+        if(kind === 'present'){ ctx.se = s ? String(idOf(s) || '') : ''; ctx.co = s ? s.company_id : ''; }
         return '<div class="two"><div class="field"><label for="f_who">To</label><select id="f_who">' + mailPeople({ co: ctx.co }) + '</select></div>' +
       '<div class="field"><label for="f_toe">Or type an address</label><input id="f_toe" type="email" placeholder="someone@company.com"></div></div>' +
       '<div class="field"><label for="f_subj">Subject</label><input id="f_subj"></div>' +
@@ -3693,6 +3828,35 @@ function form(kind, ctx){
         return '<div class="prow"><div><b>' + esc(F(c,'name')) + '</b><div class="muted small">' + esc(F(c,'title') || '') + '</div></div><div></div></div>'; }).join('') + '</div></div>'],
     bulkpool: ['Add ' + (ctx.ids || []).length + ' to a pool.', 'A pool is a list you keep, not a stage.',
       '<div class="field"><label for="f_pool">Pool</label><select id="f_pool">' + opts(S.pools, p => F(p,'name')) + '</select></div>'],
+    paid: ['Money came in.', 'The day the client paid is the month the commission lands in. Reminders stop.',
+      '<div class="field"><label>Invoice</label><div><b>' + esc(F(byId(S.invoices, ctx.inv) || {}, 'invoice_no','number') || 'Invoice') + '</b> · ' +
+        esc(cname((byId(S.invoices, ctx.inv) || {}).company_id)) + ' · ' + money(F(byId(S.invoices, ctx.inv) || {}, 'amount')) + '</div></div>' +
+      '<div class="field"><label for="f_paid">Money came in on</label><input id="f_paid" type="date" max="' + lwToday() + '" value="' + lwToday() + '"></div>'],
+    owner: ['Client owner.', 'Who earns business development on this client. A client that already has an owner moves with 30 days notice.',
+      '<p class="muted small" style="margin:0 0 12px">' + esc(ownerLine(ctx.co)) + '</p>' +
+      '<div class="field"><label for="f_who">Owner</label><select id="f_who">' + opts(activeStaff(), st => F(st,'name','email')) + '</select></div>' +
+      '<div class="field"><label for="f_start">Owns it from</label><input id="f_start" type="date" min="' + (ownersOf(ctx.co).length ? ownerStart(ctx.co) : '') + '" value="' + ownerStart(ctx.co) + '"></div>' +
+      '<div class="field"><label for="f_note">Note</label><input id="f_note" placeholder="Assigned in writing, email of Oct 5"></div>'],
+    plan: ['Commission plan.', esc(whoName(ctx.staff)) + '. A new plan takes effect on its date and applies from then on.',
+      planSpec(ctx.staff) +
+      '<div class="two"><div class="field"><label for="f_side">Which commission</label><select id="f_side">' +
+        '<option value="recruiter">Placement, for filling the role</option><option value="am">Business development, for the client</option></select></div>' +
+      '<div class="field"><label for="f_eff">Takes effect</label><input id="f_eff" type="date" value="' + lwToday() + '"></div></div>' +
+      '<div class="two"><div class="field"><label for="f_r1">Rate, percent</label><input id="f_r1" inputmode="decimal" placeholder="5"></div>' +
+      '<div class="field"><label for="f_b1">On net fees a year up to</label><input id="f_b1" inputmode="numeric" placeholder="Blank for one flat rate"></div></div>' +
+      '<div class="two"><div class="field"><label for="f_r2">Then, percent</label><input id="f_r2" inputmode="decimal"></div>' +
+      '<div class="field"><label for="f_b2">Up to</label><input id="f_b2" inputmode="numeric" placeholder="Blank for two steps"></div></div>' +
+      '<div class="field"><label for="f_r3">Then, percent</label><input id="f_r3" inputmode="decimal"></div>' +
+      '<div class="field"><label><input type="checkbox" id="f_own" style="height:auto;width:auto;margin-right:8px">Business development only on clients assigned to them</label></div>' +
+      '<div class="field"><label for="f_note">Note</label><input id="f_note" placeholder="Per the signed commission agreement"></div>' +
+      '<div class="field"><label for="f_last">Last day of employment</label><input id="f_last" type="date" value="' + esc(F(byId(S.staff, ctx.staff) || {}, 'ended_on')) + '">' +
+        '<div class="muted small">Nothing is earned on invoices sent after this day. Invoices sent before it still pay as clients pay.</div></div>'],
+    falloff: ['Fell off.', 'The commission already earned stays. A replacement inside the guarantee is free, so it earns nothing.',
+      '<div class="field"><label>Placement</label><div><b>' + esc(pname((byId(S.placements, ctx.place) || {}).candidate_id)) + '</b> · ' +
+        esc(cname((byId(S.placements, ctx.place) || {}).company_id)) + '</div></div>' +
+      '<div class="two"><div class="field"><label for="f_last">Last day</label><input id="f_last" type="date" max="' + lwToday() + '" value="' + lwToday() + '"></div>' +
+      '<div class="field"><label for="f_why">Why</label><select id="f_why"><option value="quit">Quit</option><option value="performance">Performance</option>' +
+        '<option value="conduct">Conduct</option><option value="eliminated">Role eliminated</option><option value="layoff">Layoff</option><option value="other">Other</option></select></div></div>'],
     premier: ['Premier.', 'A human call, so it needs a reason.',
       '<div class="field"><label for="f_why">Why this person</label><textarea id="f_why" placeholder="Placed twice, both still there. Every client asks for her profile."></textarea></div>']
   }[kind];
@@ -4209,6 +4373,8 @@ async function save(kind, ctx){
       [M.company.industry]: val('f_ind'), [M.company.kind]: val('f_kind'), [M.company.status]: val('f_status'),
       [M.company.notes]: val('f_notes'), [M.company.legal]: val('f_legal'), [M.company.address]: val('f_addr'),
       [M.company.notice]: val('f_notice').toLowerCase(),
+      commission_excluded: isAdmin() ? val('f_excl') === true : undefined,
+      excluded_reason: isAdmin() && val('f_excl') === true ? 'Main Electric affiliate' : undefined,
       [M.company.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Client updated.' : 'Client added.');
   }
   if(kind === 'sendsign'){
@@ -4440,10 +4606,12 @@ async function save(kind, ctx){
       [M.pipeline.stage]: 'placed', [M.pipeline.released]: true, [M.pipeline.released_at]: new Date().toISOString(), [M.pipeline.added_by]: meId() })));
     else if(stageOf(pp) !== 'Placed') await tryWrite(() => patch('pipeline', idOf(pp), { [M.pipeline.stage]: 'placed' }));
     if(!pp) return;
-    const sal = num(val('f_sal')), fee = val('f_fee') ? num(val('f_fee')) : Math.round(sal * 0.2);
+    const repl = val('f_repl');
+    const sal = num(val('f_sal')), fee = repl ? 0 : val('f_fee') ? num(val('f_fee')) : Math.round(sal * 0.2);
     const ends = new Date(val('f_start')); ends.setDate(ends.getDate() + 90);
     r = await tryWrite(() => insert('placements', clean({ [M.placement.pipeline]: idOf(pp), [M.placement.start]: val('f_start'),
-      [M.placement.salary]: sal || '', [M.placement.fee]: fee || '', [M.placement.fee_pct]: 20,
+      [M.placement.salary]: sal || '', [M.placement.fee]: repl ? 0 : (fee || ''), [M.placement.fee_pct]: repl ? 0 : 20,
+      replaces_placement_id: repl || undefined,
       [M.placement.guarantee_ends]: ends.toISOString().slice(0,10), [M.placement.status]: 'active' })), 'Placement recorded. Guarantee clock started.');
   }
   if(kind === 'invoice'){
@@ -4585,6 +4753,42 @@ async function save(kind, ctx){
       closeSheet(); await loadAll(); drawNav(); draw();
     }catch(e){ toast('Did not send. ' + e.message, true); if(b){ b.disabled = false; b.textContent = 'Send'; } }
     return;
+  }
+  if(kind === 'paid'){
+    const d = val('f_paid');
+    if(!d) return toast('When did the money come in?', true);
+    if(d > lwToday()) return toast('That day has not happened yet.', true);
+    r = await tryWrite(() => patch('invoices', ctx.inv, { status:'paid', paid_at: d }), 'Marked paid on ' + dday(d) + '.');
+  }
+  if(kind === 'owner'){
+    if(!val('f_who') || !val('f_start')) return toast('Pick the person and the day.', true);
+    r = await tryWrite(() => insert('company_owners', clean({ company_id: ctx.co, staff_id: val('f_who'), starts_on: val('f_start'),
+      note: val('f_note'), created_by: meId() })), 'Owner set.');
+  }
+  if(kind === 'falloff'){
+    if(!val('f_last')) return toast('What was the last day?', true);
+    r = await tryWrite(() => patch('placements', ctx.place, { fell_off_at: val('f_last'), falloff_reason: val('f_why') }), 'Marked fell off.');
+  }
+  if(kind === 'plan'){
+    const pc = x => x === '' ? null : num(x) / 100, dl = x => x === '' ? null : num(x);
+    const st = byId(S.staff, ctx.staff) || {};
+    const lastWas = F(st,'ended_on') || '', lastNow = val('f_last');
+    if(val('f_r1') === '' && lastWas === lastNow) return toast('Put a rate in, or change the last day.', true);
+    if(val('f_r1') !== ''){
+      const row = { staff_id: ctx.staff, side: val('f_side'), r1: pc(val('f_r1')), b1: dl(val('f_b1')), r2: pc(val('f_r2')),
+        b2: dl(val('f_b2')), r3: pc(val('f_r3')), effective_on: val('f_eff') || lwToday(),
+        needs_owner: val('f_side') === 'am' && val('f_own') === true, note: val('f_note') || null, created_by: meId() };
+      if(row.b1 == null){ row.r2 = null; row.b2 = null; row.r3 = null; }
+      if(row.b2 == null) row.r3 = null;
+      if([row.r1, row.r2, row.r3].some(x => x != null && (x < 0 || x > 0.5))) return toast('Rates are percents from 0 to 50.', true);
+      if(row.b1 != null && row.r2 == null) return toast('Say the rate above ' + usd(row.b1) + '.', true);
+      if(row.b2 != null && row.b2 <= row.b1) return toast('The second step has to sit above the first.', true);
+      if(row.b2 != null && row.r3 == null) return toast('Say the rate above ' + usd(row.b2) + '.', true);
+      r = await tryWrite(() => insert('comp_plans', row), 'Plan saved.');
+      if(!r) return;
+    }
+    if(lastWas !== lastNow) r = await tryWrite(() => patch('staff', ctx.staff, { ended_on: lastNow || null }),
+      lastNow ? 'Last day set.' : 'Last day cleared.');
   }
   if(kind === 'premier'){
     if(!val('f_why')) return toast('Premier needs a reason.', true);
@@ -5069,6 +5273,7 @@ function wire(){
   const m = $('#main');
   common(m);
   try{ wirePeople(m); }catch(e){ console.warn('people', e.message); }
+  try{ wireCommission(m); }catch(e){ console.warn('commission', e.message); }
   m.querySelectorAll('select.rolesel').forEach(sel => sel.onchange = async () => {
     const was = S.staff.find(x => String(idOf(x)) === String(sel.dataset.staff));
     const prev = was ? roleOf(was) : '';
@@ -5116,6 +5321,7 @@ function wire(){
     if(t && t.candidate_id) openSheet('candidate', t.candidate_id);
     else if(t && t.company_id) openSheet('company', t.company_id);
   });
+  m.querySelectorAll('[data-falloff]').forEach(b => b.onclick = e => { e.stopPropagation(); form('falloff', { place: b.dataset.falloff }); });
   m.querySelectorAll('[data-place]').forEach(r => r.onclick = () => {
     const p = byId(S.placements, r.dataset.place); if(p) openSheet('candidate', p.candidate_id);
   });
@@ -5183,9 +5389,7 @@ function wire(){
   });
   m.querySelectorAll('[data-paid]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const i = byId(S.invoices, b.dataset.paid); if(!i) return;
-    if(!confirm('Mark ' + (F(i,'invoice_no','number')||'this invoice') + ' paid? Reminders stop.')) return;
-    const r = await tryWrite(() => patch('invoices', idOf(i), { status:'paid', paid_at: today() }), 'Marked paid.');
-    if(r){ await loadAll(); drawNav(); draw(); }
+    form('paid', { inv: idOf(i) });
   });
   m.querySelectorAll('[data-pdf]').forEach(b => b.onclick = async e => { e.stopPropagation();
     const lbl = b.textContent; b.disabled = true; b.textContent = 'Building';
