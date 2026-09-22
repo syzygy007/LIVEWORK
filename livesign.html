@@ -69,7 +69,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .ls-page canvas{display:block;width:100%;height:auto}
 .ls-page .n{position:absolute;top:8px;right:8px;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--stone);background:var(--paper);padding:2px 6px;pointer-events:none}
 .ls-f{position:absolute;border:2px solid var(--yellow-deep);background:rgba(242,198,50,.18);display:flex;align-items:center;justify-content:center;font:600 11px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;color:#000;cursor:default}
-.ls-f.date,.ls-f.name,.ls-f.title{background:rgba(242,198,50,.25);text-transform:none;letter-spacing:0;font-weight:500;font-size:12px;justify-content:flex-start;padding-left:4px;overflow:hidden;white-space:nowrap}
+.ls-f.date,.ls-f.name,.ls-f.title,.ls-f.company{background:rgba(242,198,50,.25);text-transform:none;letter-spacing:0;font-weight:500;font-size:12px;justify-content:flex-start;padding-left:4px;overflow:hidden;white-space:nowrap}
 .ls-f .tag{position:absolute;left:4px;top:1px;font:500 7px/1 var(--font);letter-spacing:0;text-transform:none;color:#555;pointer-events:none}
 .ls-f .uid{position:absolute;left:4px;bottom:1px;font:500 6px/1 var(--font);letter-spacing:0;text-transform:none;color:#777;pointer-events:none}
 .ls-f.sig{border-left-width:3px}
@@ -148,6 +148,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         <button class="ls-mode" data-mode="date">Date</button>
         <button class="ls-mode" data-mode="name">Name</button>
         <button class="ls-mode" data-mode="title">Title</button>
+        <button class="ls-mode" data-mode="company">Company</button>
         <span class="sp"></span>
         <span class="cnt" id="cnt">No fields yet</span>
       </div>
@@ -157,6 +158,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
           <h2>Sign it.</h2>
           <div class="field"><label for="name">Your full name</label><input id="name" autocomplete="name"></div>
           <div class="field"><label for="title2">Title (optional)</label><input id="title2"></div>
+          <div class="field"><label for="company">Company (optional)</label><input id="company" autocomplete="organization"></div>
           <div class="field"><label for="email">Send the signed copy to</label><input id="email" type="email" autocomplete="email" inputmode="email"></div>
           <div class="padwrap">
             <div class="padlab"><label for="pad">Your signature</label><a id="clear">Clear</a></div>
@@ -212,6 +214,7 @@ function ready(kind, who, name, email, title){
   $('#gate').style.display = 'none'; $('#drop').style.display = ''; $('#app').style.display = '';
   $('#who').textContent = name || email || 'LIVESIGN';
   if(name) $('#name').value = name; if(email) $('#email').value = email; if(title) $('#title2').value = title;
+  const co = who && who.company && (who.company.legal_name || who.company.name); if(co && !$('#company').value) $('#company').value = co;
   relabel(); fit();
 }
 function staffDoor(){
@@ -250,7 +253,7 @@ $('#asclient').onclick = clientDoor; $('#asstaff').onclick = staffDoor;
 
 /* ---------- the document ---------- */
 let BUF = null, FILE = '', PAGES = [], FIELDS = [], MODE = 'sig';
-const SIZE = { sig: [0.2, 0.045], date: [0.12, 0.022], name: [0.2, 0.022], title: [0.2, 0.022] };   /* fraction of page width and height */
+const SIZE = { sig: [0.2, 0.045], date: [0.12, 0.022], name: [0.2, 0.022], title: [0.2, 0.022], company: [0.26, 0.022] };   /* fraction of page width and height */
 
 $('#pick').onclick = () => $('#file').click();
 $('#file').onchange = e => { if(e.target.files[0]) openPdf(e.target.files[0]); };
@@ -284,7 +287,7 @@ async function openPdf(f){
       for(const a of ann){
         if(a.subtype !== 'Widget' || !a.rect) continue;
         const nm = String(a.fieldName || '') + ' ' + String(a.alternativeText || '');
-        const kind = a.fieldType === 'Sig' || /sig/i.test(nm) ? 'sig' : /date/i.test(nm) ? 'date' : /title/i.test(nm) ? 'title' : /\bname\b|signer|print/i.test(nm) ? 'name' : '';
+        const kind = a.fieldType === 'Sig' || /sig/i.test(nm) ? 'sig' : /date/i.test(nm) ? 'date' : /title/i.test(nm) ? 'title' : /company|firm|entity|organi[sz]ation|business/i.test(nm) ? 'company' : /\bname\b|signer|print/i.test(nm) ? 'name' : '';
         if(!kind) continue;
         const [x1, y1, x2, y2] = a.rect;
         const f = { page: p, kind, x: Math.min(x1, x2) / v1.width, y: 1 - Math.max(y1, y2) / v1.height, w: Math.abs(x2 - x1) / v1.width, h: Math.abs(y2 - y1) / v1.height, id: Math.random().toString(36).slice(2), auto: true };
@@ -342,9 +345,9 @@ function draw(f, pg){
   d.addEventListener('click', e => e.stopPropagation());
 }
 function today(){ return new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }); }
-function label(k){ return k === 'sig' ? 'Sign here' : k === 'date' ? today() : k === 'title' ? ($('#title2').value.trim() || 'Title') : ($('#name').value.trim() || 'Name'); }
-function relabel(){ document.querySelectorAll('.ls-f.name, .ls-f.title').forEach(d => { d.childNodes[0].textContent = label(d.classList.contains('title') ? 'title' : 'name'); }); }
-$('#name').addEventListener('input', relabel); $('#title2').addEventListener('input', relabel);
+function label(k){ return k === 'sig' ? 'Sign here' : k === 'date' ? today() : k === 'title' ? ($('#title2').value.trim() || 'Title') : k === 'company' ? ($('#company').value.trim() || 'Company') : ($('#name').value.trim() || 'Name'); }
+function relabel(){ document.querySelectorAll('.ls-f.name, .ls-f.title, .ls-f.company').forEach(d => { d.childNodes[0].textContent = label(d.classList.contains('title') ? 'title' : d.classList.contains('company') ? 'company' : 'name'); }); }
+$('#name').addEventListener('input', relabel); $('#title2').addEventListener('input', relabel); $('#company').addEventListener('input', relabel);
 function count(){
   const s = FIELDS.filter(f => f.kind === 'sig').length, o = FIELDS.length - s;
   $('#cnt').textContent = FIELDS.length ? (s + ' signature' + (s === 1 ? '' : 's') + (o ? ', ' + o + ' other' : '')) : 'No fields yet';
@@ -397,24 +400,44 @@ function signature(){
 }
 function b64(buf){ let s = '', u = new Uint8Array(buf); for(let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
 
+/* ---------- company: stamped here in the browser, the function never sees the field ---------- */
+async function withCompany(){
+  const cf = FIELDS.filter(f => f.kind === 'company'), txt = $('#company').value.trim();
+  if(!cf.length || !txt) return BUF;
+  if(!window.PDFLib){ await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pdf-lib.min.js'; s.onload = ok; s.onerror = () => no(new Error('Could not load the PDF tools. Reload and try again.')); document.head.appendChild(s); }); }
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const pdf = await PDFDocument.load(BUF.slice(0), { ignoreEncryption: true });
+  const font = await pdf.embedFont(StandardFonts.Helvetica), pages = pdf.getPages();
+  for(const f of cf){
+    const pg = pages[f.page - 1]; if(!pg) continue;
+    const { width: W, height: H } = pg.getSize();
+    const w = f.w * W, h = f.h * H;
+    let size = Math.min(h * 0.72, 11); while(size > 5 && font.widthOfTextAtSize(txt, size) > w - 4) size -= 0.25;
+    pg.drawText(txt, { x: f.x * W + 2, y: H - (f.y + f.h) * H + (h - size) / 2 + size * 0.22, size, font, color: rgb(0, 0, 0) });
+  }
+  return (await pdf.save()).buffer;
+}
+
 /* ---------- send ---------- */
 $('#sign').onclick = async () => {
   if(!FIELDS.some(f => f.kind === 'sig')) return say('Tap the page where your signature goes.', true);
   if(!$('#name').value.trim()) return say('Type your full name.', true);
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test($('#email').value.trim())) return say('Where should the signed copy go?', true);
   if(!inked) return say('Sign in the box.', true);
+  if(FIELDS.some(f => f.kind === 'company') && !$('#company').value.trim()) return say('Type the company name.', true);
   if(!$('#consent').checked) return say('Tick the box, that is the part that counts.', true);
   if(BUF.byteLength > 12 * 1024 * 1024) return say('That PDF is over 12MB. Compress it first.', true);
   const b = $('#sign'); b.disabled = true; b.textContent = 'Signing';
   try{
+    const doc = await withCompany();
     let bearer = LW.anon, room_token = '';
     if(AUTH && AUTH.kind === 'room'){ room_token = AUTH.token; }
     else { const s = await LWAuth.ensure(); if(!s) throw new Error('Signed out. Reload and sign in again.'); bearer = s.access_token; }
     const r = await fetch(LW.url + '/functions/v1/live-sign', { method: 'POST',
       headers: { 'content-type': 'application/json', apikey: LW.anon, Authorization: 'Bearer ' + bearer },
-      body: JSON.stringify({ room_token, pdf: b64(BUF), filename: FILE, name: $('#name').value.trim(), title: $('#title2').value.trim(),
+      body: JSON.stringify({ room_token, pdf: b64(doc), filename: FILE, name: $('#name').value.trim(), title: $('#title2').value.trim(),
         email: $('#email').value.trim(), consent: true, sig: signature(),
-        fields: FIELDS.map(f => ({ page: f.page, kind: f.kind, x: f.x, y: f.y, w: f.w, h: f.h })) }) });
+        fields: FIELDS.filter(f => f.kind !== 'company').map(f => ({ page: f.page, kind: f.kind, x: f.x, y: f.y, w: f.w, h: f.h })) }) });
     const d = await r.json().catch(() => ({ ok: false, error: 'no answer from the server' }));
     if(!d.ok){ if(/room (session|access)/i.test(d.error || '')){ try{ localStorage.removeItem('lw_room_session'); }catch(e){} } throw new Error(d.error || 'That did not go through.'); }
     $('#work').style.display = 'none';
