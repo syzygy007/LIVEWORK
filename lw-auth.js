@@ -135,6 +135,7 @@
           ? '<p class="small muted" style="margin-top:20px"><a href="#" id="lwmode">' + (mode === 'email' ? 'Text me a code instead' : 'Email me a code instead') + '</a></p>'
           : '') +
         '<p class="small muted" style="margin-top:28px">Client sign in is at <a href="room.html">the client room</a>.</p>' +
+        '<p class="small muted" style="margin-top:8px">Trouble signing in? <a href="mailto:help@livework.inc?subject=Desk%20sign%20in">help@livework.inc</a></p>' +
       '</div></div>';
 
     var go = document.getElementById('lwgo');
@@ -148,7 +149,11 @@
           go.disabled = true; go.textContent = 'Sending';
           var r = await post('otp', { email: em, create_user: false });
           if(!r.ok && r.status !== 200){
-            err = (r.body && (r.body.msg || r.body.error_description || r.body.message)) || 'We could not send a code to that address.';
+            var why = String((r.body && (r.body.msg || r.body.error_description || r.body.message || r.body.error_code)) || '');
+            if(r.status === 429 || /rate|seconds|too many/i.test(why)) err = 'Too many tries. Wait a minute, then press Email me a code once.';
+            else if(/signup|not allowed|not found|otp_disabled|user/i.test(why) || r.status === 422 || r.status === 400)
+              err = 'That email is not on the desk. Use the work email on your day one sheet, or write to help@livework.inc.';
+            else err = 'We could not send a code. Try again in a minute, or write to help@livework.inc.';
             go.disabled = false; return door(mount, done);
           }
           step = 1; return door(mount, done);
