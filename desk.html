@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="Desk">
 <link rel="stylesheet" href="lw.css?v=6">
 <script src="lw-config.js?v=3"></script>
-<script src="lw-auth.js?v=6"></script>
+<script src="lw-auth.js?v=7"></script>
 <script src="lw-app.js?v=1" defer></script>
 <style>
 body{background:var(--paper)}
@@ -867,7 +867,7 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
     <nav id="nav"></nav>
     <div class="me">
       <span id="skinRail"></span>
-      <div class="who"><b id="meName">Loading</b><span id="meRole"></span><br><a href="#" id="signout">Sign out</a></div>
+      <div class="who"><b id="meName">Loading</b><span id="meRole"></span><br><a href="#" id="signout">Sign out</a> · <a href="#" id="phonelink">Sign in by text</a></div>
     </div>
   </aside>
   <main class="main" id="main"><div class="load">Loading the desk.</div></main>
@@ -5760,6 +5760,7 @@ LWAuth.gate(document.getElementById('gate'), async function(staff){
   document.getElementById('meName').textContent = F(staff,'name','email');
   document.getElementById('meRole').textContent = 'The Desk · ' + roleLabel(F(staff,'role'));
   document.getElementById('signout').onclick = e => { e.preventDefault(); LWAuth.signOut(); };
+  const pl = document.getElementById('phonelink'); if(pl) pl.onclick = e => { e.preventDefault(); LWAuth.phoneSetup(); };
   
   $('#scrim').onclick = closeDrawer;
   const jump = (location.hash || '').replace('#','');
