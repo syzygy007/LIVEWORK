@@ -815,6 +815,41 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 .undo37.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .undo37 button{border:0;background:var(--yellow);color:#000;font:inherit;font-weight:800;padding:6px 14px;border-radius:20px;cursor:pointer}
 @media (min-width:901px){.undo37{bottom:32px}}
+.gl.owed{color:#8A5A00;font-weight:700}
+.rts{border-top:1px solid var(--ink);margin-bottom:14px}
+.rt{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
+.rt .mono{grid-column:1}
+.rt-c{grid-row:1 / span 2;grid-column:2;height:36px;border:1px solid var(--line);background:var(--white);color:var(--ink);font:inherit;font-size:13px;padding:0 8px}
+.rt-ck{display:flex;align-items:center;gap:8px;font-size:14px}
+.rt-ck input{width:auto;height:auto}
+.wz-k{display:block;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);margin-bottom:10px}
+.wz{display:grid;gap:18px}
+.wz-dots{display:flex;gap:6px}
+.wz-dots i{flex:1;height:3px;border-radius:2px;background:var(--line)}
+.wz-dots i.d{background:var(--ink)}
+.wz-dots i.on{background:var(--yellow)}
+.wz-b{display:grid;gap:12px}
+.wz-f{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px}
+.wz-f>div,.wz-f{align-items:center}
+.wz-f .btn.y{margin-left:auto}
+.wz-l{padding-left:20px;margin:0;display:grid;gap:8px;font-size:14px;line-height:1.45}
+.wz-ok{background:var(--paper);border-left:4px solid #1F7A45;padding:12px 14px;font-weight:700}
+.wz-ok.no{border-left-color:#B97A0E}
+.wz-note{background:#FFF7DA;border-left:4px solid var(--yellow);padding:12px 14px;font-size:13px;line-height:1.5;color:#3a3630}
+.wz-have{display:grid;gap:6px;border-top:1px solid var(--ink);padding-top:10px}
+.wz-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.wz-row b{display:block}
+.wz-btns{display:flex;gap:6px;flex-wrap:wrap}
+.wz-sel{height:36px;border:1px solid var(--line);background:var(--white);color:var(--ink);font:inherit;font-size:13px;padding:0 8px;max-width:200px}
+.wz-ts{display:grid;gap:4px;border-top:1px solid var(--ink)}
+.wz-t{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.wz-t input{width:20px;height:20px;margin-top:2px;flex:none}
+.wz-t b{display:block;font-size:14px}
+.wz-t em{display:block;font-style:normal;color:var(--stone);font-size:13px;margin-top:2px}
+.wz-t input:checked + span b{text-decoration:line-through;color:var(--stone)}
+.av-g{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;max-width:220px;border:1px solid var(--line);padding:6px;background:var(--paper)}
+.av-c{height:30px;border:1px solid var(--line);background:var(--white);font:inherit;font-weight:700;font-size:12px;color:var(--stone);cursor:pointer}
+.av-c.on{background:var(--yellow);border-color:var(--yellow);color:#000}
 </style>
 </head>
 <body>
@@ -3265,7 +3300,7 @@ function vPeople(){
   const chip = (k, label) => '<button class="pp-chip' + (tab === k ? ' on' : '') + '" data-ptab="' + k + '">' +
     (k === 'all' ? '' : '<i class="' + k + '"></i>') + label + (counts[k] ? ' <em>' + counts[k] + '</em>' : '') + '</button>';
 
-  return head('Who is in the system.', '') +
+  return head('Who is in the system.', '<button class="btn y" data-onb="1">Bring someone on</button><button class="btn ghost" data-offb="1">Someone is leaving</button>') +
     '<div class="pp-lede">' + (isOwner() ? 'You can change anyone but yourself.' : 'Root accounts are visible but locked.') + '</div>' +
     (unstaffed ? '<div class="sec" style="margin-top:8px"><h2>' + unstaffed + ' open ' + (unstaffed === 1 ? 'role is' : 'roles are') +
       ' missing a name.</h2><span class="muted small">A role with no AM or no Recruiter is invisible to everyone but an admin.</span></div>' : '') +
@@ -6158,13 +6193,16 @@ const gearOf = sid => (S.gear || []).filter(g => String(g.staff_id) === String(s
 const gearName = g => F(g,'model') || GEARKIND[g.kind] || 'Device';
 function nextTag(){
   const n = (S.gear || []).map(g => parseInt(String(g.tag || '').replace(/\D/g,''), 10) || 0);
-  return 'LW-' + String((n.length ? Math.max.apply(null, n) : 0) + 1).padStart(4, '0');
+  return 'LW' + String((n.length ? Math.max.apply(null, n) : 0) + 1).padStart(3, '0');
 }
+const staffGone = sid => { const s = byId(S.staff, sid) || {}; return s.active === false || (s.ended_on && String(s.ended_on) <= lwToday()); };
 function gearLine(sid){
   const gs = gearOf(sid);
-  if(!gs.length) return '<a class="gl add" data-gearnew="' + sid + '">Assign gear</a>';
+  if(!gs.length) return staffGone(sid) ? '' : '<a class="gl add" data-gearnew="' + sid + '">Assign gear</a>';
+  if(staffGone(sid)) return '<a class="gl owed" data-gearret="' + sid + '"><i class="wait"></i>' + gs.length + (gs.length === 1 ? ' device' : ' devices') + ' not back · Return gear</a>';
   return gs.map(g => '<a class="gl" data-gear="' + idOf(g) + '"><i class="' + (g.ack_at ? 'ok' : 'wait') + '"></i>' +
-    esc(gearName(g)) + ' · ' + esc(g.tag || '') + ' · ' + (g.ack_at ? 'Accepted ' + esc(short(g.ack_at)) : 'Not accepted yet') + '</a>').join('');
+    esc(gearName(g)) + ' · ' + esc(g.tag || '') + ' · ' + (g.ack_at ? 'Accepted ' + esc(short(g.ack_at)) : 'Not accepted yet') + '</a>').join('') +
+    '<a class="gl add" data-gearnew="' + sid + '">Add another</a><a class="gl add" data-gearret="' + sid + '">Return gear</a>';
 }
 function vGearSection(){
   if(!isAdmin()) return '';
@@ -6199,24 +6237,25 @@ function gearForm(gid, sid){
         '<div class="field"><label for="g_os">System</label>' + sel('g_os', OSNAME, d.os || 'mac') + '</div></div>' +
       '<div class="field"><label for="g_model">Make and model</label>' + inp('g_model', d.model, 'MacBook Air 15 M4') + '</div>' +
       '<div class="two"><div class="field"><label for="g_serial">Serial number, the UID</label>' + inp('g_serial', d.serial, 'FVFH3P2KQ6L4') + '</div>' +
-        '<div class="field"><label for="g_tag">Asset tag</label>' + inp('g_tag', d.tag, 'LW-0001') + '</div></div>' +
+        '<div class="field"><label for="g_tag">Asset tag</label>' + inp('g_tag', d.tag, 'LW001') + '</div></div>' +
       '<div class="muted small" style="margin:-4px 0 10px">Mac: Apple menu, About This Mac. Windows: Settings, System, About. Or the sticker on the bottom.</div>' +
       '<div class="two"><div class="field"><label for="g_bought">Bought on</label>' + inp('g_bought', d.bought_on, '', 'date') + '</div>' +
         '<div class="field"><label for="g_cost">Cost</label>' + inp('g_cost', d.cost, '1499') + '</div></div>' +
       '<div class="two"><div class="field"><label for="g_vendor">Bought from</label>' + inp('g_vendor', d.vendor, 'Apple Store') + '</div>' +
         '<div class="field"><label for="g_cond">Condition</label>' + inp('g_cond', d.condition || (g ? '' : 'New in box'), 'New in box') + '</div></div>' +
       '<div class="two"><div class="field"><label for="g_handed">Handed over on</label>' + inp('g_handed', d.handed_on, '', 'date') + '</div>' +
-        '<div class="field"><label for="g_extras">Comes with</label>' + inp('g_extras', d.extras || (g ? '' : 'Charger, USB C cable'), 'Charger, USB C cable') + '</div></div>' +
+        '<div class="field"><label for="g_extras">Comes with</label>' + inp('g_extras', d.extras || '', 'Charger, USB C cable') + '</div></div>' +
       '<div class="field"><label for="g_note">Note</label>' + inp('g_note', d.note, '') + '</div>' +
       '<div class="g-acts"><button class="btn" id="gsave">' + (g ? 'Save changes' : 'Assign it') + '</button>' +
-        (g ? '<button class="btn y" id="gday">Print day one sheet</button><button class="btn ghost" id="gform">Print handoff form</button>' +
+        (g ? '<button class="btn y" id="gday">Print day one sheet</button><button class="btn ghost" id="gform">Print handoff form</button><button class="btn ghost" id="glabel">Print tag label</button>' +
              (gearOut(g) ? '<button class="btn ghost" id="gback">Mark returned</button>' : '') : '') + '</div>' +
-      '<div class="muted small" style="margin-top:12px">The password is theirs. They set it on day one from the sheet. Nobody at LIVEWORK asks for it and the desk never stores one.</div>' +
+      '<div class="muted small" style="margin-top:12px">A temporary email password can go on the printed sheet. The desk prints it and forgets it, it is never saved. They change it the first time they sign in.</div>' +
     '</div>');
   $('#gsave').onclick = () => gearSave(gid);
   if(g){
-    $('#gday').onclick = () => printDayOne(g);
+    $('#gday').onclick = () => dayOneForm(g);
     $('#gform').onclick = () => printHandoff(g);
+    $('#glabel').onclick = () => printLabel(g);
     const b = $('#gback'); if(b) b.onclick = async () => {
       if(!confirm('Mark ' + gearName(g) + ' returned today?')) return;
       const r = await tryWrite(() => patch('gear', gid, { returned_on: lwToday() }), 'Marked returned.');
@@ -6256,7 +6295,11 @@ function gearAckBanner(){
   const me = meId(); if(!me) return '';
   const wait = (S.gear || []).filter(g => String(g.staff_id) === String(me) && gearOut(g) && !g.ack_at);
   const sort = myInboxNew().filter(x => String(x.scanned_by) === String(me)).length;
-  return wait.map(g => '<div class="gack"><div><b>Company gear to accept.</b><span>' + esc(gearName(g)) + ' · ' + esc(g.tag || '') + '</span></div>' +
+  const owed = isAdmin() ? S.staff.filter(s => staffGone(idOf(s)) && gearOf(idOf(s)).length) : [];
+  return owed.map(s => '<div class="gack"><div><b>' + esc(F(s,'name','email')) + ' has ' + gearOf(idOf(s)).length + ' LIVEWORK ' + (gearOf(idOf(s)).length === 1 ? 'device' : 'devices') + ' not back.</b>' +
+      '<span>' + gearOf(idOf(s)).map(g => esc(g.tag || '') + ' ' + esc(gearName(g))).join(' · ') + '</span></div>' +
+      '<button class="btn" data-gearret="' + idOf(s) + '">Return gear</button></div>').join('') +
+    wait.map(g => '<div class="gack"><div><b>Company gear to accept.</b><span>' + esc(gearName(g)) + ' · ' + esc(g.tag || '') + '</span></div>' +
       '<button class="btn" data-gearack="' + idOf(g) + '">Read and accept</button></div>').join('') +
     (sort ? '<div class="gack"><div><b>' + sort + (sort === 1 ? ' scanned card' : ' scanned cards') + ' to sort.</b><span>Put each one under a client or a new prospect.</span></div>' +
       '<button class="btn" data-goto="contacts">Sort them</button></div>' : '');
@@ -6280,6 +6323,102 @@ function gearAckForm(gid){
   };
 }
 
+/* the tag sticker, cut for Avery 5163 (2 x 4 in, 10 per letter sheet, 2 across 5 down).
+   Pick the first empty spot so a half used sheet still works. Print at Actual size. */
+function printLabel(g){
+  if(!g) return;
+  SHEET = { kind:'form', id:'label', tab:0, ctx:{} };
+  const cells = Array.from({ length: 10 }, (_, i) => '<button type="button" class="av-c' + (i === 0 ? ' on' : '') + '" data-avc="' + i + '">' + (i + 1) + '</button>').join('');
+  shell('Tag label.', esc(g.tag || '') + ' · ' + esc(gearName(g)) + '. Avery 5163 sheet, 2 by 4 inch labels, 10 per sheet.',
+    '<div class="form"><div class="field"><label>Start at this spot on the sheet</label><div class="av-g">' + cells + '</div>' +
+      '<div class="muted small">Tap the first empty label if the sheet is already partly used.</div></div>' +
+      '<div class="field"><label for="av_n">How many</label><select id="av_n"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>10</option></select>' +
+      '<div class="muted small">Two is a good habit: one on the bottom, one on the charger.</div></div>' +
+      '<div class="wz-note">In the print window set Scale to 100 percent (Actual size) and Margins to None, or the labels drift off the stickers.</div>' +
+      '<button class="btn y" id="av_go">Print labels</button></div>');
+  let start = 0;
+  document.querySelectorAll('[data-avc]').forEach(b => b.onclick = () => { start = +b.dataset.avc;
+    document.querySelectorAll('[data-avc]').forEach(x => x.classList.toggle('on', x === b)); });
+  $('#av_go').onclick = () => { printAvery(g, start, +val('av_n') || 1); closeSheet(); };
+}
+function printAvery(g, start, n){
+  const code = qrSvg('LIVEWORK ' + (g.tag || '') + ' SN ' + (g.serial || ''));
+  const one = '<div class="lab"><div class="q">' + code + '</div><div class="t"><img src="livework-wordmark-black.svg" alt="LIVEWORK"><b>' + esc(g.tag || '') + '</b>' +
+    '<span>' + esc(gearName(g)) + '</span><span class="sn">SN ' + esc(g.serial || '') + '</span><span class="pr">Property of LIVEWORK · livework.inc</span></div></div>';
+  let cells = '';
+  for(let i = 0; i < 10; i++){
+    const col = i % 2, row = Math.floor(i / 2);
+    const on = i >= start && i < start + n;
+    cells += '<div class="cell" style="left:' + (0.15625 + col * 4.1875) + 'in;top:' + (0.5 + row * 2) + 'in">' + (on ? one : '') + '</div>';
+  }
+  const w = window.open('', '_blank'); if(!w) return toast('Allow pop ups for the desk to print.', true);
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><base href="' + esc(location.href) + '"><title>Tag ' + esc(g.tag || '') + '</title>' +
+    '<link rel="stylesheet" href="lw.css?v=6"><style>' +
+    '@page{size:letter;margin:0}*{box-sizing:border-box;margin:0;padding:0}html,body{width:8.5in;height:11in;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    'body{position:relative;font-family:Manrope,system-ui,sans-serif;color:#111}' +
+    '.cell{position:absolute;width:4in;height:2in;overflow:hidden}' +
+    '.lab{display:grid;grid-template-columns:1.46in 1fr;gap:.14in;align-items:center;height:100%;padding:.2in .22in .2in .2in}' +
+    '.q svg{width:1.46in;height:1.46in;display:block}' +
+    '.t img{width:1.05in;display:block;margin-bottom:.06in}.t b{display:block;font-size:26pt;font-weight:800;letter-spacing:-.01em;line-height:1}' +
+    '.t span{display:block;font-size:7.5pt;color:#333;line-height:1.35;margin-top:.03in;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.t .sn{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:7.5pt}.t .pr{color:#6E6961}' +
+    '@media screen{body{outline:1px solid #ddd;margin:20px auto}.cell{outline:1px dashed #d8d2c8}.np{position:fixed;right:16px;top:16px}}@media print{.np{display:none}}' +
+    '</style></head><body><button class="np btn" onclick="print()">Print</button>' + cells +
+    '<script>window.onload=function(){setTimeout(function(){print()},400)}<\/script></body></html>');
+  w.document.close();
+}
+
+/* offboarding: everything a person holds, check each back in, print the receipt */
+function returnForm(sid){
+  const st = byId(S.staff, sid) || {};
+  const gs = gearOf(sid);
+  SHEET = { kind:'form', id:'gearret', tab:0, ctx:{ sid } };
+  if(!gs.length){
+    shell('Nothing out.', esc(F(st,'name','email')) + ' has no LIVEWORK gear.', '<div class="form"><button class="btn ghost" id="rclose">Close</button></div>');
+    $('#rclose').onclick = closeSheet; return;
+  }
+  const row = g => '<div class="rt" data-rt="' + idOf(g) + '"><label class="rt-ck"><input type="checkbox" checked> <b>' + esc(gearName(g)) + '</b></label>' +
+    '<span class="mono small">' + esc(g.tag || '') + ' · ' + esc(g.serial || 'no serial') + '</span>' +
+    '<select class="rt-c"><option value="Good">Back, good</option><option value="Damaged">Back, damaged</option><option value="Missing">Not returned</option></select>' +
+    (g.extras ? '<span class="muted small">With ' + esc(g.extras) + '</span>' : '') + '</div>';
+  shell('Return gear.', esc(F(st,'name','email')) + ' holds ' + gs.length + (gs.length === 1 ? ' device' : ' devices') + '. Check each one in.',
+    '<div class="form"><div class="rts">' + gs.map(row).join('') + '</div>' +
+      '<div class="two"><div class="field"><label for="r_day">Returned on</label><input id="r_day" type="date" value="' + lwToday() + '"></div>' +
+      '<div class="field"><label for="r_note">Note</label><input id="r_note" placeholder="Wiped and reset, charger missing"></div></div>' +
+      '<div class="muted small" style="margin:4px 0 12px">Before it goes back on the shelf: sign it out of their accounts and erase it (Mac: Erase All Content and Settings. Windows: Reset this PC).</div>' +
+      '<div class="g-acts"><button class="btn y" id="rsave">Check them in and print the receipt</button></div></div>');
+  $('#rsave').onclick = async () => {
+    const day = val('r_day') || lwToday(), note = val('r_note');
+    const done = [], missing = [];
+    for(const el of document.querySelectorAll('[data-rt]')){
+      const g = byId(S.gear, el.dataset.rt); if(!g) continue;
+      const cond = el.querySelector('.rt-c').value, on = el.querySelector('input').checked;
+      if(!on) continue;
+      if(cond === 'Missing'){
+        const r = await tryWrite(() => patch('gear', idOf(g), { note: ['Not returned ' + day, note].filter(Boolean).join(' · ') }));
+        if(r) Object.assign(g, r); missing.push(g); continue;
+      }
+      const r = await tryWrite(() => patch('gear', idOf(g), { returned_on: day, condition: cond === 'Damaged' ? 'Returned damaged' : 'Returned good',
+        note: note || g.note || null }));
+      if(r){ Object.assign(g, r); done.push(g); }
+    }
+    toast(done.length + ' checked in.' + (missing.length ? ' ' + missing.length + ' still out.' : ''), !!missing.length);
+    printReturn(st, done, missing, day);
+    closeSheet(); draw();
+  };
+}
+function printReturn(st, done, missing, day){
+  const who = F(st,'name') || '';
+  const rows = list => list.map(g => '<div><b>' + esc(g.tag || '') + '</b><span>' + esc(gearName(g)) + ' · <span class="mono">' + esc(g.serial || '') + '</span>' +
+    (g.extras ? ' · ' + esc(g.extras) : '') + (g.condition ? ' · ' + esc(g.condition) : '') + '</span></div>').join('');
+  printPage('Gear returned ' + who,
+    '<div class="tp"><img src="livework-wordmark-black.svg" alt="LIVEWORK"><span class="mc">Papers · Equipment return</span></div>' +
+    '<h1>Gear returned<i>.</i></h1><p class="ld">' + esc(who) + ' returned the LIVEWORK equipment below on ' + esc(dday(day)) + '.</p>' +
+    (done.length ? '<div class="sp">' + rows(done) + '</div>' : '') +
+    (missing.length ? '<p class="ld" style="margin-top:.25in"><b>Still out.</b> Not returned on this date:</p><div class="sp">' + rows(missing) + '</div>' : '') +
+    '<div class="sg"><div>' + esc(who) + ' · date</div><div>For LIVEWORK · date</div></div>');
+}
+
 /* printed pages: a new window, the house type, the browser print dialog */
 function printPage(title, body){
   const w = window.open('', '_blank'); if(!w) return toast('Allow pop ups for the desk to print.', true);
@@ -6297,17 +6436,21 @@ function printPage(title, body){
     '.sp div{display:grid;grid-template-columns:1.4in 1fr;padding:7pt 0;border-bottom:1px solid #E6E0D6;font-size:10.5pt}.sp div b{font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:#6E6961;padding-top:2pt}' +
     'ol{padding-left:16pt;margin:.2in 0}ol li{font-size:10.5pt;line-height:1.55;margin:4pt 0}' +
     '.sg{display:grid;grid-template-columns:1fr 1fr;gap:.4in;margin-top:.6in}.sg div{border-top:1px solid #111;padding-top:5pt;font-size:8.5pt;color:#6E6961}' +
+    '.pwbox{border:1.5px solid #111;padding:10pt 12pt;margin:0 0 .18in;display:grid;grid-template-columns:repeat(3,auto);gap:4pt 18pt;justify-content:start}.pwbox b{display:block;font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:#6E6961}.pwbox span{font-size:11pt}.pwbox p{grid-column:1/-1;margin:4pt 0 0;font-size:8.5pt;color:#55514B}' +
+    '.lb{display:grid;grid-template-columns:1.1in 1fr;gap:.18in;align-items:center;border:1.5px solid #111;border-radius:8pt;padding:.16in;width:3.4in;margin:.1in 0}.lb svg{width:1.1in;height:1.1in;display:block}.lb b{display:block;font-size:26pt;font-weight:800;letter-spacing:-.01em}.lb span{display:block;font-size:8pt;color:#55514B;line-height:1.35}.lbs{display:flex;flex-wrap:wrap;gap:.2in}' +
     '.ok{margin-top:.2in;font-size:9pt;color:#1F7A45}.bk{margin-top:.3in;border:1px dashed #B8B2A8;padding:10pt;font-size:9pt;color:#6E6961}' +
     '@media print{.np{display:none}}.np{position:fixed;right:16px;top:16px}' +
     '</style></head><body><button class="np btn" onclick="print()">Print</button><div class="pg">' + body + '</div>' +
     '<script>window.onload=function(){setTimeout(function(){print()},400)}<\/script></body></html>');
   w.document.close();
 }
-function dayOneSteps(g, who, email){
+function dayOneSteps(g, who, email, o){
+  o = o || {};
   const first = String(who || '').split(/\s+/)[0] || 'there';
   const acct = String(first).toLowerCase().replace(/[^a-z]/g,'') || 'yourname';
   const mgr = F(ME || {}, 'name') || 'your manager';
   const s = (b, t, k) => '<div class="s' + (k ? ' k' : '') + '"><em></em><div><b>' + b + '</b><span>' + t + '</span></div></div>';
+  const mailStep = o.pw ? s('Change your email password.', 'Sign in to ' + esc(email) + (o.web ? ' at ' + esc(o.web) : '') + ' with the temporary password in the box above. Pick your own when it asks. Nobody at LIVEWORK will ever ask for it.', 1) : null;
   const mac = [
     s('Turn it on and pick your country.', 'Join the office or home Wi Fi when it asks.'),
     s('Make your account. Pick your own password.', 'Full name: ' + esc(who) + '. Account name: ' + esc(acct) + '. Twelve characters or more. Nobody at LIVEWORK will ever ask for it, not your manager, not IT.', 1),
@@ -6329,18 +6472,44 @@ function dayOneSteps(g, who, email){
     s('Put it on your phone.', 'iPhone: Safari, Share, Add to Home Screen. Android: Chrome, the three dots, Add to Home screen.'),
     s('Make your card.', 'Desk, The Card, Edit. Name, title, cell. That is your business card now.')
   ];
-  return (g.os === 'windows' ? win : mac).map((x, i) => x.replace('<em></em>', '<em>' + (i + 1) + '</em>')).join('');
+  const phone = [
+    s('Turn it on and set it up.', 'Pick your language, join Wi Fi, sign in with your own Apple ID or Google account. Never a shared one.'),
+    s('Set a passcode. Six digits or more.', 'Turn on Face ID or fingerprint too. Nobody at LIVEWORK will ever ask for the passcode.', 1),
+    s('Turn on Find My.', 'iPhone: Settings, your name, Find My. Android: Settings, Security, Find My Device. If it is ever lost, tell your manager the same day.'),
+    s('Add your work email.', 'Settings, Mail, Accounts, Add Account. Use ' + esc(email) + '.'),
+    s('Put the desk on the home screen.', 'Safari or Chrome, livework.inc/desk.html, type the code from your inbox, then Share, Add to Home Screen.'),
+    s('Make your card.', 'Desk, More, The Card, Edit. Name, title, cell. That is your business card now.')
+  ];
+  const list = g.kind === 'phone' ? phone : (g.os === 'windows' ? win : mac); if(mailStep) list.splice(g.kind === 'phone' ? 1 : 2, 0, mailStep);
+  return list.map((x, i) => x.replace('<em></em>', '<em>' + (i + 1) + '</em>')).join('');
 }
-function printDayOne(g){
+function dayOneForm(g){
   const st = byId(S.staff, g.staff_id) || {};
-  const who = F(st,'name') || 'Welcome', email = F(st,'email') || 'your work email';
+  SHEET = { kind:'form', id:'dayone', tab:0, ctx:{ gid: idOf(g) } };
+  shell('Day one sheet.', esc(F(st,'name') || 'On the shelf') + ' · ' + esc(gearName(g)) + ' · ' + esc(g.tag || ''),
+    '<div class="form">' +
+      '<div class="field"><label for="d_email">Work email</label><input id="d_email" type="email" value="' + esc(F(st,'email')) + '"></div>' +
+      '<div class="field"><label for="d_pw">Temporary email password</label><input id="d_pw" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Leave blank if they set their own">' +
+        '<div class="muted small">Printed on the sheet, never saved in LIVEWORK. They change it on first sign in. You can reset it from the email admin if it gets lost.</div></div>' +
+      '<div class="field"><label for="d_web">Where they sign in to email</label><input id="d_web" placeholder="The webmail address, optional"></div>' +
+      '<button class="btn y" id="dprint">Print the sheet</button></div>');
+  $('#dprint').onclick = () => { printDayOne(g, { email: val('d_email'), pw: $('#d_pw').value, web: val('d_web') }); $('#d_pw').value = ''; closeSheet(); };
+}
+function printDayOne(g, o){
+  o = o || {};
+  const st = byId(S.staff, g.staff_id) || {};
+  const who = F(st,'name') || 'Welcome', email = o.email || F(st,'email') || 'your work email';
   const first = String(who).split(/\s+/)[0];
   printPage('Day one ' + who,
-    '<div class="tp"><img src="livework-wordmark-black.svg" alt="LIVEWORK"><span class="mc">Day one · ' + (g.os === 'windows' ? 'Windows' : 'Mac') + '</span></div>' +
+    '<div class="tp"><img src="livework-wordmark-black.svg" alt="LIVEWORK"><span class="mc">Day one · ' + (g.kind === 'phone' ? 'Phone' : g.os === 'windows' ? 'Windows' : 'Mac') + '</span></div>' +
     '<h1>Day one<i>.</i></h1><p class="ld">' + esc(first) + ', this ' + esc(GEARKIND[g.kind] || 'device').toLowerCase() + ' is yours to run. Do these in order. About twenty minutes.</p>' +
-    '<div class="st">' + dayOneSteps(g, who, email) + '</div>' +
+    (o.pw || o.web ? '<div class="pwbox"><div><b>Work email</b><span class="mono">' + esc(email) + '</span></div>' +
+      (o.pw ? '<div><b>Temporary password</b><span class="mono">' + esc(o.pw) + '</span></div>' : '') +
+      (o.web ? '<div><b>Sign in at</b><span class="mono">' + esc(o.web) + '</span></div>' : '') +
+      '<p>Sign in, then set your own password straight away. Cross this box out once you have.</p></div>' : '') +
+    '<div class="st">' + dayOneSteps(g, who, email, o) + '</div>' +
     '<div class="ft"><div><b>Device</b><span>' + esc(gearName(g)) + '</span></div><div><b>Serial</b><span>' + esc(g.serial || '') + '</span></div><div><b>Tag</b><span>' + esc(g.tag || '') + '</span></div></div>' +
-    '<div class="bk">Recovery key goes on the back of this page, never in an email or a text.</div>');
+    (g.kind === 'phone' ? '' : '<div class="bk">Recovery key goes on the back of this page, never in an email or a text.</div>'));
   tryWrite(() => patch('gear', idOf(g), { day_one_at: isoNow() })).then(r => { if(r) Object.assign(g, r); });
 }
 function printHandoff(g){
@@ -6366,6 +6535,9 @@ function wireP37(m){
     go(b.dataset.goto); if(b.dataset.scanfirst){ const s = document.getElementById('scanSec'); if(s) s.scrollIntoView({ behavior:'smooth' }); } });
   m.querySelectorAll('[data-gear]').forEach(b => b.onclick = e => { e.stopPropagation(); gearForm(b.dataset.gear); });
   m.querySelectorAll('[data-gearnew]').forEach(b => b.onclick = e => { e.stopPropagation(); gearForm(null, b.dataset.gearnew); });
+  m.querySelectorAll('[data-gearret]').forEach(b => b.onclick = e => { e.stopPropagation(); if(staffGone(b.dataset.gearret)) returnForm(b.dataset.gearret); else offboard(b.dataset.gearret); });
+  m.querySelectorAll('[data-onb]').forEach(b => b.onclick = e => { e.stopPropagation(); onboard(); });
+  m.querySelectorAll('[data-offb]').forEach(b => b.onclick = e => { e.stopPropagation(); offboard(); });
   m.querySelectorAll('[data-gearack]').forEach(b => b.onclick = e => { e.stopPropagation(); gearAckForm(b.dataset.gearack); });
 
   /* contacts */
@@ -6422,6 +6594,251 @@ function wireP37(m){
     const i = document.getElementById('scCam'); if(i) i.click(); });
   m.querySelectorAll('[data-scanphone]').forEach(b => b.onclick = () => toPhone((P37.scan || []).filter(x => x.status !== 'skipped').map(x => ({ name:x.name, title:x.title,
     company:x.company, cell:x.cell, office:x.office, email:x.email, website:x.website }))));
+}
+
+/* ============================================================
+   Patch 40. Guided flows, one step per screen.
+   Bring someone on: email, desk, plan, gear, day one, done.
+   Someone is leaving: last day, their work, gear back, access off, done.
+   Every step writes as it goes, so closing halfway loses nothing.
+   ============================================================ */
+let WZ = null;
+const wzDot = (n, i) => '<div class="wz-dots">' + Array.from({ length: n }, (_, k) => '<i class="' + (k < i ? 'd' : k === i ? 'on' : '') + '"></i>').join('') + '</div>';
+function wzShell(title, lede, body, foot){
+  const st = WZ.steps, i = WZ.i;
+  SHEET = { kind:'form', id:'wizard', tab:0, ctx:{} };
+  shell('<span class="wz-k">' + esc(WZ.name) + ' · Step ' + (i + 1) + ' of ' + st.length + '</span>' + title,
+    lede, '<div class="wz">' + wzDot(st.length, i) + '<div class="wz-b">' + body + '</div>' +
+      '<div class="wz-f">' + (i ? '<button class="btn ghost" id="wzBack">Back</button>' : '<span></span>') + (foot || '') + '</div></div>');
+  const b = $('#wzBack'); if(b) b.onclick = () => { WZ.i--; wzPaint(); };
+}
+const wzNext = () => { WZ.i = Math.min(WZ.i + 1, WZ.steps.length - 1); wzPaint(); };
+function wzPaint(){ WZ.steps[WZ.i](); }
+const wzStaff = () => WZ.sid ? byId(S.staff, WZ.sid) : null;
+const wzTick = (id, label, sub) => '<label class="wz-t"><input type="checkbox" id="' + id + '"><span><b>' + label + '</b>' + (sub ? '<em>' + sub + '</em>' : '') + '</span></label>';
+
+/* ---------- Bring someone on ---------- */
+function onboard(){
+  WZ = { name:'Bring someone on', i:0, sid:null, email:'', pw:'', web:'', who:'', steps:[obMail, obDesk, obPlan, obGear, obPapers, obDone] };
+  wzPaint();
+}
+function obMail(){
+  wzShell('Make their work email.', 'Do this first. The desk sends their sign in code to this address.',
+    '<ol class="wz-l"><li>Open your email admin (GoDaddy, Email and Office).</li><li>Add a user. First and last name, then the address, like jordan@livework.inc.</li>' +
+      '<li>Set a temporary password. Type it below so it prints on their day one sheet. It is never saved.</li></ol>' +
+    '<a class="btn ghost" href="https://sso.godaddy.com/?path=%2Fproducts" target="_blank" rel="noopener">Open GoDaddy</a>' +
+    '<div class="field"><label for="w_name">Full name</label><input id="w_name" value="' + esc(WZ.who) + '" placeholder="Jordan Lee"></div>' +
+    '<div class="field"><label for="w_email">Work email</label><input id="w_email" type="email" value="' + esc(WZ.email) + '" placeholder="jordan@livework.inc"></div>' +
+    '<div class="two"><div class="field"><label for="w_pw">Temporary email password</label><input id="w_pw" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(WZ.pw) + '"></div>' +
+      '<div class="field"><label for="w_web">They sign in to email at</label><input id="w_web" value="' + esc(WZ.web || 'email.godaddy.com') + '"></div></div>',
+    '<button class="btn y" id="wzGo">Email is made. Next</button>');
+  $('#wzGo').onclick = () => {
+    WZ.who = val('w_name'); WZ.email = String(val('w_email')).toLowerCase(); WZ.pw = $('#w_pw').value; WZ.web = val('w_web');
+    if(WZ.who.split(/\s+/).length < 2) return toast('First and last name.', true);
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(WZ.email)) return toast('That email does not look right.', true);
+    const have = S.staff.find(s => String(F(s,'email')).toLowerCase() === WZ.email);
+    if(have) WZ.sid = idOf(have);
+    wzNext();
+  };
+}
+function obDesk(){
+  const have = wzStaff();
+  const opts2 = ROLES.filter(r => r !== 'owner' || isOwner()).map(r => '<option value="' + r + '"' + (r === (have ? roleOf(have) : 'recruiter') ? ' selected' : '') + '>' + roleLabel(r) + '</option>').join('');
+  wzShell('Give them the desk.', have ? esc(F(have,'name')) + ' is already on the desk as ' + esc(roleLabel(roleOf(have))) + '. Nothing to add.'
+      : 'This adds ' + esc(WZ.who) + ' to People and lets ' + esc(WZ.email) + ' sign in with a code. No password on the desk, ever.',
+    have ? '<div class="wz-ok">On the desk.</div>' :
+    '<div class="field"><label for="w_role">Tier</label><select id="w_role">' + opts2 + '</select></div>' +
+    '<div class="muted small">Recruiter sees only their own roles and commission. Admin sees everything. You can change it later on People.</div>',
+    '<button class="btn y" id="wzGo">' + (have ? 'Next' : 'Add them to the desk') + '</button>');
+  $('#wzGo').onclick = async () => {
+    if(wzStaff()) return wzNext();
+    const b = $('#wzGo'); b.disabled = true; b.textContent = 'Adding';
+    try{
+      const j = await fnCall('staff-add', { name: WZ.who, email: WZ.email, role: val('w_role') });
+      const row = j.staff; if(row){ S.staff = S.staff.filter(s => String(idOf(s)) !== String(idOf(row))).concat([row]); WZ.sid = idOf(row); }
+      toast(WZ.who + ' can sign in now.'); drawNav(); wzNext();
+    }catch(e){ toast('Did not add. ' + e.message, true); b.disabled = false; b.textContent = 'Add them to the desk'; }
+  };
+}
+function obPlan(){
+  const st = wzStaff(); const has = (S.comp_plans || []).some(p => String(p.staff_id) === String(WZ.sid));
+  wzShell('Set their commission.', has ? 'A plan is on file. You can add another or move on.' : 'Rates and bands from their offer letter. Skip it if they are not on commission.',
+    '<div class="wz-ok' + (has ? '' : ' no') + '">' + (has ? 'Plan on file.' : 'No plan yet. Anyone without one gets the standard ladder.') + '</div>',
+    '<button class="btn ghost" id="wzPlan">' + (has ? 'Open the plan' : 'Set the plan') + '</button><button class="btn y" id="wzGo">Next</button>');
+  $('#wzPlan').onclick = () => { const back = WZ; form('plan', { staff: WZ.sid }); const s = $('#fsave'); if(s){ const o = s.onclick; s.onclick = async () => { await o(); WZ = back; wzPaint(); }; } };
+  $('#wzGo').onclick = wzNext;
+}
+function obGear(){
+  const gs = gearOf(WZ.sid), shelf = (S.gear || []).filter(g => !g.staff_id && gearOut(g));
+  wzShell('Hand them their gear.', 'One device at a time. The tag number fills itself in. Their own phone is fine, the desk runs on it.',
+    (gs.length ? '<div class="wz-have">' + gs.map(g => '<div><b>' + esc(g.tag || '') + '</b> ' + esc(gearName(g)) + ' <span class="mono small">' + esc(g.serial || '') + '</span></div>').join('') + '</div>' : '') +
+    (shelf.length ? '<div class="field"><label for="w_shelf">From the shelf</label><select id="w_shelf"><option value="">A new device</option>' +
+      shelf.map(g => '<option value="' + idOf(g) + '">' + esc(g.tag || '') + ' · ' + esc(gearName(g)) + '</option>').join('') + '</select></div>' : '') +
+    '<div class="two"><div class="field"><label for="w_kind">Kind</label><select id="w_kind"><option value="laptop">Laptop</option><option value="phone">Phone</option><option value="monitor">Monitor</option><option value="other">Other</option></select></div>' +
+      '<div class="field"><label for="w_os">System</label><select id="w_os"><option value="mac">Mac</option><option value="windows">Windows</option><option value="other">Other</option></select></div></div>' +
+    '<div class="field"><label for="w_model">Make and model</label><input id="w_model" placeholder="MacBook Air 15 M4"></div>' +
+    '<div class="two"><div class="field"><label for="w_serial">Serial number</label><input id="w_serial" placeholder="On the box or the bottom"></div>' +
+      '<div class="field"><label for="w_cost">Cost</label><input id="w_cost" inputmode="decimal" placeholder="1499"></div></div>' +
+    '<div class="field"><label for="w_extras">Comes with</label><input id="w_extras" placeholder="Charger, USB C cable"></div>',
+    '<button class="btn ghost" id="wzAdd">Assign this one</button><button class="btn y" id="wzGo">' + (gs.length ? 'Next' : 'No company gear, next') + '</button>');
+  $('#wzAdd').onclick = async () => {
+    const sh = $('#w_shelf') ? val('w_shelf') : '';
+    if(sh){
+      const r = await tryWrite(() => patch('gear', sh, { staff_id: WZ.sid, handed_on: lwToday(), returned_on: null, ack_name: null, ack_at: null, ack_agent: null }), 'Assigned.');
+      if(r){ Object.assign(byId(S.gear, sh), r); wzPaint(); } return;
+    }
+    const row = { staff_id: WZ.sid, kind: val('w_kind'), os: val('w_os'), model: val('w_model') || null,
+      serial: String(val('w_serial') || '').toUpperCase() || null, cost: val('w_cost') === '' ? null : num(val('w_cost')),
+      extras: val('w_extras') || null, tag: nextTag(), handed_on: lwToday(), condition: 'New in box', created_by: meId() };
+    if(!row.model && !row.serial) return toast('Give it a model or a serial.', true);
+    if(row.serial && (S.gear || []).some(x => String(x.serial || '').toUpperCase() === row.serial)) return toast('That serial is already on the desk.', true);
+    const r = await tryWrite(() => insert('gear', row), row.tag + ' assigned.');
+    if(r){ S.gear.push(r); wzPaint(); }
+  };
+  $('#wzGo').onclick = wzNext;
+}
+function obPapers(){
+  const gs = gearOf(WZ.sid);
+  wzShell('Print their papers.', 'Hand these over on day one. The handoff terms also show up on their desk to accept.',
+    (gs.length ? gs.map(g => '<div class="wz-row"><div><b>' + esc(g.tag || '') + ' · ' + esc(gearName(g)) + '</b><span class="muted small">' + (g.kind === 'phone' ? 'Phone steps' : g.os === 'windows' ? 'Windows steps' : 'Mac steps') + '</span></div>' +
+        '<div class="wz-btns"><button class="btn y sm" data-wday="' + idOf(g) + '">Day one sheet</button><button class="btn ghost sm" data-wlab="' + idOf(g) + '">Tag labels</button><button class="btn ghost sm" data-whand="' + idOf(g) + '">Handoff form</button></div></div>').join('')
+      : '<div class="wz-row"><div><b>Own devices</b><span class="muted small">The day one sheet still covers email, the desk and their card.</span></div><div class="wz-btns"><button class="btn y sm" data-wday="">Day one sheet</button></div></div>') +
+    '<div class="muted small" style="margin-top:12px">The temporary password from step 1 prints in the box at the top. It is forgotten when you close this.</div>',
+    '<button class="btn y" id="wzGo">Next</button>');
+  document.querySelectorAll('[data-wday]').forEach(b => b.onclick = () => {
+    const g = b.dataset.wday ? byId(S.gear, b.dataset.wday) : { kind:'laptop', os:'mac', staff_id: WZ.sid, model:'Their own device', tag:'', serial:'' };
+    printDayOne(g, { email: WZ.email, pw: WZ.pw, web: WZ.web });
+  });
+  document.querySelectorAll('[data-wlab]').forEach(b => b.onclick = () => printLabel(byId(S.gear, b.dataset.wlab)));
+  document.querySelectorAll('[data-whand]').forEach(b => b.onclick = () => printHandoff(byId(S.gear, b.dataset.whand)));
+  $('#wzGo').onclick = wzNext;
+}
+function obDone(){
+  const st = wzStaff() || {}, gs = gearOf(WZ.sid);
+  WZ.pw = '';
+  wzShell('They are set.', 'What happens on their first sign in, nothing for you to do.',
+    '<div class="spec gspec">' +
+      '<div class="row"><b>Email</b><span>' + esc(WZ.email) + '</span></div>' +
+      '<div class="row"><b>Desk</b><span>' + esc(roleLabel(roleOf(st))) + ' · signs in with a code</span></div>' +
+      '<div class="row"><b>Gear</b><span>' + (gs.length ? gs.map(g => esc(g.tag) + ' ' + esc(gearName(g))).join(' · ') : 'Own devices') + '</span></div></div>' +
+    '<ol class="wz-l"><li>They read and accept the desk access agreement.</li>' + (gs.length ? '<li>Today asks them to accept the company gear terms.</li>' : '') +
+      '<li>They make their card under The Card.</li></ol>',
+    '<button class="btn y" id="wzGo">Done</button>');
+  $('#wzGo').onclick = () => { WZ = null; closeSheet(); draw(); };
+}
+
+/* ---------- Someone is leaving ---------- */
+function offboard(sid){
+  WZ = { name:'Someone is leaving', i: sid ? 1 : 0, sid: sid || null, steps:[offWho, offDay, offWork, offGear, offAccess, offDone], log:[] };
+  wzPaint();
+}
+function offWho(){
+  const opts3 = activeStaff().filter(s => String(idOf(s)) !== String(meId())).map(s => '<option value="' + idOf(s) + '"' + (String(idOf(s)) === String(WZ.sid) ? ' selected' : '') + '>' + esc(F(s,'name','email')) + '</option>').join('');
+  wzShell('Who is leaving.', 'Five short steps. Each one saves as you go.',
+    '<div class="field"><label for="w_who">Person</label><select id="w_who"><option value="">Pick one</option>' + opts3 + '</select></div>',
+    '<button class="btn y" id="wzGo">Next</button>');
+  $('#wzGo').onclick = () => { if(!val('w_who')) return toast('Pick the person.', true); WZ.sid = val('w_who'); wzNext(); };
+}
+function offDay(){
+  const st = wzStaff() || {};
+  wzShell('Their last day.', esc(F(st,'name')) + '. Commission stops on invoices sent after this day. Earlier invoices still pay as clients pay.',
+    '<div class="field"><label for="w_last">Last day</label><input id="w_last" type="date" value="' + esc(F(st,'ended_on') || lwToday()) + '"></div>' +
+    '<div class="field"><label for="w_why">Why</label><select id="w_why"><option>Resigned with notice</option><option>Resigned without notice</option><option>Let go</option><option>Laid off</option><option>End of contract</option></select></div>' +
+    '<div class="wz-note">Final paycheck in California: on the last day if you let them go. Within 72 hours if they quit without notice, on the last day if they gave 72 hours or more. Include unused vacation.</div>',
+    '<button class="btn y" id="wzGo">Save and next</button>');
+  $('#wzGo').onclick = async () => {
+    const d = val('w_last'); if(!d) return toast('Pick the day.', true);
+    WZ.why = val('w_why'); WZ.last = d;
+    const r = await tryWrite(() => patch('staff', WZ.sid, { ended_on: d }), 'Last day set.');
+    if(r){ Object.assign(st, r); WZ.log.push('Last day ' + dday(d) + ' · ' + WZ.why); wzNext(); }
+  };
+}
+function offWork(){
+  const id = String(WZ.sid);
+  const roles = S.searches.filter(s => isOpen(s) && (String(s.am_id) === id || String(s.recruiter_id) === id));
+  const cos = S.companies.filter(c => { const o = ownerNow(idOf(c)); return o && String(o.staff_id) === id; });
+  const scans = inboxNew().filter(x => String(x.scanned_by) === id).length;
+  const others = activeStaff().filter(s => String(idOf(s)) !== id);
+  const pick = k => '<select class="wz-sel" data-' + k + '><option value="">Keep</option>' + others.map(s => '<option value="' + idOf(s) + '">' + esc(F(s,'name','email')) + '</option>').join('') + '</select>';
+  wzShell('Hand off their work.', 'Pick who takes each one. Nothing moves until you press the button.',
+    (roles.length ? '<div class="micro">Open roles</div>' + roles.map(s => '<div class="wz-row"><div><b>' + esc(F(s,'title')) + '</b><span class="muted small">' + esc(cname(s.company_id)) + ' · ' +
+        [String(s.am_id) === id ? 'AM' : '', String(s.recruiter_id) === id ? 'Recruiter' : ''].filter(Boolean).join(' and ') + '</span></div>' + pick('wse="' + idOf(s) + '"') + '</div>').join('') : '<div class="wz-ok">No open roles in their name.</div>') +
+    (cos.length ? '<div class="micro" style="margin-top:14px">Clients they own</div>' + cos.map(c => '<div class="wz-row"><div><b>' + esc(F(c,'name')) + '</b><span class="muted small">Commission owner</span></div>' +
+        '<button class="btn ghost sm" data-wown="' + idOf(c) + '">Move owner</button></div>').join('') : '') +
+    (scans ? '<div class="wz-note">' + scans + ' scanned ' + (scans === 1 ? 'card' : 'cards') + ' of theirs still to sort. Admins see them in Contacts.</div>' : ''),
+    '<button class="btn y" id="wzGo">' + (roles.length ? 'Move and next' : 'Next') + '</button>');
+  document.querySelectorAll('[data-wown]').forEach(b => b.onclick = () => { const back = WZ; form('owner', { co: b.dataset.wown });
+    const s = $('#fsave'); if(s){ const o = s.onclick; s.onclick = async () => { await o(); WZ = back; wzPaint(); }; } });
+  $('#wzGo').onclick = async () => {
+    for(const sel of document.querySelectorAll('[data-wse]')){
+      if(!sel.value) continue;
+      const s = search(sel.dataset.wse), row = {};
+      if(String(s.am_id) === id) row.am_id = sel.value;
+      if(String(s.recruiter_id) === id) row.recruiter_id = sel.value;
+      const r = await tryWrite(() => patch('searches', idOf(s), row));
+      if(r){ Object.assign(s, r); WZ.log.push(F(s,'title') + ' moved to ' + staffName(sel.value)); }
+    }
+    wzNext();
+  };
+}
+function offGear(){
+  const gs = gearOf(WZ.sid);
+  if(!gs.length){
+    wzShell('Get the gear back.', 'Nothing of LIVEWORK’s is out with them.', '<div class="wz-ok">No gear out.</div>', '<button class="btn y" id="wzGo">Next</button>');
+    $('#wzGo').onclick = wzNext; return;
+  }
+  wzShell('Get the gear back.', 'Check each one in as it comes back. Anything not back stays on their record.',
+    '<div class="rts">' + gs.map(g => '<div class="rt" data-rt="' + idOf(g) + '"><label class="rt-ck"><input type="checkbox" checked> <b>' + esc(gearName(g)) + '</b></label>' +
+      '<span class="mono small">' + esc(g.tag || '') + ' · ' + esc(g.serial || 'no serial') + '</span>' +
+      '<select class="rt-c"><option value="Good">Back, good</option><option value="Damaged">Back, damaged</option><option value="Missing">Not back yet</option></select>' +
+      (g.extras ? '<span class="muted small">With ' + esc(g.extras) + '</span>' : '') + '</div>').join('') + '</div>' +
+    '<div class="wz-note">Before a device goes back on the shelf: sign it out of their accounts, then erase it. Mac: Erase All Content and Settings. Windows: Reset this PC. Phone: Erase All Content.</div>',
+    '<button class="btn y" id="wzGo">Check in, print receipt, next</button>');
+  $('#wzGo').onclick = async () => {
+    const st = wzStaff() || {}, day = lwToday(), done = [], missing = [];
+    for(const el of document.querySelectorAll('[data-rt]')){
+      const g = byId(S.gear, el.dataset.rt); if(!g || !el.querySelector('input').checked) continue;
+      const c = el.querySelector('.rt-c').value;
+      if(c === 'Missing'){ const r = await tryWrite(() => patch('gear', idOf(g), { note: 'Not back ' + day })); if(r) Object.assign(g, r); missing.push(g); continue; }
+      const r = await tryWrite(() => patch('gear', idOf(g), { returned_on: day, condition: c === 'Damaged' ? 'Returned damaged' : 'Returned good' }));
+      if(r){ Object.assign(g, r); done.push(g); }
+    }
+    WZ.log.push(done.length + ' device' + (done.length === 1 ? '' : 's') + ' back' + (missing.length ? ', ' + missing.length + ' still out' : ''));
+    printReturn(st, done, missing, day);
+    wzNext();
+  };
+}
+function offAccess(){
+  const st = wzStaff() || {};
+  const now = !WZ.last || WZ.last <= lwToday();
+  wzShell('Close their access.', now ? 'Their last day is here. Switch the desk off and work down the list.' : 'Their last day is ' + esc(dday(WZ.last)) + '. Come back that day, or switch it off now.',
+    '<button class="btn' + (st.active === false ? ' ghost' : '') + '" id="wzOff"' + (st.active === false ? ' disabled' : '') + '>' + (st.active === false ? 'Desk access is off' : 'Switch off their desk access') + '</button>' +
+    '<div class="wz-ts">' +
+      wzTick('t1', 'Suspend their email.', 'GoDaddy, Email and Office. Forward it to their manager for 90 days so client mail is not lost.') +
+      wzTick('t2', 'Change what they knew.', 'Wi Fi, any shared logins, the office door code.') +
+      wzTick('t3', 'Erase the returned devices.', 'Then they go back on the shelf for the next person.') +
+      wzTick('t4', 'Final paycheck and unused vacation.', 'On the timing from step 2.') +
+    '</div><div class="muted small">The ticks are your checklist on this screen only.</div>',
+    '<button class="btn y" id="wzGo">Next</button>');
+  const o = $('#wzOff'); if(o) o.onclick = async () => {
+    if(!confirm('Switch off ' + F(st,'name') + '? They can no longer sign in.')) return;
+    const r = await tryWrite(() => patch('staff', WZ.sid, { active: false }), 'Desk access off.');
+    if(r){ Object.assign(st, r); WZ.log.push('Desk access off ' + dday(lwToday())); wzPaint(); }
+  };
+  $('#wzGo').onclick = wzNext;
+}
+function offDone(){
+  const st = wzStaff() || {}, gs = gearOf(WZ.sid);
+  wzShell('That is everything.', esc(F(st,'name')) + (gs.length ? ' still has ' + gs.length + ' LIVEWORK ' + (gs.length === 1 ? 'device' : 'devices') + ' out. People and Today keep flagging it until it comes back.' : ' is fully off the books.'),
+    '<div class="spec gspec">' + (WZ.log.length ? WZ.log : ['Nothing changed']).map((l, i) => '<div class="row"><b>' + (i + 1) + '</b><span>' + esc(l) + '</span></div>').join('') + '</div>',
+    '<button class="btn ghost" id="wzPrint">Print this record</button><button class="btn y" id="wzGo">Done</button>');
+  $('#wzPrint').onclick = () => printPage('Offboarding ' + F(st,'name'),
+    '<div class="tp"><img src="livework-wordmark-black.svg" alt="LIVEWORK"><span class="mc">Papers · Offboarding</span></div>' +
+    '<h1>Offboarded<i>.</i></h1><p class="ld">' + esc(F(st,'name')) + ' · ' + esc(F(st,'email')) + (WZ.last ? ' · last day ' + esc(dday(WZ.last)) : '') + '</p>' +
+    '<div class="sp">' + WZ.log.map((l, i) => '<div><b>' + (i + 1) + '</b><span>' + esc(l) + '</span></div>').join('') + '</div>' +
+    (gs.length ? '<p class="ld" style="margin-top:.25in"><b>Still out:</b> ' + gs.map(g => esc(g.tag) + ' ' + esc(gearName(g))).join(' · ') + '</p>' : '') +
+    '<div class="sg"><div>Completed by ' + esc(F(ME || {}, 'name')) + ' · date</div><div></div></div>');
+  $('#wzGo').onclick = () => { WZ = null; closeSheet(); draw(); };
 }
 
 </script>
