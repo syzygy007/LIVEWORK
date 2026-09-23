@@ -711,6 +711,96 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 @media (max-width:900px){ .xamt{font-size:40px;height:72px} }
 .btn.ghost.del{color:var(--s-due);border-color:var(--s-due)}
 .btn.ghost.del:hover{background:var(--s-due);color:#fff}
+
+/* ---------- Patch 37: gear, the card, the scanner, contacts ---------- */
+.vh{position:absolute!important;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.gl{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:12px;color:var(--stone);cursor:pointer;width:max-content;max-width:100%}
+.gl:hover{color:var(--ink)}
+.gl.add{text-decoration:underline;text-underline-offset:3px}
+.gl i,.gdot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block;margin-right:6px;vertical-align:middle}
+.gl i.ok,.gdot.ok{background:#1F7A45}
+.gl i.wait,.gdot.wait{background:#B97A0E}
+.geartbl .r.gr-back{opacity:.55}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
+.g-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.gack{display:flex;justify-content:space-between;align-items:center;gap:16px;background:var(--white);border:1px solid var(--line);
+  border-left:4px solid var(--yellow);padding:14px 18px;margin:0 0 12px}
+.gack b{display:block;font-size:15px}
+.gack span{color:var(--stone);font-size:13px}
+.gspec{border-top:1px solid var(--ink);margin:4px 0 8px}
+.gspec .row{display:grid;grid-template-columns:120px 1fr;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+.gspec .row b{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--stone);font-weight:600}
+.gterms{padding-left:18px;margin:14px 0 16px}
+.gterms li{margin:6px 0;line-height:1.5;font-size:13.5px}
+
+.cx-sec{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.cx-sec .btn{margin-left:auto}
+.cx-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:12px;margin:10px 0 28px}
+.cx-card{background:var(--white);border:1px solid var(--line);padding:14px 16px}
+.cx-top{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px}
+.cx-why{font-size:11px;font-weight:600;color:var(--stone)}
+.cx-f{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cx-f input{height:34px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 10px;font:inherit;font-size:13px;min-width:0;border-radius:2px}
+.cx-f input[data-f=name]{font-weight:700}
+.cx-go{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+.cx-land{font-size:13px;margin-bottom:10px}
+.cx-land b{cursor:default}
+.cx-btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cx-btns select{height:34px;border:1px solid var(--line);background:var(--white);color:var(--ink);font:inherit;font-size:12.5px;padding:0 8px;max-width:190px}
+.cx-pill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;vertical-align:1px}
+.cx-pill.cl{background:#E4EDFF;color:#1F55C4}
+.cx-pill.pr{background:#FBEFC4;color:#7A5C00}
+.cx-pill.bl{background:#DDF1E6;color:#1F7A45}
+.cx-who b{display:block}
+.cx-co{cursor:pointer}
+.cx-co:hover{text-decoration:underline}
+
+.lc-page{display:flex;flex-direction:column;align-items:center;padding:8px 0 10px}
+.lc{width:min(420px,100%);aspect-ratio:1.586;perspective:1400px;cursor:pointer;outline:none}
+.lc-in{position:relative;width:100%;height:100%;transition:transform .7s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
+.lc.on .lc-in{transform:rotateY(180deg)}
+.lc-face{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;
+  background:radial-gradient(120% 120% at 0 0,#262626 0,#151515 45%,#0A0A0A 100%);border:1px solid #2A2A2A;box-shadow:0 22px 44px rgba(0,0,0,.35);color:#F4F2ED}
+.lc-front{padding:24px}
+.lc-front b{font-size:12.5px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:#E8E6E1}
+.lc-front i{position:absolute;left:24px;top:52px;width:20px;height:2px;background:var(--yellow)}
+.lc-front .lc-wm{position:absolute;right:24px;bottom:22px;width:96px;height:auto;opacity:.92}
+.lc-back{transform:rotateY(180deg);display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:20px;background:#101010}
+.lc-qr{background:#fff;border-radius:12px;padding:10px;width:clamp(120px,36vw,168px)}
+.lc-qr svg{display:block;width:100%;height:auto}
+.lc-back p{margin:0;font-size:15px;font-weight:700;line-height:1.3;color:#F4F2ED}
+.lc-back p span{display:block;margin-top:8px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8F8A82;font-weight:600}
+.lc-flip{margin-top:22px;border-radius:30px;padding-left:28px;padding-right:28px}
+.lc-note{margin-top:12px;text-align:center;max-width:380px}
+
+.sc{max-width:520px;margin:6px 0 30px}
+.sc-frame{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;aspect-ratio:4/3;background:#0B0B0B;color:#F4F2ED;
+  border-radius:14px;cursor:pointer;gap:6px;overflow:hidden}
+.sc-frame b{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.sc-frame em{font-style:normal;color:#8F8A82;font-size:13px}
+.sc-c{position:absolute;width:28px;height:28px;border:2px solid var(--yellow)}
+.sc-c.tl{left:18px;top:18px;border-right:0;border-bottom:0}.sc-c.tr{right:18px;top:18px;border-left:0;border-bottom:0}
+.sc-c.bl{left:18px;bottom:18px;border-right:0;border-top:0}.sc-c.br{right:18px;bottom:18px;border-left:0;border-top:0}
+.sc-two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.sc-two .btn{justify-content:center;text-align:center;min-width:0;white-space:nowrap}
+.sc-bar{height:3px;background:var(--line);border-radius:2px;margin:14px 0 8px;overflow:hidden;opacity:0;transition:opacity .2s}
+.sc-bar.on{opacity:1}
+.sc-bar i{display:block;height:100%;width:0;background:var(--yellow);transition:width .25s}
+.sc-head{display:flex;align-items:baseline;gap:10px;margin:14px 0 10px}
+.sc-head b{font-size:18px}
+.sc-card{background:var(--white);border:1px solid var(--line);padding:12px 14px;margin-bottom:8px}
+.sc-card b{display:block}
+.sc-card>span{display:block;color:var(--stone);font-size:13px}
+.sc-card em{display:block;font-style:normal;font-size:12px;color:var(--stone);margin-top:4px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.sc-land{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:12.5px}
+.sc-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.sc-none{padding:16px;border:1px dashed var(--line);color:var(--stone);margin-top:12px}
+@media (max-width:900px){
+  .cx-list{grid-template-columns:1fr}
+  .cx-sec .btn{margin-left:0}
+  .gack{flex-direction:column;align-items:flex-start}
+  .lc-back{gap:12px;padding:16px}
+}
 </style>
 </head>
 <body>
@@ -880,7 +970,8 @@ const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_ta
   candidate_tags:[], pipeline:[], pipeline_log:[], placements:[], invoices:[], documents:[],
   automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[], interview_guides:[],
   pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[], desk_acceptances:[], expenses:[],
-  lw_payouts:[], lw_commission_lines:[], commission_runs:[], comp_plans:[], company_owners:[] };
+  lw_payouts:[], lw_commission_lines:[], commission_runs:[], comp_plans:[], company_owners:[],
+  gear:[], contact_inbox:[], staff_cards:[] };
 let ME = null;
 
 async function loadAll(){
@@ -955,9 +1046,9 @@ const sigBar = v => v == null ? '<span class="muted small">Not submitted yet</sp
 <script>
 /* ============================ views ============================ */
 const NAV = [
-  ['today','Today'],['companies','Clients'],['searches','Roles'],['candidates','Candidates'],['find','Search'],['intake','Intake'],
+  ['today','Today'],['companies','Clients'],['contacts','Contacts'],['searches','Roles'],['candidates','Candidates'],['find','Search'],['intake','Intake'],
   ['pools','Pools'],['pipeline','Pipeline'],['activity','Activity'],['placements','Placements'],
-  ['invoices','Invoices'],['expenses','Expenses'],['mail','Mail'],['reports','Reports'],['people','People'],['settings','Settings']
+  ['invoices','Invoices'],['expenses','Expenses'],['card','The Card'],['mail','Mail'],['reports','Reports'],['people','People'],['settings','Settings']
 ];
 let VIEW = 'today';
 let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted',
@@ -974,6 +1065,7 @@ function counts(k){
   if(k==='placements') return S.placements.length;
   if(k==='invoices') return S.invoices.filter(i => String(F(i,'status')).toLowerCase()!=='paid').length;
   if(k==='expenses') return exBadge();
+  if(k==='contacts') return (typeof myInboxNew === 'function' ? myInboxNew().length : 0) || '';
   if(k==='pools') return S.pools.length;
   return '';
 }
@@ -1059,7 +1151,8 @@ function draw(){
   m.innerHTML = ({
     today: vToday, companies: vCompanies, searches: vSearches, candidates: vCandidates, find: vFind, intake: vIntake,
     pools: vPools, pipeline: vPipeline, activity: vActivity, placements: vPlacements,
-    invoices: vInvoices, expenses: vExpenses, mail: vMail, reports: vReports, people: vPeople, settings: vSettings
+    invoices: vInvoices, expenses: vExpenses, mail: vMail, reports: vReports, settings: vSettings,
+    people: () => vPeople() + vGearSection(), contacts: vContacts, card: vCard
   }[VIEW])();
   wire();
   labelCells(m);
@@ -1332,7 +1425,7 @@ function vToday(){
 
   const sat = w => w.days > 900 ? w.tag : w.tag + ' \u00b7 ' + w.days + (w.days === 1 ? ' DAY' : ' DAYS');
 
-  return head('Today.', addMenu([['call','Log a call'],['task','Add a task'],['interview','New interview'],['visit','Visit note']])) +
+  return head('Today.', addMenu([['call','Log a call'],['task','Add a task'],['interview','New interview'],['visit','Visit note']])) + gearAckBanner() +
     scopeBar +
     '<div class="stats">' +
       '<div class="stat"><b>' + openS.length + '</b><span>Open roles</span></div>' +
@@ -3141,7 +3234,7 @@ function vPeople(){
         '<div><b>' + esc(F(x,'name','email')) + '</b>' +
         '<span class="pp-sub">' + (self ? 'You' : esc(roleLabel(roleOf(x)))) + '</span>' +
         '<span class="pp-mail muted">' + esc(F(x,'email')) + '</span>' +
-        accDot(F(x,'email')) + '</div></div>' +
+        accDot(F(x,'email')) + gearLine(id) + '</div></div>' +
       '<span class="muted pp-email">' + esc(F(x,'email')) + '</span>' +
       (canSetRole(x) ? '<select class="rolesel" data-staff="' + id + '">' + grantable(x) + '</select>'
                      : '<span class="chip" title="' + (self ? 'You cannot change your own role' : 'Only a Root can change a Root') + '">' +
@@ -5273,6 +5366,7 @@ function wire(){
   const m = $('#main');
   common(m);
   try{ wirePeople(m); }catch(e){ console.warn('people', e.message); }
+  try{ wireP37(m); }catch(e){ console.warn('p37', e.message); }
   try{ wireCommission(m); }catch(e){ console.warn('commission', e.message); }
   m.querySelectorAll('select.rolesel').forEach(sel => sel.onchange = async () => {
     const was = S.staff.find(x => String(idOf(x)) === String(sel.dataset.staff));
@@ -5649,6 +5743,603 @@ LWAuth.gate(document.getElementById('gate'), async function(staff){
   }
   G.onclick = ask; Qi.onkeydown = e => { if(e.key === 'Enter') ask(); };
 })();
+</script>
+<script>
+/* qrcode-generator 1.4.4 · Kazuhiko Arase · MIT */
+var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1})},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});
+</script>
+<script>
+/* ============================================================
+   Patch 37. Gear, The Card, the Card scanner and Contacts.
+   Scanned cards never go straight into the book. They land in
+   contact_inbox and a person puts each one under a client or a
+   new prospect. The desk guesses the home, the person confirms.
+   ============================================================ */
+const P37 = { scan: null, scanning: false };
+if(Q.ctTab == null) Q.ctTab = 'all';
+if(Q.ctQ == null) Q.ctQ = '';
+
+/* ---------- small helpers ---------- */
+const FREEMAIL = ['gmail.com','googlemail.com','yahoo.com','hotmail.com','outlook.com','live.com','msn.com','icloud.com','me.com','mac.com',
+  'aol.com','comcast.net','att.net','sbcglobal.net','verizon.net','cox.net','charter.net','proton.me','protonmail.com','ymail.com','gmx.com'];
+const domOf = e => { const m = String(e || '').toLowerCase().trim().match(/@([^@\s>]+)$/); return m ? m[1].replace(/^www\./,'') : ''; };
+const workDom = e => { const d = domOf(e); return d && FREEMAIL.indexOf(d) < 0 ? d : ''; };
+const webDom = w => String(w || '').toLowerCase().trim().replace(/^https?:\/\//,'').replace(/^www\./,'').split(/[\/?#\s]/)[0];
+const coKey = n => String(n || '').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9 ]+/g,' ')
+  .replace(/\b(inc|incorporated|llc|l l c|corp|corporation|co|company|ltd|limited|the|group|holdings|lp|llp|pc|plc|usa)\b/g,' ')
+  .replace(/\s+/g,' ').trim();
+const isProspect = c => /prospect/i.test(String(F(c,'status'))) || /prospect/i.test(String(F(c,'engagement_type','kind')));
+const staffName = id => F(byId(S.staff, id) || {}, 'name','email') || '';
+const fName37 = id => String(staffName(id)).split(/\s+/)[0] || '';
+const isoNow = () => new Date().toISOString();
+const inboxNew = () => (S.contact_inbox || []).filter(x => x.status === 'new')
+  .sort((a,b) => String(b.scanned_at).localeCompare(String(a.scanned_at)));
+const myInboxNew = () => inboxNew().filter(x => String(x.scanned_by) === String(meId()) || isAdmin());
+const WMW = '<img class="lc-wm" src="livework-wordmark-white.svg" alt="LIVEWORK">';
+const WMB = '<img class="lc-wm" src="livework-wordmark-black.svg" alt="LIVEWORK">';
+
+/* ============================================================
+   Contacts
+   ============================================================ */
+/* where a scanned card most likely belongs. Order: same email already
+   in the book, same work email domain, same website, same company name,
+   close company name, else a new prospect under the name on the card. */
+function sortGuess(x){
+  const em = String(x.email || '').toLowerCase().trim();
+  if(em){
+    const dup = S.contacts.find(c => String(F(c,'email')).toLowerCase().trim() === em);
+    if(dup) return { dup, co: company(dup.company_id), why:'Already in the book' };
+  }
+  const d = workDom(em) || webDom(x.website);
+  if(d){
+    const hit = S.contacts.find(c => company(c.company_id) && (workDom(F(c,'email')) === d || webDom(c.website) === d));
+    if(hit) return { co: company(hit.company_id), why: workDom(em) ? 'Same email domain' : 'Same website' };
+  }
+  const k = coKey(x.company);
+  if(k){
+    const exact = S.companies.find(c => coKey(F(c,'name')) === k || (F(c,'legal_name') && coKey(F(c,'legal_name')) === k));
+    if(exact) return { co: exact, why:'Same company name' };
+    const close = S.companies.find(c => { const ck = coKey(F(c,'name'));
+      return ck.length >= 5 && k.length >= 5 && (ck.indexOf(k) === 0 || k.indexOf(ck) === 0); });
+    if(close) return { co: close, why:'Close company name' };
+  }
+  return { co: null, why: x.company ? 'Nobody from there yet' : 'No company on the card' };
+}
+const kindPill = c => !c ? '' : isProspect(c) ? '<span class="cx-pill pr">Prospect</span>' : '<span class="cx-pill cl">Client</span>';
+
+function inboxCard(x){
+  const g = sortGuess(x), id = idOf(x);
+  const inp = (k, ph) => '<input data-f="' + k + '" value="' + esc(x[k] || '') + '" placeholder="' + ph + '">';
+  const others = S.companies.slice().sort((a,b) => String(F(a,'name')).localeCompare(String(F(b,'name'))))
+    .map(c => '<option value="' + idOf(c) + '">' + esc(F(c,'name')) + (isProspect(c) ? ' · prospect' : '') + '</option>').join('');
+  const target = g.dup ? 'dup' : g.co ? String(idOf(g.co)) : '__new';
+  const main = g.dup
+    ? '<button class="btn" data-cxfill="' + id + '">Fill in what is missing</button>'
+    : '<button class="btn y" data-cxsave="' + id + '">' + (g.co ? 'Save under ' + esc(F(g.co,'name')) : 'Save as a new prospect') + '</button>';
+  return '<div class="cx-card" data-cx="' + id + '" data-target="' + target + '">' +
+    '<div class="cx-top"><span class="micro">' + (x.scanned_by ? 'Scanned by ' + esc(fName37(x.scanned_by)) + ' · ' : '') + esc(ago(x.scanned_at)) + '</span>' +
+      '<span class="cx-why">' + esc(g.why) + '</span></div>' +
+    '<div class="cx-f">' + inp('name','Name') + inp('title','Title') + inp('company','Company') +
+      inp('cell','Cell') + inp('office','Office') + inp('email','Email') + '</div>' +
+    '<div class="cx-go">' +
+      (g.dup ? '<div class="cx-land">In the book as <b data-co="' + (g.co ? idOf(g.co) : '') + '">' + esc(F(g.dup,'name')) + '</b>' + (g.co ? ' at ' + esc(F(g.co,'name')) + ' ' + kindPill(g.co) : '') + '</div>'
+             : '<div class="cx-land">' + (g.co ? 'Goes under <b>' + esc(F(g.co,'name')) + '</b> ' + kindPill(g.co)
+                                           : 'New prospect <b>' + esc(x.company || 'name the company') + '</b> <span class="cx-pill pr">Prospect</span>') + '</div>') +
+      '<div class="cx-btns">' + main +
+        '<select class="cx-other" data-cxother="' + id + '"><option value="">Somewhere else</option><option value="__new">New prospect from the card</option>' + others + '</select>' +
+        '<button class="btn ghost" data-cxskip="' + id + '">Skip</button></div>' +
+    '</div></div>';
+}
+
+function vContacts(){
+  const inbox = myInboxNew();
+  const q = String(Q.ctQ || '').trim().toLowerCase();
+  const all = S.contacts.slice();
+  const cnt = { all: all.length, cl: 0, pr: 0, sc: 0 };
+  all.forEach(c => { const co = company(c.company_id); if(co && isProspect(co)) cnt.pr++; else cnt.cl++; if(c.source === 'scan') cnt.sc++; });
+  const shown = all.filter(c => {
+    const co = company(c.company_id);
+    if(Q.ctTab === 'cl' && (!co || isProspect(co))) return false;
+    if(Q.ctTab === 'pr' && !(co && isProspect(co))) return false;
+    if(Q.ctTab === 'sc' && c.source !== 'scan') return false;
+    if(!q) return true;
+    return [F(c,'name'), F(c,'title'), F(c,'email'), F(c,'phone'), c.mobile, co ? F(co,'name') : ''].join(' ').toLowerCase().includes(q);
+  }).sort((a,b) => String(F(b,'created_at')).localeCompare(String(F(a,'created_at'))));
+  const CAP = 300;
+  const GRID = 'minmax(200px,1.6fr) minmax(160px,1.4fr) 110px minmax(180px,1.5fr) minmax(140px,1.1fr) 104px';
+  const rows = shown.slice(0, CAP).map(c => {
+    const co = company(c.company_id), id = idOf(c);
+    const reach = [c.mobile || F(c,'phone'), F(c,'email')].filter(Boolean).map(esc).join('<br>');
+    const came = (c.source === 'scan' ? 'Scanned' : 'Typed') + (c.added_by ? ' by ' + esc(fName37(c.added_by)) : '') +
+      (F(c,'created_at') ? ' · ' + esc(short(F(c,'created_at'))) : '');
+    return '<div class="r" style="grid-template-columns:' + GRID + '">' +
+      '<div class="cx-who"><b>' + esc(F(c,'name') || 'No name') + '</b><span class="muted small">' + esc(F(c,'title')) + '</span></div>' +
+      (co ? '<b class="cx-co" data-co="' + idOf(co) + '">' + esc(F(co,'name')) + '</b>' : '<span class="muted">No company</span>') +
+      '<span>' + kindPill(co) + (c[MAP.contact.billing] === true ? ' <span class="cx-pill bl">Billing</span>' : '') + '</span>' +
+      '<span class="muted small">' + (reach || 'No phone or email') + '</span>' +
+      '<span class="muted small">' + came + '</span>' +
+      '<button class="btn sm ghost" data-tophone="' + id + '">To phone</button></div>';
+  });
+  const chip = (k, l) => '<button class="chip ' + (Q.ctTab === k ? 'on' : '') + '" data-cttab="' + k + '">' + l + ' ' + cnt[k] + '</button>';
+  return head('Everyone we know.', '<button class="btn y" data-goto="card" data-scanfirst="1">Scan cards</button><button class="btn ghost" data-new="contact">Add a contact</button>') +
+    (inbox.length ? '<div class="sec cx-sec"><h2>' + inbox.length + (inbox.length === 1 ? ' card' : ' cards') + ' to sort.</h2>' +
+      '<span class="muted small">Scanned cards wait here. Check the read, then put each one under a client or a new prospect.</span>' +
+      (inbox.length > 1 ? '<button class="btn sm" data-cxall="1">Save all as suggested</button>' : '') + '</div>' +
+      '<div class="cx-list">' + inbox.map(inboxCard).join('') + '</div>' : '') +
+    '<div class="tools"><div class="search">' + SRCH + '<input id="qct" placeholder="Search name, company, title, email" value="' + esc(Q.ctQ || '') + '"></div>' +
+      chip('all','All') + chip('cl','Clients') + chip('pr','Prospects') + chip('sc','Scanned') + '</div>' +
+    table(['Name','Company','Kind','Reach','Came in',''], rows, GRID, { cls:'cxtbl', empty: q ? 'Nobody matches that.' : 'No contacts yet. Scan a stack of cards to start the book.' }) +
+    (shown.length > CAP ? '<div class="muted small" style="margin-top:10px">Showing the newest ' + CAP + ' of ' + shown.length + '. Search to narrow it.</div>' : '');
+}
+
+function cxRead(el){
+  const o = {}; el.querySelectorAll('[data-f]').forEach(i => o[i.dataset.f] = i.value.trim()); return o;
+}
+async function cxSave(id, target, quiet){
+  const el = document.querySelector('[data-cx="' + id + '"]'); const row = byId(S.contact_inbox, id);
+  if(!row) return false;
+  const x = el ? cxRead(el) : row;
+  if(!x.name && !x.email) { if(!quiet) toast('The card needs at least a name or an email.', true); return false; }
+  const me = meId();
+  let coId = target;
+  if(!coId || coId === '__new'){
+    if(!x.company){ if(!quiet) toast('Put the company name in first.', true); return false; }
+    const same = S.companies.find(c => coKey(F(c,'name')) === coKey(x.company));
+    if(same) coId = idOf(same);
+    else {
+      const c = await tryWrite(() => insert('companies', clean({ [MAP.company.name]: x.company, [MAP.company.status]: 'Prospect',
+        [MAP.company.kind]: 'Prospect', [MAP.company.notes]: 'Started from a scanned business card' })));
+      if(!c) return false;
+      S.companies.push(c); coId = idOf(c);
+    }
+  }
+  const ct = await tryWrite(() => insert('contacts', clean({ [MAP.contact.company]: coId, [MAP.contact.name]: x.name,
+    [MAP.contact.title]: x.title, [MAP.contact.email]: String(x.email || '').toLowerCase(), [MAP.contact.phone]: x.office || x.cell,
+    mobile: x.cell, website: x.website || row.website, source: 'scan', added_by: me })));
+  if(!ct) return false;
+  S.contacts.push(ct);
+  const done = await tryWrite(() => patch('contact_inbox', id, { status:'sorted', company_id: coId, contact_id: idOf(ct), sorted_by: me, sorted_at: isoNow(),
+    name: x.name, title: x.title, company: x.company, cell: x.cell, office: x.office, email: x.email }));
+  if(done) Object.assign(row, done);
+  return !!done;
+}
+async function cxFill(id){
+  const el = document.querySelector('[data-cx="' + id + '"]'); const row = byId(S.contact_inbox, id); if(!row) return;
+  const x = el ? cxRead(el) : row; const g = sortGuess(x); if(!g.dup) return cxSave(id, g.co ? idOf(g.co) : '__new');
+  const d = g.dup, add = {};
+  if(!F(d,'title') && x.title) add[MAP.contact.title] = x.title;
+  if(!F(d,'phone') && (x.office || x.cell)) add[MAP.contact.phone] = x.office || x.cell;
+  if(!d.mobile && x.cell) add.mobile = x.cell;
+  if(!d.website && row.website) add.website = row.website;
+  if(Object.keys(add).length){ const r = await tryWrite(() => patch('contacts', idOf(d), add)); if(!r) return; Object.assign(d, r); }
+  const r = await tryWrite(() => patch('contact_inbox', id, { status:'sorted', company_id: d.company_id, contact_id: idOf(d), sorted_by: meId(), sorted_at: isoNow() }),
+    Object.keys(add).length ? 'Filled in ' + F(d,'name') + '.' : F(d,'name') + ' already had it all.');
+  if(r) Object.assign(row, r);
+}
+
+/* the Add to Contacts link: a fifteen minute token the phone opens in Safari */
+async function toPhone(cards){
+  cards = cards.filter(c => c && (c.name || c.email || c.company));
+  if(!cards.length) return toast('Nothing to add.', true);
+  const r = await tryWrite(() => insert('vcf_links', { cards }));
+  if(!r || !r.token) return;
+  location.href = LW.url + '/functions/v1/vcf?t=' + r.token;
+}
+const contactCard = c => { const co = company(c.company_id);
+  return { name: F(c,'name'), title: F(c,'title'), company: co ? F(co,'name') : '', cell: c.mobile || '',
+    office: F(c,'phone') !== c.mobile ? F(c,'phone') : '', email: F(c,'email'), website: c.website || '' }; };
+
+/* ============================================================
+   The Card
+   ============================================================ */
+function myCard(){
+  const row = (S.staff_cards || []).find(x => String(x.staff_id) === String(meId()));
+  const d = Object.assign({}, row ? row.data : {});
+  if(!d.name) d.name = F(ME || {}, 'name');
+  if(!d.email) d.email = F(ME || {}, 'email');
+  if(!d.website) d.website = 'livework.inc';
+  d.company = 'LIVEWORK';
+  return d;
+}
+function vcardText(d){
+  const e = s => String(s || '').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/([,;])/g,'\\$1');
+  const p = String(d.name || '').trim().split(/\s+/); const last = p.length > 1 ? p.pop() : '';
+  const L = ['BEGIN:VCARD','VERSION:3.0','N:' + e(last) + ';' + e(p.join(' ')) + ';;;','FN:' + e(d.name), 'ORG:' + e(d.company || 'LIVEWORK')];
+  if(d.title) L.push('TITLE:' + e(d.title));
+  if(d.cell) L.push('TEL;TYPE=CELL:' + e(d.cell));
+  if(d.office) L.push('TEL;TYPE=WORK:' + e(d.office));
+  if(d.email) L.push('EMAIL;TYPE=INTERNET:' + e(d.email));
+  if(d.website) L.push('URL:' + e(/^https?:/i.test(d.website) ? d.website : 'https://' + d.website));
+  L.push('END:VCARD'); return L.join('\r\n');
+}
+function qrSvg(text){
+  try{
+    qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+    const q = qrcode(0, 'M'); q.addData(text, 'Byte'); q.make();
+    const n = q.getModuleCount(); let p = '';
+    for(let r = 0; r < n; r++) for(let c = 0; c < n; c++) if(q.isDark(r, c)) p += 'M' + c + ' ' + r + 'h1v1h-1z';
+    return '<svg viewBox="0 0 ' + n + ' ' + n + '" shape-rendering="crispEdges" aria-label="Contact code"><path d="' + p + '" fill="#000"/></svg>';
+  }catch(e){ console.warn('qr', e.message); return '<div class="muted small">The code did not draw.</div>'; }
+}
+function vCard(){
+  const d = myCard();
+  return head('Your card.', '<button class="btn ghost" id="lcEdit">Edit</button>') +
+    '<div class="lc-page">' +
+      '<div class="lc" id="lcCard" role="button" tabindex="0" aria-label="Flip the card">' +
+        '<div class="lc-in">' +
+          '<div class="lc-face lc-front"><b>' + esc(d.name || 'Your name') + '</b><i></i>' + WMW + '</div>' +
+          '<div class="lc-face lc-back"><div class="lc-qr">' + qrSvg(vcardText(d)) + '</div>' +
+            '<p>Scan to save my contact.<span>' + esc(d.name) + ' · LIVEWORK</span></p></div>' +
+        '</div></div>' +
+      '<button class="btn lc-flip" id="lcFlip">Show my code.</button>' +
+      '<div class="muted small lc-note">Name, title, cell, work email and livework.inc ride in the code. The screen stays awake while it shows.</div>' +
+    '</div>' +
+    '<div class="sec" id="scanSec"><h2>Card scanner.</h2><span class="muted small">Lay up to six cards flat and take one photo. They go to Contacts to sort.</span></div>' +
+    '<div class="sc">' +
+      '<label class="sc-frame" for="scCam"><span class="sc-c tl"></span><span class="sc-c tr"></span><span class="sc-c bl"></span><span class="sc-c br"></span>' +
+        '<b>Snap the cards.</b><em>Flat on a table, fill the frame.</em></label>' +
+      '<input id="scCam" class="vh" type="file" accept="image/*" capture="environment">' +
+      '<input id="scPick" class="vh" type="file" accept="image/*">' +
+      '<div class="sc-two"><label class="btn" for="scCam">Camera</label><label class="btn ghost" for="scPick">Pick from photos</label></div>' +
+      '<div class="sc-bar" id="scBar"><i></i></div><div class="muted small" id="scMsg"></div>' +
+      '<div id="scOut">' + (P37.scan ? scanResult(P37.scan) : '') + '</div>' +
+    '</div>';
+}
+function scanResult(rows){
+  if(!rows.length) return '<div class="sc-none">No cards read in that photo. Try closer, with more light.</div>';
+  return '<div class="sc-head"><b>' + rows.length + (rows.length === 1 ? ' card read.' : ' cards read.') + '</b><span class="muted small">Waiting in Contacts to sort.</span></div>' +
+    rows.map(x => { const g = sortGuess(x);
+      return '<div class="sc-card"><b>' + esc(x.name || 'No name') + '</b><span>' + esc([x.title, x.company].filter(Boolean).join(' · ')) + '</span>' +
+        '<em>' + esc([x.cell || x.office, x.email].filter(Boolean).join(' · ')) + '</em>' +
+        '<div class="sc-land">' + (g.dup ? 'Already in the book' : g.co ? 'Looks like ' + esc(F(g.co,'name')) + ' ' + kindPill(g.co) : 'New prospect <span class="cx-pill pr">Prospect</span>') + '</div></div>'; }).join('') +
+    '<div class="sc-acts"><button class="btn y" data-goto="contacts">Sort them now</button><button class="btn" data-scanphone="1">Add all to phone</button><button class="btn ghost" data-scanmore="1">Scan more</button></div>';
+}
+function cardForm(){
+  const d = myCard();
+  const f = (k, l, ph, t) => '<div class="field"><label for="c_' + k + '">' + l + '</label><input id="c_' + k + '" ' + (t ? 'type="' + t + '" ' : '') +
+    'value="' + esc(d[k] || '') + '" placeholder="' + ph + '"></div>';
+  SHEET = { kind:'form', id:'card', tab:0, ctx:{} };
+  shell('Your card.', 'The front shows your name. Everything else rides in the code.',
+    '<div class="form">' + f('name','Name','First Last') + f('title','Title','') +
+      '<div class="two">' + f('cell','Cell','', 'tel') + f('office','Office','', 'tel') + '</div>' +
+      f('email','Work email','', 'email') + f('website','Website','livework.inc') +
+      '<button class="btn" id="csave">Save card</button></div>');
+  $('#csave').onclick = async () => {
+    const data = {}; ['name','title','cell','office','email','website'].forEach(k => data[k] = (val('c_' + k) || '').trim());
+    if(!data.name) return toast('Your card needs your name.', true);
+    const r = await tryWrite(() => rest('staff_cards', { method:'POST', prefer:'resolution=merge-duplicates,return=representation',
+      body: JSON.stringify({ staff_id: meId(), data, updated_at: isoNow() }) }), 'Card saved.');
+    if(!r) return;
+    S.staff_cards = (S.staff_cards || []).filter(x => String(x.staff_id) !== String(meId())).concat(Array.isArray(r) ? r : [r]);
+    closeSheet(); draw();
+  };
+}
+let WAKE = null;
+async function wakeOn(){ try{ if('wakeLock' in navigator) WAKE = await navigator.wakeLock.request('screen'); }catch(e){} }
+function wakeOff(){ try{ if(WAKE) WAKE.release(); }catch(e){} WAKE = null; }
+document.addEventListener('visibilitychange', () => {
+  const c = document.getElementById('lcCard');
+  if(document.visibilityState === 'visible' && c && c.classList.contains('on')) wakeOn();
+});
+
+/* photo in, cards out, rows into the inbox */
+function shrink(file, max){
+  return new Promise((ok, no) => {
+    const u = URL.createObjectURL(file), im = new Image();
+    im.onload = () => { const s = Math.min(1, max / Math.max(im.width, im.height));
+      const cv = document.createElement('canvas'); cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s);
+      cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); URL.revokeObjectURL(u); ok(cv.toDataURL('image/jpeg', .82)); };
+    im.onerror = () => { URL.revokeObjectURL(u); no(new Error('That photo would not open.')); };
+    im.src = u;
+  });
+}
+async function runScan(file){
+  if(!file || P37.scanning) return;
+  P37.scanning = true;
+  const bar = $('#scBar'), msg = $('#scMsg'), fill = bar ? bar.querySelector('i') : null;
+  const PH = ['Sending the photo','Reading the cards','Picking out names and numbers','Almost there'];
+  const t0 = Date.now(); let tick = null;
+  if(bar){ bar.classList.add('on'); fill.style.width = '4%'; }
+  tick = setInterval(() => { const s = (Date.now() - t0) / 1000;
+    if(fill) fill.style.width = Math.min(92, 92 * (1 - Math.exp(-s / 6))) + '%';
+    if(msg) msg.textContent = PH[Math.min(PH.length - 1, Math.floor(s / 3))] + '.'; }, 200);
+  try{
+    const image = await shrink(file, 1600);
+    const j = await fnCall('card-read', { image });
+    const batch = String(Date.now());
+    const rows = (j.cards || []).map(c => ({ scanned_by: meId(), batch, name: c.name, title: c.title, company: c.company,
+      cell: c.cell, office: c.office, email: String(c.email || '').toLowerCase(), website: c.website }));
+    let saved = [];
+    if(rows.length) saved = await rest('contact_inbox', { method:'POST', body: JSON.stringify(rows), prefer:'return=representation' }) || [];
+    S.contact_inbox = (S.contact_inbox || []).concat(saved);
+    P37.scan = saved;
+    if(fill) fill.style.width = '100%';
+    if(msg) msg.textContent = 'Done.';
+    const out = $('#scOut'); if(out){ out.innerHTML = scanResult(saved); wireP37($('#main')); }
+    drawNav();
+  }catch(e){
+    if(msg) msg.textContent = 'Did not read. ' + e.message;
+    toast('Did not read. ' + e.message, true);
+  }finally{
+    clearInterval(tick); P37.scanning = false;
+    setTimeout(() => { if(bar) bar.classList.remove('on'); }, 900);
+    ['scCam','scPick'].forEach(k => { const i = document.getElementById(k); if(i) i.value = ''; });
+  }
+}
+
+/* ============================================================
+   Gear
+   ============================================================ */
+const GEARKIND = { laptop:'Laptop', phone:'Phone', monitor:'Monitor', other:'Other' };
+const OSNAME = { mac:'Mac', windows:'Windows', other:'Other' };
+const gearOut = g => !g.returned_on;
+const gearOf = sid => (S.gear || []).filter(g => String(g.staff_id) === String(sid) && gearOut(g));
+const gearName = g => F(g,'model') || GEARKIND[g.kind] || 'Device';
+function nextTag(){
+  const n = (S.gear || []).map(g => parseInt(String(g.tag || '').replace(/\D/g,''), 10) || 0);
+  return 'LW-' + String((n.length ? Math.max.apply(null, n) : 0) + 1).padStart(4, '0');
+}
+function gearLine(sid){
+  const gs = gearOf(sid);
+  if(!gs.length) return '<a class="gl add" data-gearnew="' + sid + '">Assign gear</a>';
+  return gs.map(g => '<a class="gl" data-gear="' + idOf(g) + '"><i class="' + (g.ack_at ? 'ok' : 'wait') + '"></i>' +
+    esc(gearName(g)) + ' · ' + esc(g.tag || '') + ' · ' + (g.ack_at ? 'Accepted ' + esc(short(g.ack_at)) : 'Not accepted yet') + '</a>').join('');
+}
+function vGearSection(){
+  if(!isAdmin()) return '';
+  const list = (S.gear || []).slice().sort((a,b) => String(a.tag).localeCompare(String(b.tag)));
+  const GRID = '100px minmax(180px,1.6fr) minmax(140px,1.2fr) minmax(140px,1.2fr) 120px minmax(150px,1.2fr) 84px';
+  const rows = list.map(g => '<div class="r' + (gearOut(g) ? '' : ' gr-back') + '" style="grid-template-columns:' + GRID + '">' +
+    '<b class="mono">' + esc(g.tag || '') + '</b>' +
+    '<span><b>' + esc(gearName(g)) + '</b><span class="muted small"> · ' + esc(GEARKIND[g.kind] || '') + (g.os ? ' · ' + esc(OSNAME[g.os] || '') : '') + '</span></span>' +
+    '<span class="mono small">' + esc(g.serial || 'No serial') + '</span>' +
+    '<span>' + (g.staff_id ? esc(staffName(g.staff_id)) : '<span class="muted">Nobody, on the shelf</span>') + '</span>' +
+    '<span class="muted small">' + (gearOut(g) ? (g.handed_on ? esc(dday(g.handed_on)) : 'Not handed over') : 'Returned ' + esc(dday(g.returned_on))) + '</span>' +
+    '<span class="small">' + (!g.staff_id ? '' : g.ack_at ? '<span class="gdot ok"></span>Accepted ' + esc(short(g.ack_at)) : '<span class="gdot wait"></span>Waiting on them') + '</span>' +
+    '<button class="btn sm ghost" data-gear="' + idOf(g) + '">Open</button></div>');
+  return '<div class="sec"><h2>The gear.</h2><span class="muted small">Every laptop, phone and monitor LIVEWORK owns. The serial is the UID.</span>' +
+      '<button class="btn sm" data-gearnew="">Add a device</button></div>' +
+    table(['Tag','Device','Serial','Who has it','Handed over','Handoff',''], rows, GRID, { cls:'geartbl', empty:'No gear yet. Add the first laptop.' });
+}
+function gearForm(gid, sid){
+  const g = gid ? byId(S.gear, gid) : null;
+  const d = g || { kind:'laptop', os:'mac', tag: nextTag(), staff_id: sid || '', handed_on: lwToday() };
+  const staffOpts = '<option value="">Nobody yet, on the shelf</option>' + activeStaff().map(s =>
+    '<option value="' + idOf(s) + '"' + (String(idOf(s)) === String(d.staff_id) ? ' selected' : '') + '>' + esc(F(s,'name','email')) + '</option>').join('');
+  const sel = (id, map, v) => '<select id="' + id + '">' + Object.keys(map).map(k => '<option value="' + k + '"' + (k === v ? ' selected' : '') + '>' + map[k] + '</option>').join('') + '</select>';
+  const inp = (id, v, ph, t) => '<input id="' + id + '" ' + (t ? 'type="' + t + '" ' : '') + 'value="' + esc(v == null ? '' : v) + '" placeholder="' + (ph || '') + '">';
+  SHEET = { kind:'form', id:'gear', tab:0, ctx:{ gid } };
+  shell(g ? esc(gearName(g)) + '.' : 'Hand over a device.',
+    g ? esc(g.tag || '') + (g.staff_id ? ' · ' + esc(staffName(g.staff_id)) : ' · on the shelf') + (g.ack_at ? ' · accepted ' + esc(day(g.ack_at)) + ' by ' + esc(g.ack_name) : '')
+      : 'One row per device. The serial is the UID. The tag goes on a sticker on the bottom.',
+    '<div class="form">' +
+      '<div class="field"><label for="g_who">Who has it</label><select id="g_who">' + staffOpts + '</select></div>' +
+      '<div class="two"><div class="field"><label for="g_kind">Kind</label>' + sel('g_kind', GEARKIND, d.kind) + '</div>' +
+        '<div class="field"><label for="g_os">System</label>' + sel('g_os', OSNAME, d.os || 'mac') + '</div></div>' +
+      '<div class="field"><label for="g_model">Make and model</label>' + inp('g_model', d.model, 'MacBook Air 15 M4') + '</div>' +
+      '<div class="two"><div class="field"><label for="g_serial">Serial number, the UID</label>' + inp('g_serial', d.serial, 'FVFH3P2KQ6L4') + '</div>' +
+        '<div class="field"><label for="g_tag">Asset tag</label>' + inp('g_tag', d.tag, 'LW-0001') + '</div></div>' +
+      '<div class="muted small" style="margin:-4px 0 10px">Mac: Apple menu, About This Mac. Windows: Settings, System, About. Or the sticker on the bottom.</div>' +
+      '<div class="two"><div class="field"><label for="g_bought">Bought on</label>' + inp('g_bought', d.bought_on, '', 'date') + '</div>' +
+        '<div class="field"><label for="g_cost">Cost</label>' + inp('g_cost', d.cost, '1499') + '</div></div>' +
+      '<div class="two"><div class="field"><label for="g_vendor">Bought from</label>' + inp('g_vendor', d.vendor, 'Apple Store') + '</div>' +
+        '<div class="field"><label for="g_cond">Condition</label>' + inp('g_cond', d.condition || (g ? '' : 'New in box'), 'New in box') + '</div></div>' +
+      '<div class="two"><div class="field"><label for="g_handed">Handed over on</label>' + inp('g_handed', d.handed_on, '', 'date') + '</div>' +
+        '<div class="field"><label for="g_extras">Comes with</label>' + inp('g_extras', d.extras || (g ? '' : 'Charger, USB C cable'), 'Charger, USB C cable') + '</div></div>' +
+      '<div class="field"><label for="g_note">Note</label>' + inp('g_note', d.note, '') + '</div>' +
+      '<div class="g-acts"><button class="btn" id="gsave">' + (g ? 'Save changes' : 'Assign it') + '</button>' +
+        (g ? '<button class="btn y" id="gday">Print day one sheet</button><button class="btn ghost" id="gform">Print handoff form</button>' +
+             (gearOut(g) ? '<button class="btn ghost" id="gback">Mark returned</button>' : '') : '') + '</div>' +
+      '<div class="muted small" style="margin-top:12px">The password is theirs. They set it on day one from the sheet. Nobody at LIVEWORK asks for it and the desk never stores one.</div>' +
+    '</div>');
+  $('#gsave').onclick = () => gearSave(gid);
+  if(g){
+    $('#gday').onclick = () => printDayOne(g);
+    $('#gform').onclick = () => printHandoff(g);
+    const b = $('#gback'); if(b) b.onclick = async () => {
+      if(!confirm('Mark ' + gearName(g) + ' returned today?')) return;
+      const r = await tryWrite(() => patch('gear', gid, { returned_on: lwToday() }), 'Marked returned.');
+      if(r){ Object.assign(g, r); closeSheet(); draw(); }
+    };
+  }
+}
+async function gearSave(gid){
+  const g = gid ? byId(S.gear, gid) : null;
+  const who = val('g_who') || null;
+  const row = { staff_id: who, kind: val('g_kind'), os: val('g_os'), model: val('g_model') || null,
+    serial: String(val('g_serial') || '').trim().toUpperCase() || null, tag: String(val('g_tag') || '').trim().toUpperCase() || null,
+    bought_on: val('g_bought') || null, cost: val('g_cost') === '' ? null : num(val('g_cost')), vendor: val('g_vendor') || null,
+    condition: val('g_cond') || null, handed_on: val('g_handed') || null, extras: val('g_extras') || null, note: val('g_note') || null };
+  if(!row.model && !row.serial) return toast('Give it a model or a serial.', true);
+  if(row.serial && (S.gear || []).some(x => String(idOf(x)) !== String(gid) && String(x.serial || '').toUpperCase() === row.serial))
+    return toast('That serial is already on another row.', true);
+  /* a new holder starts over: fresh handoff, not returned */
+  if(g && String(g.staff_id || '') !== String(who || '')){ row.ack_name = null; row.ack_at = null; row.ack_agent = null; row.returned_on = null; row.day_one_at = null; }
+  const r = g ? await tryWrite(() => patch('gear', gid, row), 'Saved.')
+              : await tryWrite(() => insert('gear', Object.assign(row, { created_by: meId() })), who ? 'Assigned to ' + staffName(who) + '.' : 'On the shelf.');
+  if(!r) return;
+  if(g) Object.assign(g, r); else S.gear.push(r);
+  closeSheet(); draw();
+  if(!g && who) gearForm(idOf(r));
+}
+
+/* the handoff the holder accepts on their own desk */
+const GEAR_TERMS = [
+  'Use it for LIVEWORK work. Keep client and candidate data on the desk, not in personal accounts.',
+  'Keep disk encryption and the screen lock on. Never share your password, with anyone, including LIVEWORK.',
+  'Lost, stolen or broken: tell your manager the same day.',
+  'Give it back, with everything listed, by your last day or when asked.',
+  'Nothing is ever taken out of your pay for it.'
+];
+function gearAckBanner(){
+  const me = meId(); if(!me) return '';
+  const wait = (S.gear || []).filter(g => String(g.staff_id) === String(me) && gearOut(g) && !g.ack_at);
+  const sort = myInboxNew().filter(x => String(x.scanned_by) === String(me)).length;
+  return wait.map(g => '<div class="gack"><div><b>Company gear to accept.</b><span>' + esc(gearName(g)) + ' · ' + esc(g.tag || '') + '</span></div>' +
+      '<button class="btn" data-gearack="' + idOf(g) + '">Read and accept</button></div>').join('') +
+    (sort ? '<div class="gack"><div><b>' + sort + (sort === 1 ? ' scanned card' : ' scanned cards') + ' to sort.</b><span>Put each one under a client or a new prospect.</span></div>' +
+      '<button class="btn" data-goto="contacts">Sort them</button></div>' : '');
+}
+function gearAckForm(gid){
+  const g = byId(S.gear, gid); if(!g) return;
+  SHEET = { kind:'form', id:'gearack', tab:0, ctx:{ gid } };
+  shell('Company gear.', 'LIVEWORK is lending you this for work. It stays LIVEWORK property.',
+    '<div class="form"><div class="spec gspec">' +
+      '<div class="row"><b>Device</b><span>' + esc(gearName(g)) + (g.extras ? ' · ' + esc(g.extras) : '') + '</span></div>' +
+      '<div class="row"><b>Serial · tag</b><span class="mono">' + esc(g.serial || '') + ' · ' + esc(g.tag || '') + '</span></div>' +
+      '<div class="row"><b>Handed over</b><span>' + esc(dday(g.handed_on) || 'Today') + (g.condition ? ' · ' + esc(g.condition) : '') + '</span></div></div>' +
+      '<ol class="gterms">' + GEAR_TERMS.map(t => '<li>' + t + '</li>').join('') + '</ol>' +
+      '<div class="field"><label for="ga_name">Type your full legal name to accept</label><input id="ga_name" value="' + esc(F(ME || {}, 'name')) + '"></div>' +
+      '<button class="btn" id="gasave">Accept</button></div>');
+  $('#gasave').onclick = async () => {
+    const n = String(val('ga_name') || '').trim(); if(n.split(/\s+/).length < 2) return toast('Type your first and last name.', true);
+    const ok = await tryWrite(() => rest('rpc/lw_gear_ack', { method:'POST', body: JSON.stringify({ p_gear: gid, p_name: n, p_agent: navigator.userAgent }) }));
+    if(ok !== true) return toast('Did not save. It may already be accepted.', true);
+    g.ack_name = n; g.ack_at = isoNow(); toast('Accepted. Thank you.'); closeSheet(); draw();
+  };
+}
+
+/* printed pages: a new window, the house type, the browser print dialog */
+function printPage(title, body){
+  const w = window.open('', '_blank'); if(!w) return toast('Allow pop ups for the desk to print.', true);
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><base href="' + esc(location.href) + '"><title>' + esc(title) + '</title>' +
+    '<link rel="stylesheet" href="lw.css?v=6"><style>' +
+    '@page{size:letter;margin:.55in}*{box-sizing:border-box}body{background:#fff;color:#111;font-family:Manrope,system-ui,sans-serif;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.pg{max-width:7.4in;margin:0 auto;padding:.2in 0}.tp{display:flex;justify-content:space-between;align-items:center}.tp img{width:1.35in}' +
+    '.mc{font-size:9pt;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#6E6961}' +
+    'h1{font-size:54pt;font-weight:800;letter-spacing:-.03em;line-height:1;margin:.35in 0 .1in}h1 i{font-style:normal;color:#C79A15}' +
+    '.ld{color:#6E6961;font-size:11pt;margin:0 0 .2in}.st{border-top:1.5px solid #111}' +
+    '.s{display:grid;grid-template-columns:.45in 1fr;padding:9pt 0;border-bottom:1px solid #E6E0D6;break-inside:avoid}.s em{font-style:normal;font-weight:800;font-size:15pt;color:#C79A15}' +
+    '.s b{display:block;font-size:11.5pt;margin-bottom:2pt}.s span{color:#55514B;font-size:9.5pt;line-height:1.45}.s.k{background:#FFF7DA;margin:0 -8pt;padding-left:8pt;padding-right:8pt}' +
+    '.ft{display:grid;grid-template-columns:repeat(3,1fr);border-top:1.5px solid #111;margin-top:.25in;padding-top:6pt;gap:8pt}.ft b{display:block;font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:#6E6961}' +
+    '.ft span,.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.5pt}.sp{border-top:1.5px solid #111;margin-top:.15in}' +
+    '.sp div{display:grid;grid-template-columns:1.4in 1fr;padding:7pt 0;border-bottom:1px solid #E6E0D6;font-size:10.5pt}.sp div b{font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:#6E6961;padding-top:2pt}' +
+    'ol{padding-left:16pt;margin:.2in 0}ol li{font-size:10.5pt;line-height:1.55;margin:4pt 0}' +
+    '.sg{display:grid;grid-template-columns:1fr 1fr;gap:.4in;margin-top:.6in}.sg div{border-top:1px solid #111;padding-top:5pt;font-size:8.5pt;color:#6E6961}' +
+    '.ok{margin-top:.2in;font-size:9pt;color:#1F7A45}.bk{margin-top:.3in;border:1px dashed #B8B2A8;padding:10pt;font-size:9pt;color:#6E6961}' +
+    '@media print{.np{display:none}}.np{position:fixed;right:16px;top:16px}' +
+    '</style></head><body><button class="np btn" onclick="print()">Print</button><div class="pg">' + body + '</div>' +
+    '<script>window.onload=function(){setTimeout(function(){print()},400)}<\/script></body></html>');
+  w.document.close();
+}
+function dayOneSteps(g, who, email){
+  const first = String(who || '').split(/\s+/)[0] || 'there';
+  const acct = String(first).toLowerCase().replace(/[^a-z]/g,'') || 'yourname';
+  const mgr = F(ME || {}, 'name') || 'your manager';
+  const s = (b, t, k) => '<div class="s' + (k ? ' k' : '') + '"><em></em><div><b>' + b + '</b><span>' + t + '</span></div></div>';
+  const mac = [
+    s('Turn it on and pick your country.', 'Join the office or home Wi Fi when it asks.'),
+    s('Make your account. Pick your own password.', 'Full name: ' + esc(who) + '. Account name: ' + esc(acct) + '. Twelve characters or more. Nobody at LIVEWORK will ever ask for it, not your manager, not IT.', 1),
+    s('Apple ID is your call.', 'Use your own, or skip it for now. Never a shared one.'),
+    s('Turn on FileVault.', 'When setup offers it, say yes and choose Create a recovery key. Write the key on the back of this sheet, fold it, hand it to ' + esc(mgr) + ' sealed.'),
+    s('Keep it current.', 'System Settings, General, Software Update. Turn on automatic updates.'),
+    s('Open the desk.', 'Safari, livework.inc/desk.html. Enter ' + esc(email) + ' and type the code from your inbox.'),
+    s('Keep it in the Dock.', 'In Safari: File, Add to Dock. The desk now opens like an app.'),
+    s('Put it on your phone.', 'Same address in Safari on your phone, Share, Add to Home Screen.'),
+    s('Make your card.', 'Desk, The Card, Edit. Name, title, cell. That is your business card now.')
+  ];
+  const win = [
+    s('Turn it on and pick your region.', 'Join the office or home Wi Fi when it asks.'),
+    s('Make your account. Pick your own password.', 'Use your own Microsoft account, or choose Sign in options and set up a local account named ' + esc(acct) + '. Twelve characters or more, plus a PIN. Nobody at LIVEWORK will ever ask for either.', 1),
+    s('Turn on encryption.', 'Settings, Privacy and security, Device encryption (or BitLocker). Save the recovery key, print it, fold it, hand it to ' + esc(mgr) + ' sealed.'),
+    s('Keep it current.', 'Settings, Windows Update. Install everything, restart until it says you are up to date.'),
+    s('Open the desk.', 'Edge or Chrome, livework.inc/desk.html. Enter ' + esc(email) + ' and type the code from your inbox.'),
+    s('Install it as an app.', 'Edge: the three dots, Apps, Install this site as an app. Chrome: the three dots, Cast save and share, Install page as app.'),
+    s('Put it on your phone.', 'iPhone: Safari, Share, Add to Home Screen. Android: Chrome, the three dots, Add to Home screen.'),
+    s('Make your card.', 'Desk, The Card, Edit. Name, title, cell. That is your business card now.')
+  ];
+  return (g.os === 'windows' ? win : mac).map((x, i) => x.replace('<em></em>', '<em>' + (i + 1) + '</em>')).join('');
+}
+function printDayOne(g){
+  const st = byId(S.staff, g.staff_id) || {};
+  const who = F(st,'name') || 'Welcome', email = F(st,'email') || 'your work email';
+  const first = String(who).split(/\s+/)[0];
+  printPage('Day one ' + who,
+    '<div class="tp"><img src="livework-wordmark-black.svg" alt="LIVEWORK"><span class="mc">Day one · ' + (g.os === 'windows' ? 'Windows' : 'Mac') + '</span></div>' +
+    '<h1>Day one<i>.</i></h1><p class="ld">' + esc(first) + ', this ' + esc(GEARKIND[g.kind] || 'device').toLowerCase() + ' is yours to run. Do these in order. About twenty minutes.</p>' +
+    '<div class="st">' + dayOneSteps(g, who, email) + '</div>' +
+    '<div class="ft"><div><b>Device</b><span>' + esc(gearName(g)) + '</span></div><div><b>Serial</b><span>' + esc(g.serial || '') + '</span></div><div><b>Tag</b><span>' + esc(g.tag || '') + '</span></div></div>' +
+    '<div class="bk">Recovery key goes on the back of this page, never in an email or a text.</div>');
+  tryWrite(() => patch('gear', idOf(g), { day_one_at: isoNow() })).then(r => { if(r) Object.assign(g, r); });
+}
+function printHandoff(g){
+  const st = byId(S.staff, g.staff_id) || {};
+  const who = F(st,'name') || '______________________';
+  printPage('Company gear ' + who,
+    '<div class="tp"><img src="livework-wordmark-black.svg" alt="LIVEWORK"><span class="mc">Papers · Equipment</span></div>' +
+    '<h1>Company gear<i>.</i></h1><p class="ld">LIVEWORK is lending ' + esc(who) + ' the equipment below for work. It stays LIVEWORK property.</p>' +
+    '<div class="sp"><div><b>Device</b><span>' + esc(gearName(g)) + (g.extras ? ' · ' + esc(g.extras) : '') + '</span></div>' +
+      '<div><b>Serial · tag</b><span class="mono">' + esc(g.serial || '') + ' · ' + esc(g.tag || '') + '</span></div>' +
+      '<div><b>Handed over</b><span>' + esc(dday(g.handed_on) || '') + (g.condition ? ' · ' + esc(g.condition) : '') + '</span></div></div>' +
+    '<ol>' + GEAR_TERMS.map(t => '<li>' + t + '</li>').join('') + '</ol>' +
+    (g.ack_at ? '<div class="ok">Accepted on the desk by ' + esc(g.ack_name) + ' on ' + esc(new Date(g.ack_at).toLocaleString('en-US')) + '.</div>' : '') +
+    '<div class="sg"><div>' + esc(who) + ' · date</div><div>For LIVEWORK · date</div></div>');
+}
+
+/* ============================================================
+   wiring
+   ============================================================ */
+function wireP37(m){
+  if(!m) return;
+  m.querySelectorAll('[data-goto]').forEach(b => b.onclick = e => { e.stopPropagation();
+    go(b.dataset.goto); if(b.dataset.scanfirst){ const s = document.getElementById('scanSec'); if(s) s.scrollIntoView({ behavior:'smooth' }); } });
+  m.querySelectorAll('[data-gear]').forEach(b => b.onclick = e => { e.stopPropagation(); gearForm(b.dataset.gear); });
+  m.querySelectorAll('[data-gearnew]').forEach(b => b.onclick = e => { e.stopPropagation(); gearForm(null, b.dataset.gearnew); });
+  m.querySelectorAll('[data-gearack]').forEach(b => b.onclick = e => { e.stopPropagation(); gearAckForm(b.dataset.gearack); });
+
+  /* contacts */
+  const qi = m.querySelector('#qct');
+  if(qi) qi.oninput = () => { Q.ctQ = qi.value; const p = qi.selectionStart; draw(); const n = document.getElementById('qct'); if(n){ n.focus(); n.setSelectionRange(p,p); } };
+  m.querySelectorAll('[data-cttab]').forEach(b => b.onclick = () => { Q.ctTab = b.dataset.cttab; draw(); });
+  m.querySelectorAll('[data-tophone]').forEach(b => b.onclick = e => { e.stopPropagation();
+    const c = byId(S.contacts, b.dataset.tophone); if(c) toPhone([contactCard(c)]); });
+  m.querySelectorAll('[data-cxother]').forEach(s => s.onchange = () => {
+    const card = s.closest('[data-cx]'); const btn = card.querySelector('[data-cxsave],[data-cxfill]');
+    if(!s.value){ return; }
+    card.dataset.target = s.value;
+    const co = s.value === '__new' ? null : company(s.value);
+    const land = card.querySelector('.cx-land');
+    if(land) land.innerHTML = co ? 'Goes under <b>' + esc(F(co,'name')) + '</b> ' + kindPill(co)
+      : 'New prospect <b>' + esc(cxRead(card).company || 'name the company') + '</b> <span class="cx-pill pr">Prospect</span>';
+    if(btn){ btn.className = 'btn y'; btn.removeAttribute('data-cxfill'); btn.setAttribute('data-cxsave', card.dataset.cx);
+      btn.textContent = co ? 'Save under ' + F(co,'name') : 'Save as a new prospect';
+      btn.onclick = cxSaveClick; }
+  });
+  const cxSaveClick = async function(e){ e.stopPropagation(); const card = this.closest('[data-cx]');
+    this.disabled = true; const ok = await cxSave(card.dataset.cx, card.dataset.target === 'dup' ? '' : card.dataset.target);
+    this.disabled = false; if(ok){ toast('Saved to Contacts.'); drawNav(); draw(); } };
+  m.querySelectorAll('[data-cxsave]').forEach(b => b.onclick = cxSaveClick);
+  m.querySelectorAll('[data-cxfill]').forEach(b => b.onclick = async e => { e.stopPropagation(); b.disabled = true;
+    await cxFill(b.dataset.cxfill); b.disabled = false; drawNav(); draw(); });
+  m.querySelectorAll('[data-cxskip]').forEach(b => b.onclick = async e => { e.stopPropagation();
+    const row = byId(S.contact_inbox, b.dataset.cxskip);
+    const r = await tryWrite(() => patch('contact_inbox', b.dataset.cxskip, { status:'skipped', sorted_by: meId(), sorted_at: isoNow() }), 'Skipped.');
+    if(r){ Object.assign(row, r); drawNav(); draw(); } });
+  m.querySelectorAll('[data-cxall]').forEach(b => b.onclick = async () => {
+    const list = myInboxNew(); b.disabled = true; let n = 0, left = 0;
+    for(const x of list){
+      const card = document.querySelector('[data-cx="' + idOf(x) + '"]');
+      const t = card ? card.dataset.target : '';
+      if(t === 'dup'){ await cxFill(idOf(x)); n++; continue; }
+      const ok = await cxSave(idOf(x), t, true); if(ok) n++; else left++;
+    }
+    toast(n + ' saved.' + (left ? ' ' + left + ' need a look.' : ''), !!left); drawNav(); draw();
+  });
+
+  /* the card */
+  const card = m.querySelector('#lcCard'), flip = m.querySelector('#lcFlip');
+  const turn = () => { const on = !card.classList.contains('on'); card.classList.toggle('on', on);
+    if(flip) flip.textContent = on ? 'Show my card.' : 'Show my code.'; if(on) wakeOn(); else wakeOff(); };
+  if(card){ card.onclick = turn; card.onkeydown = e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); turn(); } }; }
+  if(flip) flip.onclick = turn;
+  const ed = m.querySelector('#lcEdit'); if(ed) ed.onclick = cardForm;
+  ['scCam','scPick'].forEach(k => { const i = m.querySelector('#' + k); if(i) i.onchange = () => runScan(i.files && i.files[0]); });
+  m.querySelectorAll('[data-scanmore]').forEach(b => b.onclick = () => { P37.scan = null; const o = $('#scOut'); if(o) o.innerHTML = '';
+    const i = document.getElementById('scCam'); if(i) i.click(); });
+  m.querySelectorAll('[data-scanphone]').forEach(b => b.onclick = () => toPhone((P37.scan || []).map(x => ({ name:x.name, title:x.title,
+    company:x.company, cell:x.cell, office:x.office, email:x.email, website:x.website }))));
+}
+
 </script>
 </body>
 </html>
