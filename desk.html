@@ -801,6 +801,20 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
   .gack{flex-direction:column;align-items:flex-start}
   .lc-back{gap:12px;padding:16px}
 }
+.swp{position:relative;overflow:hidden;margin-bottom:8px;border-radius:2px}
+.swp .sc-card{margin-bottom:0;position:relative;z-index:1;touch-action:pan-y;padding-right:44px}
+.sw-act{position:absolute;right:0;top:0;bottom:0;width:96px;border:0;background:#1a1a1a;color:#fff;font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+.sc-x{position:absolute;right:6px;top:6px;width:32px;height:32px;border:0;background:transparent;color:var(--stone);cursor:pointer;border-radius:50%;display:grid;place-items:center}
+.sc-x:hover{background:var(--wall);color:var(--ink)}
+.sc-x svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
+.sc-foot{display:flex;justify-content:space-between;margin-top:14px}
+.sc-link{border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--stone);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 0}
+.sc-link:hover{color:var(--ink)}
+.undo37{position:fixed;left:50%;bottom:148px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:60;display:flex;gap:18px;align-items:center;
+  background:#111;color:#fff;padding:12px 14px 12px 18px;border-radius:30px;font-size:14px;box-shadow:0 12px 30px rgba(0,0,0,.3);transition:all .2s;white-space:nowrap}
+.undo37.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.undo37 button{border:0;background:var(--yellow);color:#000;font:inherit;font-weight:800;padding:6px 14px;border-radius:20px;cursor:pointer}
+@media (min-width:901px){.undo37{bottom:32px}}
 </style>
 </head>
 <body>
@@ -5986,13 +6000,80 @@ function vCard(){
     '</div>';
 }
 function scanResult(rows){
-  if(!rows.length) return '<div class="sc-none">No cards read in that photo. Try closer, with more light.</div>';
-  return '<div class="sc-head"><b>' + rows.length + (rows.length === 1 ? ' card read.' : ' cards read.') + '</b><span class="muted small">Waiting in Contacts to sort.</span></div>' +
-    rows.map(x => { const g = sortGuess(x);
-      return '<div class="sc-card"><b>' + esc(x.name || 'No name') + '</b><span>' + esc([x.title, x.company].filter(Boolean).join(' · ')) + '</span>' +
+  rows = rows || [];
+  const live = rows.filter(x => x.status !== 'skipped');
+  if(!rows.length) return '<div class="sc-none">No cards read in that photo. Try closer, with more light.</div>' +
+    '<div class="sc-acts"><button class="btn ghost" data-scanmore="1">Scan again</button></div>';
+  if(!live.length) return '<div class="sc-none">Cleared. Nothing from that photo went to Contacts.</div>' +
+    '<div class="sc-acts"><button class="btn ghost" data-scanmore="1">Scan more</button></div>';
+  return '<div class="sc-head"><b>' + live.length + (live.length === 1 ? ' card read.' : ' cards read.') + '</b>' +
+      '<span class="muted small">Swipe one left to remove it.</span></div>' +
+    live.map(x => { const g = sortGuess(x), id = idOf(x);
+      return '<div class="swp" data-sw="' + id + '"><button class="sw-act" data-scdel="' + id + '">Remove</button>' +
+        '<div class="sc-card sw-face"><button class="sc-x" data-scdel="' + id + '" aria-label="Remove ' + esc(x.name || 'this card') + '">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>' +
+        '<b>' + esc(x.name || 'No name') + '</b><span>' + esc([x.title, x.company].filter(Boolean).join(' · ')) + '</span>' +
         '<em>' + esc([x.cell || x.office, x.email].filter(Boolean).join(' · ')) + '</em>' +
-        '<div class="sc-land">' + (g.dup ? 'Already in the book' : g.co ? 'Looks like ' + esc(F(g.co,'name')) + ' ' + kindPill(g.co) : 'New prospect <span class="cx-pill pr">Prospect</span>') + '</div></div>'; }).join('') +
-    '<div class="sc-acts"><button class="btn y" data-goto="contacts">Sort them now</button><button class="btn" data-scanphone="1">Add all to phone</button><button class="btn ghost" data-scanmore="1">Scan more</button></div>';
+        '<div class="sc-land">' + (g.dup ? 'Already in the book' : g.co ? 'Looks like ' + esc(F(g.co,'name')) + ' ' + kindPill(g.co) : 'New prospect <span class="cx-pill pr">Prospect</span>') + '</div></div></div>'; }).join('') +
+    '<div class="sc-acts"><button class="btn y" data-goto="contacts">Sort them now</button><button class="btn" data-scanphone="1">Add all to phone</button></div>' +
+    '<div class="sc-foot"><button class="sc-link" data-scanmore="1">Scan more</button><button class="sc-link" data-scclear="1">Clear this scan</button></div>';
+}
+/* removing is a soft skip: the row stays in contact_inbox as skipped, so LIVEWORK keeps
+   the read, it just leaves the sort pile. Undo puts it back for six seconds. */
+let UNDO37 = null;
+async function scanDrop(ids){
+  ids = ids.map(String);
+  const rows = (P37.scan || []).filter(x => ids.indexOf(String(idOf(x))) >= 0 && x.status !== 'skipped');
+  if(!rows.length) return;
+  rows.forEach(x => { x._was = x.status; x.status = 'skipped'; });
+  scanPaint();
+  try{
+    await rest('contact_inbox?id=in.(' + rows.map(x => idOf(x)).join(',') + ')', { method:'PATCH',
+      body: JSON.stringify({ status:'skipped', sorted_by: meId(), sorted_at: isoNow() }), prefer:'return=minimal' });
+  }catch(e){ rows.forEach(x => x.status = x._was || 'new'); scanPaint(); return toast('Did not clear. ' + e.message, true); }
+  syncInbox(rows);
+  undoBar(rows.length === 1 ? 'Removed ' + (rows[0].name || 'the card') + '.' : 'Cleared ' + rows.length + ' cards.', async () => {
+    rows.forEach(x => x.status = 'new'); scanPaint();
+    try{ await rest('contact_inbox?id=in.(' + rows.map(x => idOf(x)).join(',') + ')', { method:'PATCH',
+      body: JSON.stringify({ status:'new', sorted_by: null, sorted_at: null }), prefer:'return=minimal' }); syncInbox(rows); }
+    catch(e){ toast('Undo did not save. ' + e.message, true); }
+  });
+}
+function syncInbox(rows){
+  rows.forEach(r => { const s = byId(S.contact_inbox || [], idOf(r)); if(s) s.status = r.status; });
+  drawNav();
+}
+function scanPaint(){
+  const o = document.getElementById('scOut'); if(!o) return;
+  o.innerHTML = scanResult(P37.scan || []); wireP37(document.getElementById('main'));
+}
+function undoBar(msg, undo){
+  let b = document.getElementById('undo37');
+  if(!b){ b = document.createElement('div'); b.id = 'undo37'; b.className = 'undo37'; document.body.appendChild(b); }
+  b.innerHTML = '<span>' + esc(msg) + '</span><button>Undo</button>';
+  b.classList.add('on');
+  clearTimeout(UNDO37);
+  b.querySelector('button').onclick = () => { clearTimeout(UNDO37); b.classList.remove('on'); undo(); };
+  UNDO37 = setTimeout(() => b.classList.remove('on'), 6000);
+}
+/* swipe left on a scanned card: past 72px it stays open on Remove, past 60% it removes */
+function wireSwipe(root){
+  root.querySelectorAll('.swp').forEach(sw => {
+    const face = sw.querySelector('.sw-face'); if(!face || face._sw) return; face._sw = 1;
+    let x0 = 0, y0 = 0, dx = 0, on = false, locked = null;
+    const W = () => sw.offsetWidth || 320;
+    const set = (v, anim) => { face.style.transition = anim ? 'transform .22s cubic-bezier(.2,.7,.2,1)' : 'none'; face.style.transform = 'translateX(' + v + 'px)'; };
+    face.addEventListener('touchstart', e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = 0; on = true; locked = null;
+      root.querySelectorAll('.swp.open').forEach(o => { if(o !== sw){ o.classList.remove('open'); o.querySelector('.sw-face').style.transform = ''; } }); }, { passive:true });
+    face.addEventListener('touchmove', e => { if(!on) return; const t = e.touches[0]; const mx = t.clientX - x0, my = t.clientY - y0;
+      if(locked === null && (Math.abs(mx) > 8 || Math.abs(my) > 8)) locked = Math.abs(mx) > Math.abs(my) ? 'x' : 'y';
+      if(locked !== 'x') return;
+      dx = Math.min(0, mx + (sw.classList.contains('open') ? -96 : 0)); set(dx, false); }, { passive:true });
+    face.addEventListener('touchend', () => { if(!on) return; on = false; if(locked !== 'x') return;
+      if(-dx > W() * .6){ set(-W(), true); setTimeout(() => scanDrop([sw.dataset.sw]), 180); }
+      else if(-dx > 72){ sw.classList.add('open'); set(-96, true); }
+      else { sw.classList.remove('open'); set(0, true); } });
+  });
 }
 function cardForm(){
   const d = myCard();
@@ -6334,9 +6415,12 @@ function wireP37(m){
   if(flip) flip.onclick = turn;
   const ed = m.querySelector('#lcEdit'); if(ed) ed.onclick = cardForm;
   ['scCam','scPick'].forEach(k => { const i = m.querySelector('#' + k); if(i) i.onchange = () => runScan(i.files && i.files[0]); });
+  wireSwipe(m);
+  m.querySelectorAll('[data-scdel]').forEach(b => b.onclick = e => { e.stopPropagation(); scanDrop([b.dataset.scdel]); });
+  m.querySelectorAll('[data-scclear]').forEach(b => b.onclick = () => scanDrop((P37.scan || []).map(x => idOf(x))));
   m.querySelectorAll('[data-scanmore]').forEach(b => b.onclick = () => { P37.scan = null; const o = $('#scOut'); if(o) o.innerHTML = '';
     const i = document.getElementById('scCam'); if(i) i.click(); });
-  m.querySelectorAll('[data-scanphone]').forEach(b => b.onclick = () => toPhone((P37.scan || []).map(x => ({ name:x.name, title:x.title,
+  m.querySelectorAll('[data-scanphone]').forEach(b => b.onclick = () => toPhone((P37.scan || []).filter(x => x.status !== 'skipped').map(x => ({ name:x.name, title:x.title,
     company:x.company, cell:x.cell, office:x.office, email:x.email, website:x.website }))));
 }
 
