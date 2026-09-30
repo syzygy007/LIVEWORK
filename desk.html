@@ -850,6 +850,39 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 .av-g{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;max-width:220px;border:1px solid var(--line);padding:6px;background:var(--paper)}
 .av-c{height:30px;border:1px solid var(--line);background:var(--white);font:inherit;font-weight:700;font-size:12px;color:var(--stone);cursor:pointer}
 .av-c.on{background:var(--yellow);border-color:var(--yellow);color:#000}
+
+/* patch 45 · person sheet, card proof, getting paid */
+.pp-name{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.pp-name:hover{text-decoration-color:var(--ink)}
+.bc-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+.bc-pair figure{margin:0}.bc-pair figcaption{font:600 11px/1 Manrope,Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);margin-top:8px}
+.bc{position:relative;aspect-ratio:3.5/2;border-radius:6px;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.16),0 1px 0 rgba(0,0,0,.06);container-type:inline-size}
+.bc-front{background:#0B0B0B;display:grid;place-items:center}
+.bc-back{background:#F4F2ED;color:#121212}
+.bc-bar{position:absolute;top:12%;width:14%;height:2.2%;background:#F2C632;display:block}.bc-bar.l{left:7%}.bc-bar.r{right:7%}
+.bc-wm{width:56%;height:auto;display:block}
+.bc-who{position:absolute;left:7%;top:21%;line-height:1}
+.bc-who b{display:block;font:800 7.4cqw/1.05 Manrope,Arial,sans-serif;letter-spacing:-.01em;margin:0}
+.bc-who span{display:block;margin:2cqw 0 0;font:600 3.2cqw/1 Manrope,Arial,sans-serif;letter-spacing:.16em;color:#6E6961}
+.bc-lines{position:absolute;left:7%;bottom:7%;display:grid;gap:.9cqw;font:400 3.4cqw/1.2 Manrope,Arial,sans-serif}.bc-lines span{display:block;margin:0}.bc-lines em{font:400 3cqw/1.35 Manrope,Arial,sans-serif;font-style:normal;color:#6E6961;margin-top:2.2cqw}
+.bc-qr{position:absolute;right:7%;bottom:7%;width:17.5%;aspect-ratio:1}.bc-qr svg{display:block;width:100%;height:100%}
+.p45-note{background:var(--wall);border-left:4px solid #F2C632;padding:10px 14px;margin:4px 0 14px;font-weight:600}
+.p45-g{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.p45-g>div{display:grid;gap:3px;min-width:0}.p45-g>div>b{overflow:hidden;text-overflow:ellipsis}
+.p45-remit{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--white,#fff);border:1px solid var(--line);border-left:4px solid #F2C632;padding:12px 16px;margin:0 0 18px}
+.p45-remit span{color:var(--stone)}.p45-remit .btn{margin-left:auto}
+.p45-remit.warn{border-left-color:#C98A12}
+@media (max-width:700px){.bc-pair{grid-template-columns:1fr}.p45-g{grid-template-columns:60px minmax(0,1fr)}.p45-g .btn{grid-column:2;justify-self:start}}
+
+/* patch 47 · grouped rail */
+.rail nav .navg{font:600 10.5px/1 Manrope,Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--panel-dim);opacity:.6;padding:18px 12px 6px}
+.rail nav .navq{justify-content:flex-start;gap:10px;height:40px;margin-bottom:4px;border:1px solid var(--panel-line,#282828)!important}
+.rail nav .navq svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;flex:none}
+.rail nav .navq kbd{margin-left:auto;font:600 11px/1 Manrope,Arial,sans-serif;opacity:.6}
+.subnav{display:flex;gap:24px;border-bottom:1px solid var(--line);margin:-6px 0 22px;overflow-x:auto;scrollbar-width:none}
+.subnav button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 0;font:600 14px/1 Manrope,Arial,sans-serif;color:var(--stone);cursor:pointer;white-space:nowrap}
+.subnav button.on{color:var(--ink);border-bottom-color:#F2C632}
+.subnav em{font-style:normal;font-size:11px;background:#F2C632;color:#000;border-radius:9px;padding:2px 6px;margin-left:4px}
 </style>
 </head>
 <body>
@@ -1020,7 +1053,7 @@ const S = { staff:[], companies:[], contacts:[], searches:[], tags:[], search_ta
   automations:[], outbound:[], import_sources:[], activity:[], tasks:[], interview_notes:[], interview_guides:[],
   pools:[], pool_members:[], intake_queue:[], signature_requests:[], campaigns:[], lw_payable:[], desk_acceptances:[], expenses:[],
   lw_payouts:[], lw_commission_lines:[], commission_runs:[], comp_plans:[], company_owners:[],
-  gear:[], contact_inbox:[], staff_cards:[] };
+  gear:[], contact_inbox:[], staff_cards:[], lw_settings:[] };
 let ME = null;
 
 async function loadAll(){
@@ -1116,14 +1149,43 @@ function counts(k){
   if(k==='expenses') return exBadge();
   if(k==='contacts') return (typeof myInboxNew === 'function' ? myInboxNew().length : 0) || '';
   if(k==='pools') return S.pools.length;
+  if(k==='intake') return (typeof INTAKE !== 'undefined' ? INTAKE.filter(x => x.status !== 'saved').length : 0) || '';
   return '';
+}
+/* Patch 47 · the rail in four groups. Search is the field on top, Pools and Intake live inside
+   Candidates, Mail lives inside Activity, The Card sits by your name. NAV above still names every view. */
+const NAVG = [
+  ['Work',    [['today','Today'],['pipeline','Pipeline'],['searches','Roles'],['candidates','Candidates'],['activity','Activity']]],
+  ['Clients', [['companies','Clients'],['contacts','Contacts']]],
+  ['Finance', [['placements','Placements'],['invoices','Invoices'],['expenses','Expenses']]],
+  ['Team',    [['people','People'],['reports','Reports'],['settings','Settings']]]
+];
+/* views that light up their parent in the rail */
+const NAVP = { pools:'candidates', intake:'candidates', mail:'activity', find:'' };
+const SUBNAV = {
+  candidates: [['candidates','Everyone'],['pools','Pools'],['intake','Add candidates']],
+  activity:   [['activity','What happened'],['mail','What went out']]
+};
+function subNav(){
+  const g = SUBNAV[NAVP[VIEW] || VIEW]; if(!g) return '';
+  return '<div class="subnav">' + g.map(([k,l]) => '<button data-v="' + k + '" class="' + (VIEW === k ? 'on' : '') + '">' + l +
+    (k === 'intake' && counts('intake') ? ' <em>' + counts('intake') + '</em>' : '') + '</button>').join('') + '</div>';
 }
 function drawNav(){
   drawSkin();
-  $('#nav').innerHTML = NAV.filter(([k]) => k !== 'people' || isAdmin()).map(([k,l]) =>
-    '<button data-v="' + k + '" class="' + (VIEW===k?'on':'') + '">' + l +
-    '<span class="n">' + (counts(k)||'') + '</span></button>').join('');
-  document.querySelectorAll('#nav button').forEach(b => b.onclick = () => go(b.dataset.v));
+  const lit = k => VIEW === k || NAVP[VIEW] === k;
+  $('#nav').innerHTML =
+    '<button class="navq' + (VIEW === 'find' ? ' on' : '') + '" data-v="find"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span>Search</span><kbd>' + (/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl') + ' K</kbd></button>' +
+    NAVG.map(([g, items]) => {
+      const vis = items.filter(([k]) => k !== 'people' || isAdmin());
+      if(!vis.length) return '';
+      return '<div class="navg">' + g + '</div>' + vis.map(([k,l]) =>
+        '<button data-v="' + k + '" class="' + (lit(k) ? 'on' : '') + '">' + l + '<span class="n">' + (counts(k) || '') + '</span></button>').join('');
+    }).join('');
+  document.querySelectorAll('#nav button[data-v]').forEach(b => b.onclick = () => go(b.dataset.v));
+  const me = document.querySelector('.rail .me .who');
+  if(me && !document.getElementById('myCardLink')) me.insertAdjacentHTML('beforeend', ' · <a href="#" id="myCardLink">Your card</a>');
+  const mc = document.getElementById('myCardLink'); if(mc) mc.onclick = e => { e.preventDefault(); go('card'); };
   /* tools: pages that live outside the desk */
   $('#nav').insertAdjacentHTML('beforeend', '<button data-tool="livesign.html" class="tool">Livesign<span class="n">sign a PDF</span></button>');
   document.querySelectorAll('#nav button[data-tool]').forEach(b => b.onclick = () => { location.href = b.dataset.tool; });
@@ -1203,6 +1265,7 @@ function draw(){
     invoices: vInvoices, expenses: vExpenses, mail: vMail, reports: vReports, settings: vSettings,
     people: () => vPeople() + vGearSection(), contacts: vContacts, card: vCard
   }[VIEW])();
+  const sn = subNav(); if(sn){ const t = m.querySelector('.top'); if(t) t.insertAdjacentHTML('afterend', sn); else m.insertAdjacentHTML('afterbegin', sn); }
   wire();
   labelCells(m);
 }
@@ -2897,7 +2960,7 @@ function vInvoices(){
       '<div class="stat y"><b>' + money(S.invoices.filter(i => String(F(i,'status')).toLowerCase()==='paid').reduce((n,i) => n + num(F(i,'amount')), 0)) + '</b><span>Collected</span></div>' +
       '<div class="stat"><b>' + out.filter(i => F(i,'due_at') && new Date(F(i,'due_at')) < new Date()).length + '</b><span>Past due</span></div>' +
       '<div class="stat"><b>20%</b><span>Placement fee, net thirty</span></div>' +
-    '</div>' +
+    '</div>' + invRemitLine() +
     table(['Invoice','Client','Amount','Aging','Status','Billing'],
       S.invoices.map(i => '<div class="r" style="grid-template-columns:130px 1.4fr 130px 1fr 120px 210px" data-inv="' + idOf(i) + '">' +
         '<b>' + esc(F(i,'invoice_no','number') || 'Draft') + '</b>' +
@@ -3280,8 +3343,8 @@ function vPeople(){
     const st = statusOf(x);
     return '<div class="r pp" style="grid-template-columns:' + GRID + '">' +
       '<div class="pp-who"><span class="pp-av">' + esc(initials(F(x,'name','email'))) + '</span>' +
-        '<div><b>' + esc(F(x,'name','email')) + '</b>' +
-        '<span class="pp-sub">' + (self ? 'You' : esc(roleLabel(roleOf(x)))) + '</span>' +
+        '<div><b class="pp-name" data-person="' + id + '" title="Open the person record">' + esc(F(x,'name','email')) + '</b>' +
+        '<span class="pp-sub">' + (self ? 'You' : esc(F(x,'title') || roleLabel(roleOf(x)))) + '</span>' +
         '<span class="pp-mail muted">' + esc(F(x,'email')) + '</span>' +
         accDot(F(x,'email')) + gearLine(id) + '</div></div>' +
       '<span class="muted pp-email">' + esc(F(x,'email')) + '</span>' +
@@ -3344,7 +3407,7 @@ function wirePeople(m){
 function vSettings(){
   const srcs = S.import_sources.length ? S.import_sources :
     [{name:'Indeed', status:'Key not set'},{name:'LinkedIn', status:'Key not set'}];
-  return head('Settings.', '') +
+  return head('Settings.', '') + vRemit() +
     '<div class="sec"><h2>Roles.</h2></div>' +
     table(['Person','Email','Role'],
       S.staff.map(s => '<div class="r" style="grid-template-columns:1.4fr 1.8fr 140px">' +
@@ -3396,6 +3459,7 @@ function paintSheet(){
   if(k === 'search') return sheetSearch();
   if(k === 'candidate') return sheetCandidate();
   if(k === 'pool') return sheetPool();
+  if(k === 'person') return sheetPerson();
   if(k === 'form') return;
 }
 function sheetCompany(){
@@ -5416,6 +5480,7 @@ function wire(){
   common(m);
   try{ wirePeople(m); }catch(e){ console.warn('people', e.message); }
   try{ wireP37(m); }catch(e){ console.warn('p37', e.message); }
+  try{ wireP45(m); }catch(e){ console.warn('p45', e.message); }
   try{ wireCommission(m); }catch(e){ console.warn('commission', e.message); }
   m.querySelectorAll('select.rolesel').forEach(sel => sel.onchange = async () => {
     const was = S.staff.find(x => String(idOf(x)) === String(sel.dataset.staff));
@@ -6187,7 +6252,7 @@ async function runScan(file){
 /* ============================================================
    Gear
    ============================================================ */
-const GEARKIND = { laptop:'Laptop', phone:'Phone', monitor:'Monitor', other:'Other' };
+const GEARKIND = { laptop:'Laptop', phone:'Phone', monitor:'Monitor', dock:'Dock', keyboard:'Keyboard and mouse', accessory:'Accessory', other:'Other' };
 const OSNAME = { mac:'Mac', windows:'Windows', other:'Other' };
 const gearOut = g => !g.returned_on;
 const gearOf = sid => (S.gear || []).filter(g => String(g.staff_id) === String(sid) && gearOut(g));
@@ -6205,6 +6270,225 @@ function gearLine(sid){
     esc(gearName(g)) + ' · ' + esc(g.tag || '') + ' · ' + (g.ack_at ? 'Accepted ' + esc(short(g.ack_at)) : 'Not accepted yet') + '</a>').join('') +
     '<a class="gl add" data-gearnew="' + sid + '">Add another</a><a class="gl add" data-gearret="' + sid + '">Return gear</a>';
 }
+
+/* ================= Patch 45 · the person record, the business card proof, getting paid ================= */
+const WM_D = ["m 325.87396,98.948 h -17.484 V 236 h 85.164 v -15.416 h -67.68 z", "m 432.34992,98.948 h -17.672 V 236 h 17.672 z", "m 515.88991,236 47.564,-137.052 h -18.612 l -37.976,115.996 -40.232,-115.996 h -18.8 L 497.08991,236 Z", "m 596.42205,173.584 h 74.636 v -15.416 h -74.636 v -43.804 h 77.456 V 98.948 h -94.94 V 236 h 98.324 v -15.416 h -80.84 z", "m 704.21402,98.948 v 176.908 h 11.28 V 98.948 Z", "m 872.16606,236 34.78,-137.052 h -19.552 l -25.192,111.296 -31.208,-111.296 h -18.8 l -30.456,111.296 -25.756,-111.296 h -19.552 L 771.58606,236 h 19.176 l 30.644,-112.612 31.584,112.612 z", "m 977.51419,96.692 c -39.292,0 -65.988,28.952 -65.988,71.816 0,43.052 26.508,71.816 66.176,71.816 16.732,0 31.39601,-5.076 42.48801,-14.476 14.852,-12.596 23.688,-33.84 23.688,-56.212 0,-44.18 -26.132,-72.944 -66.36401,-72.944 z m 0,15.416 c 29.70401,0 48.88001,22.372 48.88001,57.152 0,33.088 -19.74,55.648 -48.69201,55.648 -29.328,0 -48.692,-22.56 -48.692,-56.4 0,-33.84 19.364,-56.4 48.504,-56.4 z", "m 1083.6141,176.968 h 45.12 c 15.604,0 22.56,7.52 22.56,24.44 l -0.188,12.22 c 0,8.46 1.504,16.732 3.948,22.372 h 21.244 v -4.324 c -6.58,-4.512 -7.896,-9.4 -8.272,-27.636 -0.188,-22.56 -3.76,-29.328 -18.612,-35.72 15.416,-7.708 21.62,-16.92 21.62,-32.712 0,-23.688 -14.664,-36.66 -41.736,-36.66 h -63.168 V 236 h 17.484 z m 0,-15.416 v -47.188 h 42.3 c 9.776,0 15.416,1.504 19.74,5.264 4.7,3.948 7.144,10.152 7.144,18.236 0,16.356 -8.272,23.688 -26.884,23.688 z", "m 1213.5901,188.06 22.372,-22.372 48.316,70.312 h 20.68 l -56.4,-81.216 55.836,-55.836 h -22.56 l -68.244,69.372 V 98.948 h -17.484 V 236 h 17.484 z"];
+const WM_VB = { w: 996.57, h: 179.16, tx: -308.39, ty: -96.69 };
+const LW_ADDR = ['26632 Towne Centre Dr', 'Foothill Ranch, CA 92610'];
+const LW_GOLD = '#F2C632';
+/* the wordmark: the Dropbox brand SVG exactly as supplied, one colour, rule included. Never recolour the rule */
+function wmSvg(fill){
+  return '<svg class="bc-wm" viewBox="0 0 ' + WM_VB.w + ' ' + WM_VB.h + '" aria-label="LIVEWORK" role="img"><g transform="translate(' + WM_VB.tx + ' ' + WM_VB.ty + ')" fill="' + fill + '">' +
+    WM_D.map(d => '<path d="' + d + '"/>').join('') + '</g></svg>';
+}
+function qrMatrix(text){
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+  const q = qrcode(0, 'M'); q.addData(text, 'Byte'); q.make();
+  return { n: q.getModuleCount(), dark: (r, c) => q.isDark(r, c) };
+}
+const fmtPhone = p => { const d = String(p || '').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
+  return d.length === 10 ? '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6) : String(p || '').trim(); };
+function personCard(s){
+  const m = fmtPhone(F(s,'mobile'));
+  return { name: F(s,'name') || '', title: F(s,'title') || '', email: F(s,'email') || '', mobile: m, cell: m, web: 'livework.inc', website: 'livework.inc', company: 'LIVEWORK' };
+}
+function cardProof(d){
+  const lines = [d.email, d.mobile, d.web].filter(Boolean);
+  return '<div class="bc-pair">' +
+    '<figure><div class="bc bc-front"><i class="bc-bar l"></i>' + wmSvg('#FFFFFF') + '</div><figcaption>Front</figcaption></figure>' +
+    '<figure><div class="bc bc-back"><i class="bc-bar r"></i>' +
+      '<div class="bc-who"><b>' + esc(d.name || 'Name') + '</b><span>' + esc(String(d.title || 'Title').toUpperCase()) + '</span></div>' +
+      '<div class="bc-lines">' + lines.map(l => '<span>' + esc(l) + '</span>').join('') +
+        '<em>' + LW_ADDR.map(esc).join('<br>') + '</em></div>' +
+      '<div class="bc-qr">' + qrSvg(vcardText(d)) + '</div>' +
+    '</div><figcaption>Back</figcaption></figure></div>';
+}
+/* print file: 3.5 x 2 in trim, 1/8 in bleed all round, trim and bleed boxes set, fonts embedded */
+async function cardPdf(d){
+  const L = await needLib('pdf-lib.min.js', 'PDFLib');
+  const FK = await needLib('fontkit.umd.min.js', 'fontkit');
+  if(!L || !FK) throw new Error('the PDF library did not load');
+  const doc = await L.PDFDocument.create(); doc.registerFontkit(FK);
+  const get = async f => { const r = await fetch(f); if(!r.ok) throw new Error(f + ' missing'); return r.arrayBuffer(); };
+  const [XB, SB, RG] = await Promise.all(['Manrope-ExtraBold.ttf','Manrope-SemiBold.ttf','Manrope-Regular.ttf'].map(async f => doc.embedFont(await get(f), { subset: true })));
+  const B = 9, TW = 252, TH = 144, PW = TW + 2 * B, PH = TH + 2 * B;
+  const ink = L.rgb(0.043, 0.043, 0.043), gold = L.rgb(0.949, 0.776, 0.196), paper = L.rgb(0.957, 0.949, 0.929),
+        stone = L.rgb(0.431, 0.412, 0.380), black = L.rgb(0.07, 0.07, 0.07), white = L.rgb(1, 1, 1);
+  const page = () => { const p = doc.addPage([PW, PH]); p.setBleedBox(0, 0, PW, PH); p.setTrimBox(B, B, TW, TH); return p; };
+  const top = y => PH - B - y;                 /* y measured down from the trim top */
+  const side = TW * 0.07, barW = TW * 0.14, barH = 3.2, barY = TH * 0.12;
+  /* front */
+  const f = page();
+  f.drawRectangle({ x: 0, y: 0, width: PW, height: PH, color: ink });
+  f.drawRectangle({ x: B + side, y: top(barY) - barH, width: barW, height: barH, color: gold });
+  const ww = TW * 0.56, s = ww / WM_VB.w, wh = WM_VB.h * s, wx = B + (TW - ww) / 2, wy = top((TH - wh) / 2);
+  WM_D.forEach(dd => f.drawSvgPath(dd, { x: wx + WM_VB.tx * s, y: wy - WM_VB.ty * s, scale: s, color: white, borderWidth: 0 }));
+  /* back */
+  const b = page();
+  b.drawRectangle({ x: 0, y: 0, width: PW, height: PH, color: paper });
+  b.drawRectangle({ x: B + TW - side - barW, y: top(barY) - barH, width: barW, height: barH, color: gold });
+  const tracked = (txt, x, y, font, size, tr, color) => { let cx = x;
+    for(const ch of String(txt)){ b.drawText(ch, { x: cx, y, size, font, color }); cx += font.widthOfTextAtSize(ch, size) + tr; } };
+  const X = B + side;
+  b.drawText(d.name || '', { x: X, y: top(TH * 0.26 + 11), size: 12, font: XB, color: black });
+  tracked(String(d.title || '').toUpperCase(), X, top(TH * 0.26 + 11 + 11), SB, 5.8, 0.9, stone);
+  const base = B + TH * 0.07 + 1.2;
+  LW_ADDR.forEach((l, i) => b.drawText(l, { x: X, y: base + (1 - i) * 7.2, size: 5.6, font: RG, color: stone }));
+  const ls = [d.email, d.mobile, d.web].filter(Boolean), lb = base + 7.2 + 12;
+  ls.forEach((l, i) => b.drawText(l, { x: X, y: lb + (ls.length - 1 - i) * 9, size: 6.8, font: RG, color: black }));
+  /* vCard code, bottom right: scan it and the contact saves */
+  const Q = qrMatrix(vcardText(d)), qs = 44, cell = qs / Q.n, qx = B + TW - side - qs, qy = B + TH * 0.07;
+  for(let r = 0; r < Q.n; r++) for(let c = 0; c < Q.n; c++) if(Q.dark(r, c))
+    b.drawRectangle({ x: qx + c * cell, y: qy + qs - (r + 1) * cell, width: cell + 0.02, height: cell + 0.02, color: black });
+  doc.setTitle('LIVEWORK business card · ' + (d.name || ''));
+  doc.setAuthor('LIVEWORK'); doc.setCreator('LIVEWORK desk');
+  return doc.save();
+}
+function sheetPerson(){
+  const s = byId(S.staff, SHEET.id); if(!s) return closeSheet();
+  const sid = idOf(s), T = SHEET.tab, first = String(F(s,'name') || 'them').split(/\s+/)[0];
+  const inp = (id, v, ph, t, ro) => '<input id="' + id + '" ' + (t ? 'type="' + t + '" ' : '') + (ro ? 'readonly ' : '') + 'value="' + esc(v == null ? '' : v) + '" placeholder="' + (ph || '') + '">';
+  let body = '';
+  if(T === 0){
+    body = '<div class="form">' +
+      '<div class="two"><div class="field"><label for="pp_name">Full name</label>' + inp('pp_name', F(s,'name'), 'Mayra Alfaro') + '</div>' +
+        '<div class="field"><label for="pp_title">Title</label>' + inp('pp_title', F(s,'title'), 'Account Manager') + '</div></div>' +
+      '<div class="two"><div class="field"><label for="pp_email">Work email</label>' + inp('pp_email', F(s,'email'), '', 'email', true) + '</div>' +
+        '<div class="field"><label for="pp_mobile">Mobile</label>' + inp('pp_mobile', fmtPhone(F(s,'mobile')), '(949) 555 0123', 'tel') + '</div></div>' +
+      '<div class="muted small" style="margin:-4px 0 10px">The work email is how they sign in to the desk, so it is locked here.</div>' +
+      '<div class="field"><label for="pp_pmail">Personal email</label>' + inp('pp_pmail', F(s,'personal_email'), 'For day one papers and final pay notices', 'email') + '</div>' +
+      '<div class="two"><div class="field"><label for="pp_start">Start date</label>' + inp('pp_start', F(s,'started_on'), '', 'date') + '</div>' +
+        '<div class="field"><label for="pp_end">Last day</label>' + inp('pp_end', F(s,'ended_on'), '', 'date') + '</div></div>' +
+      '<div class="g-acts"><button class="btn" id="ppSave">Save</button><button class="btn ghost" data-tab="1">See the card</button></div>' +
+    '</div>';
+  } else if(T === 1){
+    const d = personCard(s), miss = [!d.title && 'a title', !d.mobile && 'a mobile number'].filter(Boolean);
+    body = (miss.length ? '<div class="p45-note">Add ' + miss.join(' and ') + ' in Profile and the card fills in.</div>' : '') +
+      cardProof(d) +
+      '<div class="spec" style="margin-top:14px">' +
+        '<div class="row"><b>Size</b><span>3.5 x 2 in, with 1/8 in bleed on every side (3.75 x 2.25 in file)</span></div>' +
+        '<div class="row"><b>Front</b><span>Black, gold bar top left, the LIVEWORK wordmark centered, one colour, exactly as the brand file</span></div>' +
+        '<div class="row"><b>Back</b><span>Paper, gold bar top right, name and title up top, email, mobile, livework.inc and the office address bottom left, a contact code bottom right that saves them to a phone</span></div>' +
+        '<div class="row"><b>Fonts</b><span>Manrope, embedded</span></div>' +
+      '</div>' +
+      '<div class="g-acts"><button class="btn y" id="ppPdf">Download the print PDF</button><button class="btn ghost" data-tab="0">Edit the details</button></div>';
+  } else {
+    const mine = gearOf(sid), shelf = (S.gear || []).filter(g => !g.staff_id && !g.returned_on);
+    const worth = mine.reduce((t, g) => t + num(g.cost), 0);
+    const row = (g, act) => '<div class="p45-g"><b class="mono">' + esc(g.tag || '') + '</b>' +
+      '<div><b>' + esc(gearName(g)) + '</b><span class="muted small">' + esc([GEARKIND[g.kind], g.serial ? 'SN ' + g.serial : 'No serial yet', g.cost ? usd(g.cost) : ''].filter(Boolean).join(' · ')) + '</span>' +
+      (g.staff_id ? '<span class="small">' + (g.ack_at ? '<span class="gdot ok"></span>Accepted ' + esc(short(g.ack_at)) : '<span class="gdot wait"></span>Waiting on ' + esc(first)) + '</span>' : '') + '</div>' + act + '</div>';
+    body = '<div class="sec" style="margin-top:4px"><h2>' + (mine.length ? esc(first) + ' has ' + mine.length + (mine.length === 1 ? ' device.' : ' devices.') : 'Nothing handed over yet.') + '</h2>' +
+        (worth ? '<span class="muted small">' + usd(worth) + ' of company gear</span>' : '') + '</div>' +
+      mine.map(g => row(g, '<button class="btn sm ghost" data-gear="' + idOf(g) + '">Open</button>')).join('') +
+      '<div class="g-acts" style="margin:10px 0 18px"><button class="btn" data-gearnew="' + sid + '">Hand over a new device</button>' +
+        (mine.length ? '<button class="btn ghost" data-gearret="' + sid + '">Return gear</button>' : '') + '</div>' +
+      '<div class="sec"><h2>On the shelf.</h2><span class="muted small">' + (shelf.length ? 'Bought and not handed over. One press gives it to ' + esc(first) + '.' : 'Nothing waiting.') + '</span></div>' +
+      shelf.map(g => row(g, '<button class="btn sm y" data-give="' + idOf(g) + '">Give to ' + esc(first) + '</button>')).join('');
+  }
+  SHEET.kind = 'person';
+  shell(esc(F(s,'name','email')) + '.', esc([F(s,'title'), roleLabel(roleOf(s)), F(s,'email')].filter(Boolean).join(' · ')),
+    tabs(['Profile', 'Business card', 'Gear']) + body);
+  const sv = $('#ppSave'); if(sv) sv.onclick = () => personSave(sid);
+  const pd = $('#ppPdf'); if(pd) pd.onclick = () => cardDownload(s, pd);
+  $('#sheet').querySelectorAll('[data-give]').forEach(b => b.onclick = async () => {
+    const g = byId(S.gear, b.dataset.give); if(!g) return;
+    const r = await tryWrite(() => patch('gear', idOf(g), { staff_id: sid, handed_on: lwToday(), ack_name: null, ack_at: null, ack_agent: null, returned_on: null, day_one_at: null }),
+      gearName(g) + ' is ' + first + "'s now.");
+    if(r){ Object.assign(g, r); paintSheet(); }
+  });
+  $('#sheet').querySelectorAll('[data-gear]').forEach(b => b.onclick = () => gearForm(b.dataset.gear));
+  $('#sheet').querySelectorAll('[data-gearnew]').forEach(b => b.onclick = () => gearForm(null, b.dataset.gearnew));
+  $('#sheet').querySelectorAll('[data-gearret]').forEach(b => b.onclick = () => { if(staffGone(b.dataset.gearret)) returnForm(b.dataset.gearret); else offboard(b.dataset.gearret); });
+}
+async function cardDownload(s, btn){
+  const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Building';
+  try{ const bytes = await cardPdf(personCard(s));
+    const u = URL.createObjectURL(new Blob([bytes], { type:'application/pdf' }));
+    const a = document.createElement('a'); a.href = u; a.download = 'livework-card-' + String(F(s,'name') || 'card').toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.pdf';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000);
+    toast('Card PDF ready.'); }
+  catch(err){ toast('No PDF. ' + err.message, true); console.error(err); }
+  btn.disabled = false; btn.textContent = lbl;
+}
+async function personSave(sid){
+  const row = { name: val('pp_name') || null, title: val('pp_title') || null, mobile: String(val('pp_mobile') || '').replace(/[^\d+]/g, '') || null,
+    personal_email: val('pp_pmail') || null, started_on: val('pp_start') || null, ended_on: val('pp_end') || null };
+  if(!row.name) return toast('A name first.', true);
+  if(row.mobile && row.mobile.replace(/\D/g,'').length < 10) return toast('That mobile looks short.', true);
+  const r = await tryWrite(() => patch('staff', sid, row), 'Saved.');
+  if(!r) return;
+  const s = byId(S.staff, sid); if(s) Object.assign(s, r);
+  SHEET.tab = 1; paintSheet(); draw();
+}
+
+/* ---------- getting paid ---------- */
+const abaOk = r => { const d = String(r || '').replace(/\D/g,''); if(d.length !== 9) return false;
+  const n = d.split('').map(Number); return (3 * (n[0] + n[3] + n[6]) + 7 * (n[1] + n[4] + n[7]) + (n[2] + n[5] + n[8])) % 10 === 0; };
+function remit(){ const r = (S.lw_settings || []).find(x => x.key === 'remit'); return r ? (r.value || {}) : null; }
+const last4 = a => String(a || '').replace(/\D/g,'').slice(-4);
+function remitSpec(r, full){
+  return '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
+    '<div class="row"><b>Pay by</b><span>ACH or wire</span></div>' +
+    '<div class="row"><b>Bank</b><span>' + esc(r.bank || '') + '</span></div>' +
+    '<div class="row"><b>Account name</b><span>' + esc(r.holder || '') + '</span></div>' +
+    '<div class="row"><b>Routing (ABA)</b><span class="mono">' + esc(r.routing || '') + '</span></div>' +
+    '<div class="row"><b>Account</b><span class="mono">' + esc(r.account) + '</span></div>' +
+    '<div class="row"><b>Type</b><span>' + esc(r.type || 'Checking') + '</span></div>' +
+    (r.email ? '<div class="row"><b>Remittance to</b><span>' + esc(r.email) + '</span></div>' : '') +
+    '<div class="row"><b>Memo</b><span>' + esc(r.memo || 'Invoice number') + '</span></div></div>';
+}
+function vRemit(){
+  if(!isAdmin()) return '';
+  const r = remit();
+  return '<div class="sec"><h2>Getting paid.</h2><span class="muted small">What prints under How to pay on every invoice.</span>' +
+      '<button class="btn sm' + (r ? ' ghost' : ' y') + '" id="remitEdit">' + (r ? 'Change' : 'Add the bank details') + '</button></div>' +
+    (r ? remitSpec(r) : '<div class="tbl"><div class="empty">No bank details yet. Invoices go out without a way to pay by ACH.</div></div>');
+}
+function remitForm(){
+  const r = remit() || {};
+  const inp = (id, v, ph, extra) => '<input id="' + id + '" value="' + esc(v == null ? '' : v) + '" placeholder="' + (ph || '') + '" ' + (extra || '') + '>';
+  SHEET = { kind:'form', id:'remit', tab:0, ctx:{} };
+  shell('How clients pay.', 'Prints on every invoice PDF under How to pay.',
+    '<div class="form">' +
+      '<div class="two"><div class="field"><label for="rm_bank">Bank</label>' + inp('rm_bank', r.bank, 'JPMorgan Chase Bank, N.A.') + '</div>' +
+        '<div class="field"><label for="rm_type">Account type</label><select id="rm_type">' + ['Checking','Savings'].map(t => '<option' + ((r.type || 'Checking') === t ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></div></div>' +
+      '<div class="field"><label for="rm_holder">Account name</label>' + inp('rm_holder', r.holder || 'Germann Inc. dba LIVEWORK', '') + '</div>' +
+      '<div class="two"><div class="field"><label for="rm_routing">Routing number (ABA)</label>' + inp('rm_routing', r.routing, '9 digits', 'inputmode="numeric" autocomplete="off"') + '<span class="small" id="rm_chk"></span></div>' +
+        '<div class="field"><label for="rm_acct">Account number</label>' + inp('rm_acct', r.account, '', 'inputmode="numeric" autocomplete="off"') + '</div></div>' +
+      '<div class="two"><div class="field"><label for="rm_email">Remittance email</label>' + inp('rm_email', r.email || 'team@livework.inc', '') + '</div>' +
+        '<div class="field"><label for="rm_memo">Memo line</label>' + inp('rm_memo', r.memo || 'Invoice number', '') + '</div></div>' +
+      '<div class="g-acts"><button class="btn" id="rmSave">Save</button></div>' +
+      '<div class="muted small" style="margin-top:12px">Before the first invoice goes out, confirm the routing number with the bank for ACH. Some banks use a different one for wires.</div>' +
+    '</div>');
+  const chk = () => { const v = val('rm_routing'), el = $('#rm_chk'); if(!el) return;
+    el.textContent = !v ? '' : abaOk(v) ? 'Routing number checks out.' : 'That is not a valid routing number.';
+    el.style.color = !v ? '' : abaOk(v) ? 'var(--ok,#1F7A45)' : 'var(--warn,#B4441A)'; };
+  $('#rm_routing').oninput = chk; chk();
+  $('#rmSave').onclick = async () => {
+    const v = { bank: val('rm_bank'), type: val('rm_type'), holder: val('rm_holder'), routing: String(val('rm_routing')).replace(/\D/g,''),
+      account: String(val('rm_acct')).replace(/\s/g,''), email: val('rm_email'), memo: val('rm_memo') };
+    if(!v.bank || !v.holder) return toast('Bank and account name first.', true);
+    if(!abaOk(v.routing)) return toast('That routing number does not check out.', true);
+    if(!/^\d{4,17}$/.test(v.account)) return toast('Account number is 4 to 17 digits.', true);
+    const out = await tryWrite(() => rest('lw_settings', { method:'POST', prefer:'resolution=merge-duplicates,return=representation',
+      body: JSON.stringify({ key:'remit', value: v, updated_by: meId(), updated_at: new Date().toISOString() }) }), 'Saved. Invoices carry it from the next PDF.');
+    if(!out) return;
+    S.lw_settings = (S.lw_settings || []).filter(x => x.key !== 'remit').concat(Array.isArray(out) ? out : [out]);
+    closeSheet(); draw();
+  };
+}
+function invRemitLine(){
+  if(!isAdmin()) return '';
+  const r = remit();
+  return r ? '<div class="p45-remit"><b>How to pay, on every PDF.</b><span>' + esc(r.bank) + ' · routing <span class="mono">' + esc(r.routing) + '</span> · account <span class="mono">' + esc(r.account) + '</span></span><button class="btn sm ghost" id="remitEdit">Change</button></div>'
+           : '<div class="p45-remit warn"><b>No bank details on the invoices yet.</b><span>Clients cannot pay by ACH until they are in.</span><button class="btn sm y" id="remitEdit">Add them</button></div>';
+}
+function wireP45(m){
+  m.querySelectorAll('[data-person]').forEach(b => b.onclick = e => { e.stopPropagation(); openSheet('person', b.dataset.person, +(b.dataset.ptab2 || 0)); });
+  const re = m.querySelector('#remitEdit'); if(re) re.onclick = remitForm;
+}
+
 function vGearSection(){
   if(!isAdmin()) return '';
   const list = (S.gear || []).slice().sort((a,b) => String(a.tag).localeCompare(String(b.tag)));
@@ -6620,7 +6904,7 @@ const wzTick = (id, label, sub) => '<label class="wz-t"><input type="checkbox" i
 
 /* ---------- Bring someone on ---------- */
 function onboard(){
-  WZ = { name:'Bring someone on', i:0, sid:null, email:'', pw:'', web:'', who:'', steps:[obMail, obDesk, obPlan, obGear, obPapers, obDone] };
+  WZ = { name:'Bring someone on', i:0, sid:null, email:'', pw:'', web:'', who:'', title:'', mobile:'', pmail:'', start:'', steps:[obMail, obDesk, obCard, obPlan, obGear, obPapers, obDone] };
   wzPaint();
 }
 function obMail(){
@@ -6630,11 +6914,17 @@ function obMail(){
     '<a class="btn ghost" href="https://sso.godaddy.com/?path=%2Fproducts" target="_blank" rel="noopener">Open GoDaddy</a>' +
     '<div class="field"><label for="w_name">Full name</label><input id="w_name" value="' + esc(WZ.who) + '" placeholder="Jordan Lee"></div>' +
     '<div class="field"><label for="w_email">Work email</label><input id="w_email" type="email" value="' + esc(WZ.email) + '" placeholder="jordan@livework.inc"></div>' +
+    '<div class="two"><div class="field"><label for="w_title">Title</label><input id="w_title" value="' + esc(WZ.title) + '" placeholder="Account Manager"></div>' +
+      '<div class="field"><label for="w_mobile">Mobile</label><input id="w_mobile" type="tel" value="' + esc(WZ.mobile) + '" placeholder="(949) 555 0123"></div></div>' +
+    '<div class="two"><div class="field"><label for="w_pmail">Personal email</label><input id="w_pmail" type="email" value="' + esc(WZ.pmail) + '" placeholder="For papers before day one"></div>' +
+      '<div class="field"><label for="w_start">Start date</label><input id="w_start" type="date" value="' + esc(WZ.start) + '"></div></div>' +
     '<div class="two"><div class="field"><label for="w_pw">Temporary email password</label><input id="w_pw" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + esc(WZ.pw) + '"></div>' +
       '<div class="field"><label for="w_web">They sign in to email at</label><input id="w_web" value="' + esc(WZ.web || 'email.godaddy.com') + '"></div></div>',
     '<button class="btn y" id="wzGo">Email is made. Next</button>');
   $('#wzGo').onclick = () => {
     WZ.who = val('w_name'); WZ.email = String(val('w_email')).toLowerCase(); WZ.pw = $('#w_pw').value; WZ.web = val('w_web');
+    WZ.title = val('w_title'); WZ.mobile = val('w_mobile'); WZ.pmail = val('w_pmail'); WZ.start = val('w_start');
+    if(WZ.mobile && WZ.mobile.replace(/\D/g,'').length < 10) return toast('That mobile looks short.', true);
     if(WZ.who.split(/\s+/).length < 2) return toast('First and last name.', true);
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(WZ.email)) return toast('That email does not look right.', true);
     const have = S.staff.find(s => String(F(s,'email')).toLowerCase() === WZ.email);
@@ -6652,14 +6942,33 @@ function obDesk(){
     '<div class="muted small">Recruiter sees only their own roles and commission. Admin sees everything. You can change it later on People.</div>',
     '<button class="btn y" id="wzGo">' + (have ? 'Next' : 'Add them to the desk') + '</button>');
   $('#wzGo').onclick = async () => {
-    if(wzStaff()) return wzNext();
+    if(wzStaff()){ await wzProfile(); return wzNext(); }
     const b = $('#wzGo'); b.disabled = true; b.textContent = 'Adding';
     try{
       const j = await fnCall('staff-add', { name: WZ.who, email: WZ.email, role: val('w_role') });
       const row = j.staff; if(row){ S.staff = S.staff.filter(s => String(idOf(s)) !== String(idOf(row))).concat([row]); WZ.sid = idOf(row); }
+      await wzProfile();
       toast(WZ.who + ' can sign in now.'); drawNav(); wzNext();
     }catch(e){ toast('Did not add. ' + e.message, true); b.disabled = false; b.textContent = 'Add them to the desk'; }
   };
+}
+/* the person record: title, mobile, personal email and start date from step 1 land on their staff row */
+async function wzProfile(){
+  if(!WZ.sid) return;
+  const row = clean({ title: WZ.title, mobile: String(WZ.mobile || '').replace(/[^\d+]/g,''), personal_email: WZ.pmail, started_on: WZ.start });
+  if(!Object.keys(row).length) return;
+  const r = await tryWrite(() => patch('staff', WZ.sid, row));
+  if(r){ const s = wzStaff(); if(s) Object.assign(s, r); }
+}
+function obCard(){
+  const st = wzStaff(); if(!st) return wzNext();
+  const d = personCard(st), miss = [!d.title && 'a title', !d.mobile && 'a mobile'].filter(Boolean);
+  wzShell('Their business card.', 'Built from what you typed in step 1. Download the print file and send it to the printer.',
+    (miss.length ? '<div class="p45-note">No ' + miss.join(' or ') + ' yet. Go back to step 1 to add it, or fix it later on their record.</div>' : '') +
+    cardProof(d),
+    '<button class="btn ghost" id="wzCardPdf">Download the print PDF</button><button class="btn y" id="wzGo">Next</button>');
+  $('#wzCardPdf').onclick = () => cardDownload(st, $('#wzCardPdf'));
+  $('#wzGo').onclick = wzNext;
 }
 function obPlan(){
   const st = wzStaff(); const has = (S.comp_plans || []).some(p => String(p.staff_id) === String(WZ.sid));
@@ -6675,7 +6984,7 @@ function obGear(){
     (gs.length ? '<div class="wz-have">' + gs.map(g => '<div><b>' + esc(g.tag || '') + '</b> ' + esc(gearName(g)) + ' <span class="mono small">' + esc(g.serial || '') + '</span></div>').join('') + '</div>' : '') +
     (shelf.length ? '<div class="field"><label for="w_shelf">From the shelf</label><select id="w_shelf"><option value="">A new device</option>' +
       shelf.map(g => '<option value="' + idOf(g) + '">' + esc(g.tag || '') + ' · ' + esc(gearName(g)) + '</option>').join('') + '</select></div>' : '') +
-    '<div class="two"><div class="field"><label for="w_kind">Kind</label><select id="w_kind"><option value="laptop">Laptop</option><option value="phone">Phone</option><option value="monitor">Monitor</option><option value="other">Other</option></select></div>' +
+    '<div class="two"><div class="field"><label for="w_kind">Kind</label><select id="w_kind">' + Object.keys(GEARKIND).map(k => '<option value="' + k + '">' + GEARKIND[k] + '</option>').join('') + '</select></div>' +
       '<div class="field"><label for="w_os">System</label><select id="w_os"><option value="mac">Mac</option><option value="windows">Windows</option><option value="other">Other</option></select></div></div>' +
     '<div class="field"><label for="w_model">Make and model</label><input id="w_model" placeholder="MacBook Air 15 M4"></div>' +
     '<div class="two"><div class="field"><label for="w_serial">Serial number</label><input id="w_serial" placeholder="On the box or the bottom"></div>' +
@@ -6720,6 +7029,8 @@ function obDone(){
   wzShell('They are set.', 'What happens on their first sign in, nothing for you to do.',
     '<div class="spec gspec">' +
       '<div class="row"><b>Email</b><span>' + esc(WZ.email) + '</span></div>' +
+      '<div class="row"><b>Title</b><span>' + esc(F(st,'title') || 'Not set') + '</span></div>' +
+      '<div class="row"><b>Mobile</b><span>' + esc(fmtPhone(F(st,'mobile')) || 'Not set') + '</span></div>' +
       '<div class="row"><b>Desk</b><span>' + esc(roleLabel(roleOf(st))) + ' · signs in with a code</span></div>' +
       '<div class="row"><b>Gear</b><span>' + (gs.length ? gs.map(g => esc(g.tag) + ' ' + esc(gearName(g))).join(' · ') : 'Own devices') + '</span></div></div>' +
     '<ol class="wz-l"><li>They read and accept the desk access agreement.</li>' + (gs.length ? '<li>Today asks them to accept the company gear terms.</li>' : '') +
