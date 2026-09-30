@@ -209,8 +209,8 @@ drawSkin();
 
 /* ---------- two doors: client (room code) or staff (desk sign in) ---------- */
 let AUTH = null;   /* {kind:'staff'} or {kind:'room', token} */
-let SIGNED = null, ADMIN = false;   /* the executed bytes, and whether the vault (admins only) is open to this person */
-/* the vendor kit: W-9 and bank letter in the private vault bucket, Root and Admin only; the desk reads lw_settings.vendor */
+let SIGNED = null, ADMIN = false;   /* the executed bytes, and whether the vault (Root only) is open to this person */
+/* the vendor kit: W-9 and bank letter in the private vault bucket, Root only; the desk reads lw_settings.vendor */
 async function vaultSave(){
   const k = $('#vkind').value, b = $('#vsave'); if(!SIGNED) return;
   b.disabled = true; b.textContent = 'Saving';
@@ -244,7 +244,7 @@ function ready(kind, who, name, email, title){
 }
 function staffDoor(){
   $('#pickdoor').style.display = 'none'; $('#cdoor').style.display = 'none';
-  LWAuth.gate($('#sdoor'), st => { ADMIN = ['admin', 'owner'].includes(String(st.role || '').toLowerCase()); ready('staff', null, st.name, st.email, st.role === 'admin' ? 'President' : ''); });
+  LWAuth.gate($('#sdoor'), st => { ADMIN = String(st.role || '').toLowerCase() === 'owner'; ready('staff', null, st.name, st.email, st.role === 'admin' ? 'President' : ''); });
 }
 let cstep = 0, cemail = '', cerr = '';
 function clientDoor(){

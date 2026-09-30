@@ -3490,7 +3490,7 @@ function sheetCompany(){
       ['Notices to', esc(F(c,'notice_email') || 'Not on file')],
       ['Notes', esc(F(c,'notes','bio'))]
     ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-edit="company:' + idOf(c) + '">Edit</button><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button>' +
-      (isAdmin() ? '<button class="btn ghost" data-vpack="' + idOf(c) + '">Vendor packet</button><button class="btn ghost del" data-delco="' + idOf(c) + '">Delete client</button>' : '') + '</div>';
+      (isOwner() ? '<button class="btn ghost" data-vpack="' + idOf(c) + '">Vendor packet</button>' : '') + (isAdmin() ? '<button class="btn ghost del" data-delco="' + idOf(c) + '">Delete client</button>' : '') + '</div>';
   if(T===1) body = '<div class="clist">' + contactsOf(idOf(c)).map(ct => {
       const cid = idOf(ct);
       const ph = String(F(ct,'phone') || '').replace(/[^0-9+]/g,'');
@@ -6453,9 +6453,9 @@ function vRemit(){
 function vendorFiles(){ const r = (S.lw_settings || []).find(x => x.key === 'vendor'); return r ? (r.value || {}) : {}; }
 const VFILES = [['w9', 'W-9', 'Signed IRS W-9 for Germann Inc.'], ['bank', 'Bank letter', 'Chase account verification letter on bank letterhead']];
 function vVendor(){
-  if(!isAdmin()) return '';
+  if(!isOwner()) return '';
   const v = vendorFiles();
-  return '<div class="sec"><h2>Vendor packet.</h2><span class="muted small">Goes to a new client\'s accounts payable with the first invoice. The W-9 and bank letter sit in a private vault only Root and Admin can open.</span>' +
+  return '<div class="sec"><h2>Vendor packet.</h2><span class="muted small">Goes to a new client\'s accounts payable with the first invoice. The W-9 and bank letter sit in a private vault only Root can open.</span>' +
       '<button class="btn sm y" data-vpack="">Preview the packet</button></div>' +
     '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
     VFILES.map(([k, l, hint]) => '<div class="row"><b>' + l + '</b><span>' +
