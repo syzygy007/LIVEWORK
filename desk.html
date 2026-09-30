@@ -6455,7 +6455,7 @@ const VFILES = [['w9', 'W-9', 'Signed IRS W-9 for Germann Inc.'], ['bank', 'Bank
 function vVendor(){
   if(!isAdmin()) return '';
   const v = vendorFiles();
-  return '<div class="sec"><h2>Vendor packet.</h2><span class="muted small">Goes to a new client\'s accounts payable with the first invoice. Your PDFs below ride along at the back.</span>' +
+  return '<div class="sec"><h2>Vendor packet.</h2><span class="muted small">Goes to a new client\'s accounts payable with the first invoice. The W-9 and bank letter sit in a private vault only Root and Admin can open.</span>' +
       '<button class="btn sm y" data-vpack="">Preview the packet</button></div>' +
     '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
     VFILES.map(([k, l, hint]) => '<div class="row"><b>' + l + '</b><span>' +
@@ -6469,7 +6469,7 @@ async function vendorUpload(k, file){
   try{
     await alive();
     const path = 'vendor/' + k + '-' + Date.now() + '.pdf';
-    const up = await fetch(LW.url + '/storage/v1/object/documents/' + path, { method:'POST',
+    const up = await fetch(LW.url + '/storage/v1/object/vault/' + path, { method:'POST',
       headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/pdf', 'x-upsert':'true' }, body: file });
     if(!up.ok) throw new Error((await up.text()).slice(0, 140));
     const v = Object.assign({}, vendorFiles(), { [k]: { path, name: file.name, at: new Date().toISOString() } });
@@ -6479,9 +6479,19 @@ async function vendorUpload(k, file){
     toast((k === 'w9' ? 'W-9' : 'Bank letter') + ' on file.'); draw();
   }catch(err){ console.error(err); toast('Upload failed. ' + err.message, true); }
 }
+/* the vendor kit lives in the private vault bucket: admins only (Root and Admin tiers) */
+async function vaultUrl(path){
+  await alive();
+  const r = await fetch(LW.url + '/storage/v1/object/sign/vault/' + path, {
+    method:'POST', headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/json' },
+    body: JSON.stringify({ expiresIn: 600 }) });
+  const j = await r.json().catch(() => null);
+  if(!r.ok || !j || !j.signedURL) throw new Error((j && j.message) || 'That file would not open.');
+  return LW.url + '/storage/v1' + j.signedURL;
+}
 async function vendorFileBytes(k){
   const f = vendorFiles()[k]; if(!f) return null;
-  const u = await docUrl({ storage_path: f.path });
+  const u = await vaultUrl(f.path);
   const r = await fetch(u); if(!r.ok) return null;
   return r.arrayBuffer();
 }
@@ -6588,7 +6598,7 @@ function wireP45(m){
   const re = m.querySelector('#remitEdit'); if(re) re.onclick = remitForm;
   m.querySelectorAll('[data-vfile]').forEach(i => i.onchange = () => vendorUpload(i.dataset.vfile, i.files[0]));
   m.querySelectorAll('[data-vview]').forEach(a => a.onclick = async e => { e.preventDefault();
-    try{ const f = vendorFiles()[a.dataset.vview]; openUrl(await docUrl({ storage_path: f.path })); }catch(err){ toast(err.message, true); } });
+    try{ const f = vendorFiles()[a.dataset.vview]; openUrl(await vaultUrl(f.path)); }catch(err){ toast(err.message, true); } });
 }
 
 function vGearSection(){
