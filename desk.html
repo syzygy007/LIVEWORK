@@ -883,6 +883,9 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 .subnav button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 0;font:600 14px/1 Manrope,Arial,sans-serif;color:var(--stone);cursor:pointer;white-space:nowrap}
 .subnav button.on{color:var(--ink);border-bottom-color:#F2C632}
 .subnav em{font-style:normal;font-size:11px;background:#F2C632;color:#000;border-radius:9px;padding:2px 6px;margin-left:4px}
+
+/* patch 48 · vendor packet */
+.vup{text-decoration:underline;cursor:pointer;font-weight:600}
 </style>
 </head>
 <body>
@@ -3407,7 +3410,7 @@ function wirePeople(m){
 function vSettings(){
   const srcs = S.import_sources.length ? S.import_sources :
     [{name:'Indeed', status:'Key not set'},{name:'LinkedIn', status:'Key not set'}];
-  return head('Settings.', '') + vRemit() +
+  return head('Settings.', '') + vRemit() + vVendor() +
     '<div class="sec"><h2>Roles.</h2></div>' +
     table(['Person','Email','Role'],
       S.staff.map(s => '<div class="r" style="grid-template-columns:1.4fr 1.8fr 140px">' +
@@ -3487,7 +3490,7 @@ function sheetCompany(){
       ['Notices to', esc(F(c,'notice_email') || 'Not on file')],
       ['Notes', esc(F(c,'notes','bio'))]
     ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-edit="company:' + idOf(c) + '">Edit</button><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button>' +
-      (isAdmin() ? '<button class="btn ghost del" data-delco="' + idOf(c) + '">Delete client</button>' : '') + '</div>';
+      (isAdmin() ? '<button class="btn ghost" data-vpack="' + idOf(c) + '">Vendor packet</button><button class="btn ghost del" data-delco="' + idOf(c) + '">Delete client</button>' : '') + '</div>';
   if(T===1) body = '<div class="clist">' + contactsOf(idOf(c)).map(ct => {
       const cid = idOf(ct);
       const ph = String(F(ct,'phone') || '').replace(/[^0-9+]/g,'');
@@ -5396,6 +5399,7 @@ function common(root){
     const [kind, id] = b.dataset.edit.split(':');
     form(kind, { edit: id }); });
   root.querySelectorAll('[data-delco]').forEach(b => b.onclick = e => { e.stopPropagation(); deleteClient(b.dataset.delco, b); });
+  root.querySelectorAll('[data-vpack]').forEach(b => b.onclick = e => { e.stopPropagation(); vendorPacket(b.dataset.vpack, b); });
   root.querySelectorAll('[data-mvrole]').forEach(b => b.onclick = e => { e.stopPropagation(); form('mvrole', { pipe: b.dataset.mvrole }); });
   root.querySelectorAll('[data-mail]').forEach(b => b.onclick = e => { e.stopPropagation();
     const [what, id] = b.dataset.mail.split(':');
@@ -6429,7 +6433,7 @@ function remit(){ const r = (S.lw_settings || []).find(x => x.key === 'remit'); 
 const last4 = a => String(a || '').replace(/\D/g,'').slice(-4);
 function remitSpec(r, full){
   return '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
-    '<div class="row"><b>Pay by</b><span>ACH or wire</span></div>' +
+    '<div class="row"><b>Pay by</b><span>ACH</span></div>' +
     '<div class="row"><b>Bank</b><span>' + esc(r.bank || '') + '</span></div>' +
     '<div class="row"><b>Account name</b><span>' + esc(r.holder || '') + '</span></div>' +
     '<div class="row"><b>Routing (ABA)</b><span class="mono">' + esc(r.routing || '') + '</span></div>' +
@@ -6444,6 +6448,101 @@ function vRemit(){
   return '<div class="sec"><h2>Getting paid.</h2><span class="muted small">What prints under How to pay on every invoice.</span>' +
       '<button class="btn sm' + (r ? ' ghost' : ' y') + '" id="remitEdit">' + (r ? 'Change' : 'Add the bank details') + '</button></div>' +
     (r ? remitSpec(r) : '<div class="tbl"><div class="empty">No bank details yet. Invoices go out without a way to pay by ACH.</div></div>');
+}
+/* ---------- Patch 48 · the vendor packet: what a new client's AP team needs to pay us ---------- */
+function vendorFiles(){ const r = (S.lw_settings || []).find(x => x.key === 'vendor'); return r ? (r.value || {}) : {}; }
+const VFILES = [['w9', 'W-9', 'Signed IRS W-9 for Germann Inc.'], ['bank', 'Bank letter', 'Chase account verification letter on bank letterhead']];
+function vVendor(){
+  if(!isAdmin()) return '';
+  const v = vendorFiles();
+  return '<div class="sec"><h2>Vendor packet.</h2><span class="muted small">Goes to a new client\'s accounts payable with the first invoice. Your PDFs below ride along at the back.</span>' +
+      '<button class="btn sm y" data-vpack="">Preview the packet</button></div>' +
+    '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
+    VFILES.map(([k, l, hint]) => '<div class="row"><b>' + l + '</b><span>' +
+      (v[k] ? '<span class="gdot ok"></span>On file ' + esc(short(v[k].at)) + ' · <a href="#" data-vview="' + k + '">View</a> · ' : '<span class="gdot wait"></span>Not yet · ' + esc(hint) + ' · ') +
+      '<label class="vup" for="vf_' + k + '">' + (v[k] ? 'Replace' : 'Upload the PDF') + '</label><input id="vf_' + k + '" class="vh" type="file" accept="application/pdf" data-vfile="' + k + '"></span></div>').join('') +
+    '</div>';
+}
+async function vendorUpload(k, file){
+  if(!file) return;
+  if(!/pdf$/i.test(file.type || file.name)) return toast('A PDF, please.', true);
+  try{
+    await alive();
+    const path = 'vendor/' + k + '-' + Date.now() + '.pdf';
+    const up = await fetch(LW.url + '/storage/v1/object/documents/' + path, { method:'POST',
+      headers:{ apikey: LW.anon, Authorization:'Bearer ' + LWAuth.token(), 'content-type':'application/pdf', 'x-upsert':'true' }, body: file });
+    if(!up.ok) throw new Error((await up.text()).slice(0, 140));
+    const v = Object.assign({}, vendorFiles(), { [k]: { path, name: file.name, at: new Date().toISOString() } });
+    const out = await rest('lw_settings', { method:'POST', prefer:'resolution=merge-duplicates,return=representation',
+      body: JSON.stringify({ key:'vendor', value: v, updated_by: meId(), updated_at: new Date().toISOString() }) });
+    S.lw_settings = (S.lw_settings || []).filter(x => x.key !== 'vendor').concat(Array.isArray(out) ? out : [out]);
+    toast((k === 'w9' ? 'W-9' : 'Bank letter') + ' on file.'); draw();
+  }catch(err){ console.error(err); toast('Upload failed. ' + err.message, true); }
+}
+async function vendorFileBytes(k){
+  const f = vendorFiles()[k]; if(!f) return null;
+  const u = await docUrl({ storage_path: f.path });
+  const r = await fetch(u); if(!r.ok) return null;
+  return r.arrayBuffer();
+}
+async function vendorPacket(coid, btn){
+  const c = coid ? company(coid) : null, r = remit();
+  if(!r) return toast('Add the bank details in Settings first.', true);
+  const lbl = btn ? btn.textContent : ''; if(btn){ btn.disabled = true; btn.textContent = 'Building'; }
+  try{
+    const L = await needLib('pdf-lib.min.js', 'PDFLib'), FK = await needLib('fontkit.umd.min.js', 'fontkit');
+    if(!L || !FK) throw new Error('the PDF library did not load');
+    const doc = await L.PDFDocument.create(); doc.registerFontkit(FK);
+    const get = async f => (await fetch(f)).arrayBuffer();
+    const [XB, SB, RG] = await Promise.all(['Manrope-ExtraBold.ttf','Manrope-SemiBold.ttf','Manrope-Regular.ttf'].map(async f => doc.embedFont(await get(f), { subset: true })));
+    const W = 612, H = 792, M = 54, ink = L.rgb(0,0,0), stone = L.rgb(.459,.443,.416), line = L.rgb(.827,.808,.769),
+          paper = L.rgb(.957,.949,.929), gold = L.rgb(.949,.776,.196), white = L.rgb(1,1,1);
+    const p = doc.addPage([W, H]);
+    const T = (t, x, y, sz, f, col) => p.drawText(String(t == null ? '' : t), { x, y, size: sz, font: f, color: col || ink });
+    const lab = (t, x, y) => { let cx = x; for(const ch of String(t).toUpperCase()){ p.drawText(ch, { x: cx, y, size: 7.5, font: SB, color: stone }); cx += SB.widthOfTextAtSize(ch, 7.5) + 1.4; } };
+    const rule = y => p.drawLine({ start:{ x:M, y }, end:{ x: W - M, y }, thickness:.75, color: line });
+    /* header band with the brand wordmark, one colour */
+    p.drawRectangle({ x:0, y: H - 96, width: W, height: 96, color: ink });
+    const ww = 150, s = ww / WM_VB.w, wh = WM_VB.h * s, top = H - 48 + wh / 2;
+    WM_D.forEach(d => p.drawSvgPath(d, { x: M + WM_VB.tx * s, y: top - WM_VB.ty * s, scale: s, color: white, borderWidth: 0 }));
+    T('livework.inc', W - M - RG.widthOfTextAtSize('livework.inc', 9.5), H - 52, 9.5, RG, L.rgb(.72,.71,.69));
+    let y = H - 176;
+    T('Vendor setup.', M, y, 50, XB); y -= 26;
+    T((c ? 'Prepared for ' + F(c,'legal_name','name') + ' · ' : '') + new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }), M, y, 11, RG, stone);
+    y -= 30; rule(y); y -= 22;
+    const rows = (title, list) => { lab(title, M, y); y -= 18;
+      list.filter(x => x[1]).forEach(([k, v]) => { T(k, M, y, 10, SB); T(v, M + 150, y, 10, RG, stone); y -= 15; }); y -= 10; rule(y); y -= 22; };
+    rows('Who we are', [['Legal name', 'Germann Inc.'], ['Doing business as', 'LIVEWORK'], ['Entity', 'California corporation'],
+      ['Address', LW_ADDR.join(', ')], ['Accounts receivable', r.email || 'team@livework.inc'], ['Website', 'livework.inc'],
+      ['Tax ID', vendorFiles().w9 ? 'On the enclosed W-9' : 'W-9 to follow']]);
+    rows('How to pay', [['ACH', (r.bank || '') + ' · ' + (r.type || 'Checking')], ['Account name', r.holder], ['Routing (ABA)', r.routing], ['Account', r.account],
+      ['Memo', r.memo || 'Invoice number'], ['Check', 'Payable to Germann Inc. dba LIVEWORK, mailed to the address above'], ['Terms', 'Net 30 from the invoice date']]);
+    const v = vendorFiles();
+    lab('Enclosed', M, y); y -= 18;
+    [['W-9', v.w9 ? 'Signed, attached' : 'To follow'], ['Bank verification letter', v.bank ? 'From Chase, attached' : 'To follow'],
+     ['Certificate of insurance', 'On request']].forEach(([k, t]) => { T(k, M, y, 10, SB); T(t, M + 150, y, 10, RG, stone); y -= 15; });
+    /* the fraud line, in the gold panel */
+    const by = 70;
+    p.drawRectangle({ x: M, y: by, width: W - 2 * M, height: 52, color: paper });
+    p.drawRectangle({ x: M, y: by, width: 5, height: 52, color: gold });
+    T('Our bank details never change by email.', M + 20, by + 30, 11, SB);
+    T('Before paying to any new account, confirm it with your LIVEWORK contact at ' + (r.email || 'team@livework.inc') + '.', M + 20, by + 13, 9, RG, stone);
+    T('Germann Inc. dba LIVEWORK', M, 36, 8, RG, stone);
+    /* the W-9 and the bank letter ride along at the back */
+    for(const k of ['w9', 'bank']){
+      const bytes = await vendorFileBytes(k).catch(() => null); if(!bytes) continue;
+      const src = await L.PDFDocument.load(bytes, { ignoreEncryption: true });
+      (await doc.copyPages(src, src.getPageIndices())).forEach(pg => doc.addPage(pg));
+    }
+    doc.setTitle('LIVEWORK vendor setup' + (c ? ' · ' + F(c,'name') : '')); doc.setAuthor('LIVEWORK');
+    const out = await doc.save();
+    const u = URL.createObjectURL(new Blob([out], { type:'application/pdf' }));
+    const a = document.createElement('a'); a.href = u;
+    a.download = 'livework-vendor-setup' + (c ? '-' + String(F(c,'name')).toLowerCase().replace(/[^a-z0-9]+/g,'-') : '') + '.pdf';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000);
+    toast('Vendor packet ready' + (v.w9 && v.bank ? '.' : '. Add the ' + [!v.w9 && 'W-9', !v.bank && 'bank letter'].filter(Boolean).join(' and ') + ' in Settings so it rides along.'));
+  }catch(err){ console.error(err); toast('No packet. ' + err.message, true); }
+  if(btn){ btn.disabled = false; btn.textContent = lbl; }
 }
 function remitForm(){
   const r = remit() || {};
@@ -6487,6 +6586,9 @@ function invRemitLine(){
 function wireP45(m){
   m.querySelectorAll('[data-person]').forEach(b => b.onclick = e => { e.stopPropagation(); openSheet('person', b.dataset.person, +(b.dataset.ptab2 || 0)); });
   const re = m.querySelector('#remitEdit'); if(re) re.onclick = remitForm;
+  m.querySelectorAll('[data-vfile]').forEach(i => i.onchange = () => vendorUpload(i.dataset.vfile, i.files[0]));
+  m.querySelectorAll('[data-vview]').forEach(a => a.onclick = async e => { e.preventDefault();
+    try{ const f = vendorFiles()[a.dataset.vview]; openUrl(await docUrl({ storage_path: f.path })); }catch(err){ toast(err.message, true); } });
 }
 
 function vGearSection(){
