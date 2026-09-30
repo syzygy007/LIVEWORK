@@ -10,7 +10,7 @@
 
    Supabase calls are never touched.
    ============================================================ */
-const V = 'lw-2';   /* bumped for the design pass: the fonts and marks changed under the same names */
+const V = 'lw-3';   /* lw-3: wipes the stale GoDaddy builder copy of / that older caches still held */
 const SHELL = 'lw-shell-' + V;
 const ASSETS = 'lw-assets-' + V;
 
@@ -62,7 +62,7 @@ self.addEventListener('fetch', e => {
   /* pages: network, cache only as the offline fallback */
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     e.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-cache' })
         .then(res => {
           const copy = res.clone();
           caches.open(SHELL).then(c => c.put(req, copy));
