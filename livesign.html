@@ -181,6 +181,12 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         <a class="btn" id="dlink" href="#" download>Save the signed PDF</a>
         <a class="btn ghost" id="again" href="livesign.html">Sign another</a>
       </div>
+      <div class="ls-row" id="vaultrow" style="display:none;margin-top:14px;align-items:center;gap:10px;flex-wrap:wrap">
+        <span class="ls-note" style="margin:0">Keep it in the vendor kit as</span>
+        <select id="vkind"><option value="w9">W-9</option><option value="bank">Bank letter</option></select>
+        <button class="btn" id="vsave" type="button">Save to the vendor kit</button>
+        <span class="ls-note" id="vnote" style="margin:0"></span>
+      </div>
     </div>
   </div>
 </main>
@@ -203,6 +209,25 @@ drawSkin();
 
 /* ---------- two doors: client (room code) or staff (desk sign in) ---------- */
 let AUTH = null;   /* {kind:'staff'} or {kind:'room', token} */
+let SIGNED = null, ADMIN = false;   /* the executed bytes, and whether the vault (admins only) is open to this person */
+/* the vendor kit: W-9 and bank letter in the private vault bucket, Root and Admin only; the desk reads lw_settings.vendor */
+async function vaultSave(){
+  const k = $('#vkind').value, b = $('#vsave'); if(!SIGNED) return;
+  b.disabled = true; b.textContent = 'Saving';
+  try{
+    const s = await LWAuth.ensure(); if(!s) throw new Error('Signed out. Reload and sign in again.');
+    const H = { apikey: LW.anon, Authorization: 'Bearer ' + s.access_token };
+    const path = 'vendor/' + k + '-' + Date.now() + '.pdf';
+    const up = await fetch(LW.url + '/storage/v1/object/vault/' + path, { method: 'POST', headers: Object.assign({ 'content-type': 'application/pdf', 'x-upsert': 'true' }, H), body: SIGNED });
+    if(!up.ok) throw new Error((await up.text()).slice(0, 140));
+    const cur = await fetch(LW.url + '/rest/v1/lw_settings?key=eq.vendor&select=value', { headers: H }).then(r => r.json()).catch(() => []);
+    const v = Object.assign({}, (Array.isArray(cur) && cur[0] && cur[0].value) || {}, { [k]: { path, name: FILE.replace(/\.pdf$/i, '') + ' signed.pdf', at: new Date().toISOString() } });
+    const w = await fetch(LW.url + '/rest/v1/lw_settings', { method: 'POST', headers: Object.assign({ 'content-type': 'application/json', Prefer: 'resolution=merge-duplicates' }, H),
+      body: JSON.stringify({ key: 'vendor', value: v, updated_at: new Date().toISOString() }) });
+    if(!w.ok) throw new Error((await w.text()).slice(0, 140));
+    b.textContent = 'Saved'; $('#vnote').textContent = 'In the vault. It rides along on every vendor packet from the desk.';
+  }catch(e){ b.disabled = false; b.textContent = 'Save to the vendor kit'; $('#vnote').textContent = e.message; }
+}
 const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function roomSession(){ try{ const r = JSON.parse(localStorage.getItem('lw_room_session') || 'null'); if(r && r.token && new Date(r.expires_at) > new Date()) return r; }catch(e){} return null; }
 async function fnAnon(name, body){
@@ -219,7 +244,7 @@ function ready(kind, who, name, email, title){
 }
 function staffDoor(){
   $('#pickdoor').style.display = 'none'; $('#cdoor').style.display = 'none';
-  LWAuth.gate($('#sdoor'), st => ready('staff', null, st.name, st.email, st.role === 'admin' ? 'President' : ''));
+  LWAuth.gate($('#sdoor'), st => { ADMIN = ['admin', 'owner'].includes(String(st.role || '').toLowerCase()); ready('staff', null, st.name, st.email, st.role === 'admin' ? 'President' : ''); });
 }
 let cstep = 0, cemail = '', cerr = '';
 function clientDoor(){
@@ -445,7 +470,8 @@ $('#sign').onclick = async () => {
     $('#dnote').textContent = 'Emailed to ' + $('#email').value.trim() + (d.also ? ' and ' + d.also : '') + '. Signature ID LIVESIGN ' + (d.sig_id || '') + '. Anyone can verify it at livework.inc/verify.html?id=' + (d.sig_id || '') + '. The document was not stored.';
     if(d.pdf){ const bin = atob(d.pdf), u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
       const url = URL.createObjectURL(new Blob([u], { type: 'application/pdf' }));
-      $('#dlink').href = url; $('#dlink').download = FILE.replace(/\.pdf$/i, '') + ' signed.pdf'; }
+      $('#dlink').href = url; $('#dlink').download = FILE.replace(/\.pdf$/i, '') + ' signed.pdf';
+      SIGNED = u; if(AUTH.kind === 'staff' && ADMIN){ $('#vaultrow').style.display = ''; $('#vsave').onclick = vaultSave; } }
     else $('#dlink').style.display = 'none';
     step(3); $('#done').style.display = ''; window.scrollTo({ top: 0, behavior: 'smooth' });
   }catch(e){ b.disabled = false; b.textContent = 'Sign and send'; say(e.message, true); }
