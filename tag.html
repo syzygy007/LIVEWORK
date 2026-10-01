@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>LIVEWORK tag</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="lw.css?v=6">
+<script src="lw-config.js?v=3"></script>
+<script src="lw-auth.js?v=8"></script>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:#111010;color:#F4F2ED;font-family:var(--font,'Manrope',Arial,sans-serif);-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:28px 24px 40px;min-height:100vh;display:flex;flex-direction:column}
+.mark{width:132px;display:block}
+.main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:48px 0}
+.cap{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#8F8A82}
+.tag{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.tag i{display:block;width:6px;height:22px;background:#F2C632}
+.tag b{font-size:15px;font-weight:800;letter-spacing:.14em}
+h1{font-size:clamp(44px,13vw,84px);line-height:.96;letter-spacing:-.03em;font-weight:800;margin:0 0 22px}
+p.lede{font-size:17px;line-height:1.5;color:#BDB9B1;margin:0 0 28px;max-width:30em}
+.btn-y{display:inline-block;background:#F2C632;color:#000;font-weight:800;font-size:15px;padding:16px 22px;text-decoration:none;border-radius:2px}
+.btn-g{display:inline-block;color:#F4F2ED;font-weight:600;font-size:14px;padding:15px 20px;text-decoration:none;border:1px solid #3a3836;border-radius:2px;margin-left:8px}
+.rows{border-top:1px solid #282828;margin:0 0 28px}
+.row{display:grid;grid-template-columns:128px 1fr;gap:14px;padding:13px 0;border-bottom:1px solid #282828;font-size:15px;line-height:1.4}
+.row a{color:#F4F2ED}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.foot{font-size:12px;line-height:1.6;color:#8F8A82}
+.foot a{color:#8F8A82}
+@media(max-width:420px){.row{grid-template-columns:104px 1fr}.btn-g{margin:10px 0 0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="https://livework.inc"><img class="mark" src="livework-wordmark-white.svg" alt="LIVEWORK"></a>
+  <div class="main" id="main"></div>
+  <div class="foot">LIVEWORK · 26632 Towne Centre Dr. #300, Suite 3 · Foothill Ranch, CA 92610<br><a href="https://livework.inc">livework.inc</a> · <a href="desk.html">Staff sign in</a></div>
+</div>
+<script>
+(function(){
+  var KIND = { laptop:'Laptop', phone:'Phone', monitor:'Monitor', dock:'Dock', keyboard:'Keyboard and mouse', accessory:'Accessory', other:'Other' };
+  var tag = (new URLSearchParams(location.search).get('t') || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
+  var main = document.getElementById('main');
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function day(d){ if(!d) return ''; var x = new Date(String(d).length <= 10 ? d + 'T12:00:00' : d); return isNaN(x) ? '' : x.toLocaleDateString('en-US',{ month:'short', day:'numeric', year:'numeric' }); }
+  function chip(){ return tag ? '<div class="tag"><i></i><b>' + esc(tag) + '</b></div>' : ''; }
+
+  function found(){
+    var sub = encodeURIComponent('Found LIVEWORK device ' + tag);
+    var body = encodeURIComponent('I found a device tagged ' + tag + '.\n\nWhere I found it:\nBest way to reach me:\n');
+    main.innerHTML = chip() +
+      '<h1>This belongs to LIVEWORK.</h1>' +
+      '<p class="lede">If you found it, thank you. Send us a note and we will arrange to collect it.</p>' +
+      '<div><a class="btn-y" href="mailto:help@livework.inc?subject=' + sub + '&body=' + body + '">Email help@livework.inc</a></div>';
+  }
+  function row(k, v){ return v ? '<div class="row"><span class="cap">' + k + '</span><span>' + v + '</span></div>' : ''; }
+  function staffView(g, st){
+    var out = !g.returned_on && g.staff_id;
+    var who = out && st ? esc(st.name || st.email) + (st.title ? ' · ' + esc(st.title) : '') : '';
+    var state = out
+      ? '<span class="dot" style="background:#F2C632"></span>Out' + (g.handed_on ? ' since ' + esc(day(g.handed_on)) : '')
+      : '<span class="dot" style="background:#35C98A"></span>On the shelf' + (g.returned_on ? ' · back ' + esc(day(g.returned_on)) : '');
+    var tel = st && st.mobile ? String(st.mobile).replace(/[^\d+]/g,'') : '';
+    main.innerHTML = chip() +
+      '<h1>' + (out && st ? esc((st.name || '').split(' ')[0] || 'Assigned') + ' has it.' : 'On the shelf.') + '</h1>' +
+      '<div class="rows">' +
+        row('Device', esc(g.model || KIND[g.kind] || 'Device')) +
+        row('Serial', esc(g.serial)) +
+        row('Status', state) +
+        row('Held by', who) +
+        row('Email', out && st && st.email ? '<a href="mailto:' + esc(st.email) + '">' + esc(st.email) + '</a>' : '') +
+        row('Mobile', out && tel ? '<a href="tel:' + esc(tel) + '">' + esc(st.mobile) + '</a>' : '') +
+        row('Accepted', out ? (g.ack_at ? esc(day(g.ack_at)) : 'Not accepted yet') : '') +
+        row('Condition', esc(g.condition)) +
+        row('Comes with', esc(g.extras)) +
+      '</div>' +
+      '<div><a class="btn-y" href="desk.html#people">Open the desk</a></div>';
+  }
+  function missing(){
+    main.innerHTML = chip() + '<h1>No device on file.</h1><p class="lede">Nothing in the gear list carries this tag. Check the tag, or add the device under People in the desk.</p>' +
+      '<div><a class="btn-y" href="desk.html#people">Open the desk</a></div>';
+  }
+
+  found();
+  (async function(){
+    try{
+      if(!tag || !window.LWAuth || !window.LW || !LW.url) return;
+      var s = await LWAuth.ensure();
+      if(!s || !s.access_token) return;
+      var H = { apikey: LW.anon, Authorization: 'Bearer ' + s.access_token };
+      var alt = tag.replace(/^LW0*/, 'LW-').replace(/^LW-(\d+)$/, function(_, d){ return 'LW-' + ('0000' + d).slice(-4); });
+      var r = await fetch(LW.url + '/rest/v1/gear?select=*&tag=in.(' + encodeURIComponent(tag) + ',' + encodeURIComponent(alt) + ')&limit=1', { headers: H });
+      if(!r.ok) return;
+      var rows = await r.json();
+      if(!rows.length) return missing();
+      var g = rows[0], st = null;
+      if(g.staff_id){
+        var r2 = await fetch(LW.url + '/rest/v1/staff?select=*&id=eq.' + encodeURIComponent(g.staff_id) + '&limit=1', { headers: H });
+        if(r2.ok){ var a = await r2.json(); st = a[0] || null; }
+      }
+      staffView(g, st);
+    }catch(e){ /* the public view stays up */ }
+  })();
+})();
+</script>
+</body>
+</html>

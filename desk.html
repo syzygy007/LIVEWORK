@@ -6722,46 +6722,73 @@ function gearAckForm(gid){
 
 /* the tag sticker, cut for Avery 5163 (2 x 4 in, 10 per letter sheet, 2 across 5 down).
    Pick the first empty spot so a half used sheet still works. Print at Actual size. */
+/* label sheets the desk can print. cols x rows on US Letter, inches */
+const LABEL_SHEETS = {
+  '5160': { name:'30 per sheet · 1 x 2 5/8 in (Avery 5160, 5660, 18660)', cols:3, rows:10, left:0.1875, px:2.75, top:0.5, py:1, w:2.625, h:1, small:true },
+  '5163': { name:'10 per sheet · 2 x 4 in (Avery 5163, 8163)', cols:2, rows:5, left:0.15625, px:4.1875, top:0.5, py:2, w:4, h:2, small:false }
+};
+const TAG_URL = t => 'https://livework.inc/tag.html?t=' + encodeURIComponent(t || '');
 function printLabel(g){
   if(!g) return;
   SHEET = { kind:'form', id:'label', tab:0, ctx:{} };
-  const cells = Array.from({ length: 10 }, (_, i) => '<button type="button" class="av-c' + (i === 0 ? ' on' : '') + '" data-avc="' + i + '">' + (i + 1) + '</button>').join('');
-  shell('Tag label.', esc(g.tag || '') + ' · ' + esc(gearName(g)) + '. Avery 5163 sheet, 2 by 4 inch labels, 10 per sheet.',
-    '<div class="form"><div class="field"><label>Start at this spot on the sheet</label><div class="av-g">' + cells + '</div>' +
+  let sheet = '5160';
+  try{ const k = localStorage.getItem('lw_label_sheet'); if(k && LABEL_SHEETS[k]) sheet = k; }catch(e){}
+  let start = 0;
+  const opts = Object.keys(LABEL_SHEETS).map(k => '<option value="' + k + '"' + (k === sheet ? ' selected' : '') + '>' + esc(LABEL_SHEETS[k].name) + '</option>').join('');
+  shell('Tag label.', esc(g.tag || '') + ' · ' + esc(gearName(g)) + '.',
+    '<div class="form"><div class="field"><label for="av_s">Label sheet</label><select id="av_s">' + opts + '</select></div>' +
+      '<div class="field"><label>Start at this spot on the sheet</label><div class="av-g" id="av_g"></div>' +
       '<div class="muted small">Tap the first empty label if the sheet is already partly used.</div></div>' +
       '<div class="field"><label for="av_n">How many</label><select id="av_n"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>10</option></select>' +
       '<div class="muted small">Two is a good habit: one on the bottom, one on the charger.</div></div>' +
+      '<div class="muted small" style="margin-bottom:12px">The code on the label opens ' + esc(TAG_URL(g.tag)) + '. A stranger sees who to return it to. Staff see who holds it.</div>' +
       '<div class="wz-note">In the print window set Scale to 100 percent (Actual size) and Margins to None, or the labels drift off the stickers.</div>' +
       '<button class="btn y" id="av_go">Print labels</button></div>');
-  let start = 0;
-  document.querySelectorAll('[data-avc]').forEach(b => b.onclick = () => { start = +b.dataset.avc;
-    document.querySelectorAll('[data-avc]').forEach(x => x.classList.toggle('on', x === b)); });
-  $('#av_go').onclick = () => { printAvery(g, start, +val('av_n') || 1); closeSheet(); };
+  const grid = () => {
+    const L = LABEL_SHEETS[sheet], n = L.cols * L.rows;
+    if(start >= n) start = 0;
+    const el = $('#av_g');
+    el.style.gridTemplateColumns = 'repeat(' + L.cols + ',1fr)';
+    el.style.maxWidth = (L.cols === 3 ? 260 : 220) + 'px';
+    el.innerHTML = Array.from({ length: n }, (_, i) => '<button type="button" class="av-c' + (i === start ? ' on' : '') + '" data-avc="' + i + '"' + (L.small ? ' style="height:22px;font-size:11px"' : '') + '>' + (i + 1) + '</button>').join('');
+    el.querySelectorAll('[data-avc]').forEach(b => b.onclick = () => { start = +b.dataset.avc;
+      el.querySelectorAll('[data-avc]').forEach(x => x.classList.toggle('on', x === b)); });
+  };
+  grid();
+  $('#av_s').onchange = () => { sheet = val('av_s'); try{ localStorage.setItem('lw_label_sheet', sheet); }catch(e){} grid(); };
+  $('#av_go').onclick = () => { printAvery(g, start, +val('av_n') || 1, sheet); closeSheet(); };
 }
-function printAvery(g, start, n){
-  const code = qrSvg('LIVEWORK ' + (g.tag || '') + ' SN ' + (g.serial || ''));
-  const one = '<div class="lab"><div class="q">' + code + '</div><div class="t"><img src="livework-wordmark-black.svg" alt="LIVEWORK"><b>' + esc(g.tag || '') + '</b>' +
+function printAvery(g, start, n, sheet){
+  const L = LABEL_SHEETS[sheet] || LABEL_SHEETS['5163'];
+  const code = qrSvg(TAG_URL(g.tag));
+  const one = '<div class="lab"><div class="q">' + code + '</div><div class="t">' + wmSvg('#000') + '<b>' + esc(g.tag || '') + '</b>' +
     '<span>' + esc(gearName(g)) + '</span><span class="sn">SN ' + esc(g.serial || '') + '</span><span class="pr">Property of LIVEWORK · livework.inc</span></div></div>';
   let cells = '';
-  for(let i = 0; i < 10; i++){
-    const col = i % 2, row = Math.floor(i / 2);
+  for(let i = 0; i < L.cols * L.rows; i++){
+    const col = i % L.cols, row = Math.floor(i / L.cols);
     const on = i >= start && i < start + n;
-    cells += '<div class="cell" style="left:' + (0.15625 + col * 4.1875) + 'in;top:' + (0.5 + row * 2) + 'in">' + (on ? one : '') + '</div>';
+    cells += '<div class="cell" style="left:' + (L.left + col * L.px) + 'in;top:' + (L.top + row * L.py) + 'in">' + (on ? one : '') + '</div>';
   }
   const w = window.open('', '_blank'); if(!w) return toast('Allow pop ups for the desk to print.', true);
   w.document.write('<!doctype html><html><head><meta charset="utf-8"><base href="' + esc(location.href) + '"><title>Tag ' + esc(g.tag || '') + '</title>' +
     '<link rel="stylesheet" href="lw.css?v=6"><style>' +
     '@page{size:letter;margin:0}*{box-sizing:border-box;margin:0;padding:0}html,body{width:8.5in;height:11in;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     'body{position:relative;font-family:Manrope,system-ui,sans-serif;color:#111}' +
-    '.cell{position:absolute;width:4in;height:2in;overflow:hidden}' +
-    '.lab{display:grid;grid-template-columns:1.46in 1fr;gap:.14in;align-items:center;height:100%;padding:.2in .22in .2in .2in}' +
-    '.q svg{width:1.46in;height:1.46in;display:block}' +
-    '.t img{width:1.05in;display:block;margin-bottom:.06in}.t b{display:block;font-size:26pt;font-weight:800;letter-spacing:-.01em;line-height:1}' +
-    '.t span{display:block;font-size:7.5pt;color:#333;line-height:1.35;margin-top:.03in;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-    '.t .sn{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:7.5pt}.t .pr{color:#6E6961}' +
+    '.cell{position:absolute;width:' + L.w + 'in;height:' + L.h + 'in;overflow:hidden}' +
+    (L.small
+      ? '.lab{display:grid;grid-template-columns:.72in 1fr;gap:.1in;align-items:center;height:100%;padding:.12in .14in .12in .16in}' +
+        '.q svg{width:.72in;height:.72in;display:block}' +
+        '.t{min-width:0}.t svg{width:.68in;height:auto;display:block;margin-bottom:.035in}.t b{display:block;font-size:16pt;font-weight:800;letter-spacing:-.01em;line-height:1}' +
+        '.t span{display:block;font-size:5.2pt;color:#333;line-height:1.3;margin-top:.015in;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+        '.t .sn{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:5.2pt}.t .pr{color:#6E6961}'
+      : '.lab{display:grid;grid-template-columns:1.46in 1fr;gap:.14in;align-items:center;height:100%;padding:.2in .22in .2in .2in}' +
+        '.q svg{width:1.46in;height:1.46in;display:block}' +
+        '.t svg{width:1.05in;height:auto;display:block;margin-bottom:.06in}.t b{display:block;font-size:26pt;font-weight:800;letter-spacing:-.01em;line-height:1}' +
+        '.t span{display:block;font-size:7.5pt;color:#333;line-height:1.35;margin-top:.03in;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+        '.t .sn{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:7.5pt}.t .pr{color:#6E6961}') +
     '@media screen{body{outline:1px solid #ddd;margin:20px auto}.cell{outline:1px dashed #d8d2c8}.np{position:fixed;right:16px;top:16px}}@media print{.np{display:none}}' +
     '</style></head><body><button class="np btn" onclick="print()">Print</button>' + cells +
-    '<script>window.onload=function(){setTimeout(function(){print()},400)}<\/script></body></html>');
+    '<script>window.onload=function(){var go=function(){setTimeout(function(){print()},300)};if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go,go);else go()}<\/script></body></html>');
   w.document.close();
 }
 
