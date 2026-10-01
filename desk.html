@@ -810,6 +810,89 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 .sc-foot{display:flex;justify-content:space-between;margin-top:14px}
 .sc-link{border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--stone);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 0}
 .sc-link:hover{color:var(--ink)}
+/* Patch 56 · the dark stage shared by The Card and the Card scanner (Sep 22 phone mock) */
+.cs{background:#0B0B0B;color:#fff;max-width:400px;min-height:600px;margin:6px auto 0;padding:26px 24px 30px;border-radius:30px;
+  box-shadow:0 24px 60px rgba(0,0,0,.22);position:relative}
+.cs :focus-visible{outline-color:#F4F2ED;box-shadow:0 0 0 6px #0B0B0B}
+.cs-top{display:flex;justify-content:space-between;align-items:center;min-height:32px}
+.cs-micro{font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#8F8A82}
+.cs-link{border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:#8F8A82;cursor:pointer;padding:6px 0 6px 14px}
+.cs-link:hover{color:#fff}
+.cs-h{font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;margin:6px 0 22px;color:#fff}
+.cs-h em{font-style:normal;color:var(--yellow)}
+.cs-f1,#lcDone{display:none}
+.cs.flip .cs-f0,.cs.flip #lcEdit{display:none}
+.cs.flip .cs-f1{display:inline}
+.cs.flip #lcDone{display:inline-block}
+.cs .lc{width:100%}
+.cs .lc-face{box-shadow:0 18px 40px rgba(0,0,0,.6)}
+.cs-pill{display:block;width:78%;margin:24px auto 0;border:1px solid #444;border-radius:30px;background:transparent;color:#fff;font:inherit;
+  font-weight:600;font-size:15px;padding:14px 12px;text-align:center;cursor:pointer}
+.cs-pill:hover{border-color:#fff}
+.cs-note{display:none;color:#8F8A82;text-align:center;font-size:13.5px;line-height:1.45;margin:20px auto 0;max-width:330px}
+.cs.flip .cs-note{display:block}
+.cs-rule{height:1px;background:#222;margin:24px 0}
+.cs-row{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;border:1px solid #242424;border-radius:14px;background:transparent;
+  color:#fff;font:inherit;text-align:left;padding:15px 16px;cursor:pointer}
+.cs-row:hover{border-color:#444}
+.cs-row b{display:block;font-size:16px;font-weight:700}
+.cs-row i{display:block;font-style:normal;font-size:13px;color:#8F8A82;margin-top:2px}
+.cs-row em{font-style:normal;color:var(--yellow);font-weight:800;font-size:20px;line-height:1}
+.cs.flip .cs-rule,.cs.flip .cs-row{display:none}
+.cs-sub{color:#8F8A82;font-size:14px;line-height:1.45;margin:0 0 18px}
+.cs-msg{color:#8F8A82;font-size:13px}
+.cs-msg:not(:empty){margin:0 0 14px}
+.cs .sc-bar{background:#222;margin:-6px 0 16px}
+.cs.has .sc-bar{opacity:1}
+.cs.has .sc-bar i{width:100%!important}
+.cs.has .cs-msg,.cs.has .cs-start,.cs:not(.has) .cs-more{display:none}
+.cs.busy .cs-start{opacity:.4;pointer-events:none}
+.cs .sc-frame{background:#121212;border:1px solid #242424;border-radius:18px;gap:10px}
+.cs .sc-frame svg{width:34px;height:34px;stroke:#8F8A82;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.cs .sc-two{margin-top:12px}
+.cs-btn{display:block;border:1px solid #333;border-radius:30px;background:transparent;color:#fff;font:inherit;font-weight:600;font-size:14.5px;
+  padding:13px 12px;text-align:center;cursor:pointer;white-space:nowrap}
+.cs-btn:hover{border-color:#fff}
+.cs-btn.y{background:var(--yellow);border-color:var(--yellow);color:#000;font-weight:800}
+.cs-btn.y:hover{background:#fff;border-color:#fff}
+.cs .sc-hint{color:#8F8A82;font-size:13px;margin:0 0 12px}
+.cs .swp{border-radius:14px;margin-bottom:10px}
+.cs .sc-card{background:#121212;border:1px solid #242424;border-radius:14px;padding:14px;color:#fff}
+.cs .sc-card b{font-size:16px;padding-right:30px}
+.cs .sc-card>span{color:#A8A39A;font-size:13.5px;margin-top:2px}
+.cs .sc-card em{color:#8F8A82;font-size:12.5px;margin-top:8px;line-height:1.5}
+.cs .sc-land{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid #242424;
+  font-size:13px;white-space:nowrap}
+.cs .sc-land i{font-style:normal;color:#8F8A82;overflow:hidden;text-overflow:ellipsis}
+.sc-tag{flex:none;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:3px}
+.sc-tag.cl{background:#1B2A46;color:#8DB4FF}
+.sc-tag.pr{background:#3A2E0A;color:var(--yellow)}
+.sc-tag.in{background:#222;color:#8F8A82}
+.cs .sc-x{color:#8F8A82}
+.cs .sc-x:hover{background:#222;color:#fff}
+.cs .sw-act{background:#2A2A2A}
+.cs .sc-acts{display:grid;gap:8px;margin-top:14px}
+.cs .sc-none{border:1px dashed #333;border-radius:14px;color:#A8A39A;margin-top:0}
+.cs .sc-link{color:#8F8A82}
+.cs .sc-link:hover{color:#fff}
+body.cs-on .undo37{background:#1C1C1C;box-shadow:0 0 0 1px #2E2E2E,0 12px 30px rgba(0,0,0,.5)}
+body.cs-on .toast{box-shadow:0 0 0 1px #2E2E2E}
+@media (max-width:900px){
+  .cs{max-width:none;margin:-18px -18px -42px;border-radius:0;box-shadow:none;padding:24px max(22px, calc(50% - 210px)) 66px;
+    min-height:calc(100dvh - 116px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+  body.cs-on{background:#0B0B0B}
+  body.cs-on .topbar{background:#0B0B0B;color:#fff;border-bottom-color:#1C1C1C}
+  body.cs-on .topbar .on-light,body.cs-on #tbTitle{display:none}
+  body.cs-on .topbar .on-dark{display:block}
+  body.cs-on .topbar .skin{background:#141414;border-color:#262626;margin-left:auto}
+  body.cs-on .topbar .skin button{color:#8A867F}
+  body.cs-on .topbar .skin button.on{background:#2C2C2C;color:#fff;box-shadow:none}
+  body.cs-on .tabbar{background:#0B0B0B;border-top-color:#1C1C1C}
+  body.cs-on .tabbar button{color:#8A867F}
+  body.cs-on .tabbar button.on{color:#fff}
+}
+@media (max-width:900px) and (display-mode:standalone){ .cs{margin-top:-22px} }
+@media (max-width:900px) and (max-height:700px){ .cs{padding-top:14px;padding-bottom:58px} .cs-h{margin-bottom:12px} .cs-pill{margin-top:14px} .cs-rule{margin:12px 0} .cs .sc-frame{aspect-ratio:16/10} }
 .undo37{position:fixed;left:50%;bottom:148px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:60;display:flex;gap:18px;align-items:center;
   background:#111;color:#fff;padding:12px 14px 12px 18px;border-radius:30px;font-size:14px;box-shadow:0 12px 30px rgba(0,0,0,.3);transition:all .2s;white-space:nowrap}
 .undo37.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
@@ -1137,7 +1220,7 @@ const sigBar = v => v == null ? '<span class="muted small">Not submitted yet</sp
 const NAV = [
   ['today','Today'],['companies','Clients'],['contacts','Contacts'],['searches','Roles'],['candidates','Candidates'],['find','Search'],['intake','Intake'],
   ['pools','Pools'],['pipeline','Pipeline'],['activity','Activity'],['placements','Placements'],
-  ['invoices','Invoices'],['expenses','Expenses'],['card','The Card'],['mail','Mail'],['reports','Reports'],['people','People'],['settings','Settings']
+  ['invoices','Invoices'],['expenses','Expenses'],['card','The Card'],['scan','Card scanner'],['mail','Mail'],['reports','Reports'],['people','People'],['settings','Settings']
 ];
 let VIEW = 'today';
 let Q = { cand:'', co:'', tag:'', prem:'', se:'', searchTab:'open', coTab:'open', pipeCo:'', pipeSe:'', pipeQ:'', stage:'Submitted',
@@ -1160,10 +1243,10 @@ function counts(k){
   return '';
 }
 /* Patch 47 · the rail in four groups. Search is the field on top, Pools and Intake live inside
-   Candidates, Mail lives inside Activity. Patch 55 · The Card is back in the rail under Clients (the Your card link by your name stays). NAV above still names every view. */
+   Candidates, Mail lives inside Activity. Patch 55 · The Card is back in the rail under Clients (the Your card link by your name stays). Patch 56 · Card scanner is its own tab beside it. NAV above still names every view. */
 const NAVG = [
   ['Work',    [['today','Today'],['pipeline','Pipeline'],['searches','Roles'],['candidates','Candidates'],['activity','Activity']]],
-  ['Clients', [['companies','Clients'],['contacts','Contacts'],['card','The Card']]],
+  ['Clients', [['companies','Clients'],['contacts','Contacts'],['card','The Card'],['scan','Card scanner']]],
   ['Finance', [['placements','Placements'],['invoices','Invoices'],['expenses','Expenses']]],
   ['Team',    [['people','People'],['reports','Reports'],['settings','Settings']]]
 ];
@@ -1266,11 +1349,12 @@ function table(cols, rows, grid, opt){
 }
 function draw(){
   const m = $('#main');
+  document.body.classList.toggle('cs-on', VIEW === 'card' || VIEW === 'scan');
   m.innerHTML = ({
     today: vToday, companies: vCompanies, searches: vSearches, candidates: vCandidates, find: vFind, intake: vIntake,
     pools: vPools, pipeline: vPipeline, activity: vActivity, placements: vPlacements,
     invoices: vInvoices, expenses: vExpenses, mail: vMail, reports: vReports, settings: vSettings,
-    people: () => vPeople() + vGearSection(), contacts: vContacts, card: vCard
+    people: () => vPeople() + vGearSection(), contacts: vContacts, card: vCard, scan: vScan
   }[VIEW])();
   const sn = subNav(); if(sn){ const t = m.querySelector('.top'); if(t) t.insertAdjacentHTML('afterend', sn); else m.insertAdjacentHTML('afterbegin', sn); }
   wire();
@@ -5984,7 +6068,7 @@ function vContacts(){
       '<button class="btn sm ghost" data-tophone="' + id + '">To phone</button></div>';
   });
   const chip = (k, l) => '<button class="chip ' + (Q.ctTab === k ? 'on' : '') + '" data-cttab="' + k + '">' + l + ' ' + cnt[k] + '</button>';
-  return head('Everyone we know.', '<button class="btn y" data-goto="card" data-scanfirst="1">Scan cards</button><button class="btn ghost" data-new="contact">Add a contact</button>') +
+  return head('Everyone we know.', '<button class="btn y" data-goto="scan">Scan cards</button><button class="btn ghost" data-new="contact">Add a contact</button>') +
     (inbox.length ? '<div class="sec cx-sec"><h2>' + inbox.length + (inbox.length === 1 ? ' card' : ' cards') + ' to sort.</h2>' +
       '<span class="muted small">Scanned cards wait here. Check the read, then put each one under a client or a new prospect.</span>' +
       (inbox.length > 1 ? '<button class="btn sm" data-cxall="1">Save all as suggested</button>' : '') + '</div>' +
@@ -6084,47 +6168,80 @@ function qrSvg(text){
     return '<svg viewBox="0 0 ' + n + ' ' + n + '" shape-rendering="crispEdges" aria-label="Contact code"><path d="' + p + '" fill="#000"/></svg>';
   }catch(e){ console.warn('qr', e.message); return '<div class="muted small">The code did not draw.</div>'; }
 }
+/* Patch 56 · The Card and the Card scanner are two tabs, each on the dark stage of the Sep 22 phone mock.
+   Same parts as before (flip, QR, wake lock, Edit, camera, photo pick, swipe to remove, undo, sort, to phone). */
 function vCard(){
   const d = myCard();
-  return head('Your card.', '<button class="btn ghost" id="lcEdit">Edit</button>') +
-    '<div class="lc-page">' +
-      '<div class="lc" id="lcCard" role="button" tabindex="0" aria-label="Flip the card">' +
-        '<div class="lc-in">' +
-          '<div class="lc-face lc-front"><b>' + esc(d.name || 'Your name') + '</b><i></i>' + WMW + '</div>' +
-          '<div class="lc-face lc-back"><div class="lc-qr">' + qrSvg(vcardText(d)) + '</div>' +
-            '<p>Scan to save my contact.<span>' + esc(d.name) + ' · LIVEWORK</span></p></div>' +
-        '</div></div>' +
-      '<button class="btn lc-flip" id="lcFlip">Show my code.</button>' +
-      '<div class="muted small lc-note">Name, title, cell, work email and livework.inc ride in the code. The screen stays awake while it shows.</div>' +
-    '</div>' +
-    '<div class="sec" id="scanSec"><h2>Card scanner.</h2><span class="muted small">Lay up to six cards flat and take one photo. They go to Contacts to sort.</span></div>' +
-    '<div class="sc">' +
+  return '<div class="cs" id="csCard">' +
+    '<div class="cs-top"><span class="cs-micro">The card</span>' +
+      '<button class="cs-link" id="lcEdit">Edit.</button><button class="cs-link" id="lcDone">Done.</button></div>' +
+    '<h1 class="cs-h"><span class="cs-f0">Your card</span><span class="cs-f1">Scan me</span><em>.</em></h1>' +
+    '<div class="lc" id="lcCard" role="button" tabindex="0" aria-label="Flip the card">' +
+      '<div class="lc-in">' +
+        '<div class="lc-face lc-front"><b>' + esc(d.name || 'Your name') + '</b><i></i>' + WMW + '</div>' +
+        '<div class="lc-face lc-back"><div class="lc-qr">' + qrSvg(vcardText(d)) + '</div>' +
+          '<p>Scan to save my contact.<span>' + esc(d.name) + ' · LIVEWORK</span></p></div>' +
+      '</div></div>' +
+    '<button class="cs-pill" id="lcFlip">Show my code.</button>' +
+    '<div class="cs-note">Name, title, cell, work email and livework.inc ride in the code. The screen stays awake while it shows.</div>' +
+    '<div class="cs-rule"></div>' +
+    '<button class="cs-row" data-goto="scan"><span><b>Card scanner.</b><i>Up to six cards in one photo</i></span><em aria-hidden="true">›</em></button>' +
+  '</div>';
+}
+const SCNUM = ['None','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve'];
+function scanTitle(){
+  if(P37.scanning) return 'Reading';
+  if(!P37.scan) return 'Snap the cards';
+  if(!P37.scan.length) return 'None read';
+  const n = P37.scan.filter(x => x.status !== 'skipped').length;
+  return n ? (SCNUM[n] || String(n)) + ' read' : 'Cleared';
+}
+/* the stage follows the scan: start, reading, read */
+function scanSync(){
+  const st = document.getElementById('csScan'); if(!st) return;
+  st.classList.toggle('has', !!P37.scan && !P37.scanning);
+  st.classList.toggle('busy', !!P37.scanning);
+  const t = document.getElementById('scTitle'); if(t) t.textContent = scanTitle();
+}
+function vScan(){
+  const has = !!P37.scan && !P37.scanning;
+  return '<div class="cs' + (has ? ' has' : '') + (P37.scanning ? ' busy' : '') + '" id="csScan">' +
+    '<div class="cs-top"><span class="cs-micro">Card scanner</span>' +
+      '<button class="cs-link cs-more" data-scanmore="1">Scan more.</button></div>' +
+    '<h1 class="cs-h"><span id="scTitle">' + scanTitle() + '</span><em>.</em></h1>' +
+    '<div class="sc-bar" id="scBar"><i></i></div><div class="cs-msg" id="scMsg"></div>' +
+    '<div class="cs-start">' +
+      '<p class="cs-sub">Lay up to six cards flat and take one photo. They go to Contacts to sort.</p>' +
       '<label class="sc-frame" for="scCam"><span class="sc-c tl"></span><span class="sc-c tr"></span><span class="sc-c bl"></span><span class="sc-c br"></span>' +
-        '<b>Snap the cards.</b><em>Flat on a table, fill the frame.</em></label>' +
-      '<input id="scCam" class="vh" type="file" accept="image/*" capture="environment">' +
-      '<input id="scPick" class="vh" type="file" accept="image/*">' +
-      '<div class="sc-two"><label class="btn" for="scCam">Camera</label><label class="btn ghost" for="scPick">Pick from photos</label></div>' +
-      '<div class="sc-bar" id="scBar"><i></i></div><div class="muted small" id="scMsg"></div>' +
-      '<div id="scOut">' + (P37.scan ? scanResult(P37.scan) : '') + '</div>' +
-    '</div>';
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3l1.6-2.4h6.8L17 8.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.4" r="3.4"/></svg>' +
+        '<em>Flat on a table, fill the frame.</em></label>' +
+      '<div class="sc-two"><label class="cs-btn y" for="scCam">Camera</label><label class="cs-btn" for="scPick">Pick from photos</label></div>' +
+    '</div>' +
+    '<input id="scCam" class="vh" type="file" accept="image/*" capture="environment">' +
+    '<input id="scPick" class="vh" type="file" accept="image/*">' +
+    '<div id="scOut">' + (P37.scan ? scanResult(P37.scan) : '') + '</div>' +
+  '</div>';
 }
 function scanResult(rows){
   rows = rows || [];
   const live = rows.filter(x => x.status !== 'skipped');
   if(!rows.length) return '<div class="sc-none">No cards read in that photo. Try closer, with more light.</div>' +
-    '<div class="sc-acts"><button class="btn ghost" data-scanmore="1">Scan again</button></div>';
+    '<div class="sc-acts"><button class="cs-btn" data-scanmore="1">Scan again</button></div>';
   if(!live.length) return '<div class="sc-none">Cleared. Nothing from that photo went to Contacts.</div>' +
-    '<div class="sc-acts"><button class="btn ghost" data-scanmore="1">Scan more</button></div>';
-  return '<div class="sc-head"><b>' + live.length + (live.length === 1 ? ' card read.' : ' cards read.') + '</b>' +
-      '<span class="muted small">Swipe one left to remove it.</span></div>' +
+    '<div class="sc-acts"><button class="cs-btn" data-scanmore="1">Scan more</button></div>';
+  return '<div class="sc-hint">Swipe one left to remove it.</div>' +
     live.map(x => { const g = sortGuess(x), id = idOf(x);
+      const tag = g.dup ? '<span class="sc-tag in">Already in</span>'
+        : g.co ? (isProspect(g.co) ? '<span class="sc-tag pr">Prospect</span>' : '<span class="sc-tag cl">Client</span>')
+        : '<span class="sc-tag pr">New prospect</span>';
+      const where = g.dup ? 'Already in the book' : g.co ? F(g.co,'name') : (x.company || '');
       return '<div class="swp" data-sw="' + id + '"><button class="sw-act" data-scdel="' + id + '">Remove</button>' +
         '<div class="sc-card sw-face"><button class="sc-x" data-scdel="' + id + '" aria-label="Remove ' + esc(x.name || 'this card') + '">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>' +
         '<b>' + esc(x.name || 'No name') + '</b><span>' + esc([x.title, x.company].filter(Boolean).join(' · ')) + '</span>' +
         '<em>' + esc([x.cell || x.office, x.email].filter(Boolean).join(' · ')) + '</em>' +
-        '<div class="sc-land">' + (g.dup ? 'Already in the book' : g.co ? 'Looks like ' + esc(F(g.co,'name')) + ' ' + kindPill(g.co) : 'New prospect <span class="cx-pill pr">Prospect</span>') + '</div></div></div>'; }).join('') +
-    '<div class="sc-acts"><button class="btn y" data-goto="contacts">Sort them now</button><button class="btn" data-scanphone="1">Add all to phone</button></div>' +
+        '<div class="sc-land">' + tag + '<i>' + esc(where) + '</i></div></div></div>'; }).join('') +
+    '<div class="sc-acts"><button class="cs-btn y" data-goto="contacts">Sort them now</button><button class="cs-btn" data-scanphone="1">Add all to phone</button></div>' +
     '<div class="sc-foot"><button class="sc-link" data-scanmore="1">Scan more</button><button class="sc-link" data-scclear="1">Clear this scan</button></div>';
 }
 /* removing is a soft skip: the row stays in contact_inbox as skipped, so LIVEWORK keeps
@@ -6154,7 +6271,7 @@ function syncInbox(rows){
 }
 function scanPaint(){
   const o = document.getElementById('scOut'); if(!o) return;
-  o.innerHTML = scanResult(P37.scan || []); wireP37(document.getElementById('main'));
+  o.innerHTML = scanResult(P37.scan || []); wireP37(document.getElementById('main')); scanSync();
 }
 function undoBar(msg, undo){
   let b = document.getElementById('undo37');
@@ -6225,7 +6342,7 @@ function shrink(file, max){
 }
 async function runScan(file){
   if(!file || P37.scanning) return;
-  P37.scanning = true;
+  P37.scanning = true; scanSync();
   const bar = $('#scBar'), msg = $('#scMsg'), fill = bar ? bar.querySelector('i') : null;
   const PH = ['Sending the photo','Reading the cards','Picking out names and numbers','Almost there'];
   const t0 = Date.now(); let tick = null;
@@ -6251,7 +6368,7 @@ async function runScan(file){
     if(msg) msg.textContent = 'Did not read. ' + e.message;
     toast('Did not read. ' + e.message, true);
   }finally{
-    clearInterval(tick); P37.scanning = false;
+    clearInterval(tick); P37.scanning = false; scanSync();
     setTimeout(() => { if(bar) bar.classList.remove('on'); }, 900);
     ['scCam','scPick'].forEach(k => { const i = document.getElementById(k); if(i) i.value = ''; });
   }
@@ -7016,15 +7133,17 @@ function wireP37(m){
   /* the card */
   const card = m.querySelector('#lcCard'), flip = m.querySelector('#lcFlip');
   const turn = () => { const on = !card.classList.contains('on'); card.classList.toggle('on', on);
-    if(flip) flip.textContent = on ? 'Show my card.' : 'Show my code.'; if(on) wakeOn(); else wakeOff(); };
+    if(flip) flip.textContent = on ? 'Show my card.' : 'Show my code.'; if(on) wakeOn(); else wakeOff();
+    const st = card.closest('.cs'); if(st) st.classList.toggle('flip', on); };
   if(card){ card.onclick = turn; card.onkeydown = e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); turn(); } }; }
   if(flip) flip.onclick = turn;
   const ed = m.querySelector('#lcEdit'); if(ed) ed.onclick = cardForm;
+  const dn = m.querySelector('#lcDone'); if(dn && card) dn.onclick = turn;
   ['scCam','scPick'].forEach(k => { const i = m.querySelector('#' + k); if(i) i.onchange = () => runScan(i.files && i.files[0]); });
   wireSwipe(m);
   m.querySelectorAll('[data-scdel]').forEach(b => b.onclick = e => { e.stopPropagation(); scanDrop([b.dataset.scdel]); });
   m.querySelectorAll('[data-scclear]').forEach(b => b.onclick = () => scanDrop((P37.scan || []).map(x => idOf(x))));
-  m.querySelectorAll('[data-scanmore]').forEach(b => b.onclick = () => { P37.scan = null; const o = $('#scOut'); if(o) o.innerHTML = '';
+  m.querySelectorAll('[data-scanmore]').forEach(b => b.onclick = () => { P37.scan = null; const o = $('#scOut'); if(o) o.innerHTML = ''; scanSync();
     const i = document.getElementById('scCam'); if(i) i.click(); });
   m.querySelectorAll('[data-scanphone]').forEach(b => b.onclick = () => toPhone((P37.scan || []).filter(x => x.status !== 'skipped').map(x => ({ name:x.name, title:x.title,
     company:x.company, cell:x.cell, office:x.office, email:x.email, website:x.website }))));
