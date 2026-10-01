@@ -857,15 +857,19 @@ a.agdot{cursor:pointer;text-decoration:none}a.agdot:hover{color:var(--ink);text-
 .bc-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
 .bc-pair figure{margin:0}.bc-pair figcaption{font:600 11px/1 Manrope,Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--stone);margin-top:8px}
 .bc{position:relative;aspect-ratio:3.5/2;border-radius:6px;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.16),0 1px 0 rgba(0,0,0,.06);container-type:inline-size}
-.bc-front{background:#0B0B0B;display:grid;place-items:center}
-.bc-back{background:#F4F2ED;color:#121212}
-.bc-bar{position:absolute;top:12%;width:14%;height:2.2%;background:#F2C632;display:block}.bc-bar.l{left:7%}.bc-bar.r{right:7%}
-.bc-wm{width:56%;height:auto;display:block}
-.bc-who{position:absolute;left:7%;top:21%;line-height:1}
-.bc-who b{display:block;font:800 7.4cqw/1.05 Manrope,Arial,sans-serif;letter-spacing:-.01em;margin:0}
-.bc-who span{display:block;margin:2cqw 0 0;font:600 3.2cqw/1 Manrope,Arial,sans-serif;letter-spacing:.16em;color:#6E6961}
-.bc-lines{position:absolute;left:7%;bottom:7%;display:grid;gap:.9cqw;font:400 3.4cqw/1.2 Manrope,Arial,sans-serif}.bc-lines span{display:block;margin:0}.bc-lines em{font:400 3cqw/1.35 Manrope,Arial,sans-serif;font-style:normal;color:#6E6961;margin-top:2.2cqw}
-.bc-qr{position:absolute;right:7%;bottom:7%;width:17.5%;aspect-ratio:1}.bc-qr svg{display:block;width:100%;height:100%}
+@font-face{font-family:'Manrope';src:url('Manrope-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Manrope';src:url('Manrope-Bold.woff2') format('woff2');font-weight:700;font-display:swap}
+.bc-front{background:#111010}
+.bc-back{background:#F5F2EB;color:#15130F}
+.bc-wm{position:absolute;left:13.286%;top:38%;width:73.43%;height:auto;display:block}
+.bc-tag{position:absolute;left:13.286%;top:80.3%;font:500 2.976cqw/1 Manrope,Arial,sans-serif;letter-spacing:.04cqw;font-kerning:none;color:#D8D3C8;white-space:nowrap}
+.bc-stack{position:absolute;left:8.857%;top:17.06%;line-height:1}
+.bc-stack b{display:block;font:700 6.151cqw/1 Manrope,Arial,sans-serif;letter-spacing:-.119cqw;font-kerning:none;margin:0;white-space:nowrap}
+.bc-stack .bc-ttl{display:block;margin:2.532cqw 0 0;font:600 2.381cqw/1 Manrope,Arial,sans-serif;letter-spacing:.794cqw;color:#6E685E;white-space:nowrap}
+.bc-stack i{display:block;margin:4.329cqw 0 0;width:4.571cqw;height:.571cqw;background:#F2C632}
+.bc-stack .bc-lines{margin:2.083cqw 0 0;font:500 3.373cqw/4.206cqw Manrope,Arial,sans-serif}.bc-lines span{display:block;margin:0;white-space:nowrap}
+.bc-stack em{display:block;margin:2.536cqw 0 0;font:400 2.778cqw/3.869cqw Manrope,Arial,sans-serif;font-style:normal;color:#6E685E;white-space:nowrap}
+.bc-qr{position:absolute;left:74.48%;top:58.01%;width:16.675%;aspect-ratio:1}.bc-qr svg{display:block;width:100%;height:100%}.bc-qr path{fill:#15130F}
 .p45-note{background:var(--wall);border-left:4px solid #F2C632;padding:10px 14px;margin:4px 0 14px;font-weight:600}
 .p45-g{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
 .p45-g>div{display:grid;gap:3px;min-width:0}.p45-g>div>b{overflow:hidden;text-overflow:ellipsis}
@@ -6279,6 +6283,9 @@ function gearLine(sid){
 const WM_D = ["m 325.87396,98.948 h -17.484 V 236 h 85.164 v -15.416 h -67.68 z", "m 432.34992,98.948 h -17.672 V 236 h 17.672 z", "m 515.88991,236 47.564,-137.052 h -18.612 l -37.976,115.996 -40.232,-115.996 h -18.8 L 497.08991,236 Z", "m 596.42205,173.584 h 74.636 v -15.416 h -74.636 v -43.804 h 77.456 V 98.948 h -94.94 V 236 h 98.324 v -15.416 h -80.84 z", "m 704.21402,98.948 v 176.908 h 11.28 V 98.948 Z", "m 872.16606,236 34.78,-137.052 h -19.552 l -25.192,111.296 -31.208,-111.296 h -18.8 l -30.456,111.296 -25.756,-111.296 h -19.552 L 771.58606,236 h 19.176 l 30.644,-112.612 31.584,112.612 z", "m 977.51419,96.692 c -39.292,0 -65.988,28.952 -65.988,71.816 0,43.052 26.508,71.816 66.176,71.816 16.732,0 31.39601,-5.076 42.48801,-14.476 14.852,-12.596 23.688,-33.84 23.688,-56.212 0,-44.18 -26.132,-72.944 -66.36401,-72.944 z m 0,15.416 c 29.70401,0 48.88001,22.372 48.88001,57.152 0,33.088 -19.74,55.648 -48.69201,55.648 -29.328,0 -48.692,-22.56 -48.692,-56.4 0,-33.84 19.364,-56.4 48.504,-56.4 z", "m 1083.6141,176.968 h 45.12 c 15.604,0 22.56,7.52 22.56,24.44 l -0.188,12.22 c 0,8.46 1.504,16.732 3.948,22.372 h 21.244 v -4.324 c -6.58,-4.512 -7.896,-9.4 -8.272,-27.636 -0.188,-22.56 -3.76,-29.328 -18.612,-35.72 15.416,-7.708 21.62,-16.92 21.62,-32.712 0,-23.688 -14.664,-36.66 -41.736,-36.66 h -63.168 V 236 h 17.484 z m 0,-15.416 v -47.188 h 42.3 c 9.776,0 15.416,1.504 19.74,5.264 4.7,3.948 7.144,10.152 7.144,18.236 0,16.356 -8.272,23.688 -26.884,23.688 z", "m 1213.5901,188.06 22.372,-22.372 48.316,70.312 h 20.68 l -56.4,-81.216 55.836,-55.836 h -22.56 l -68.244,69.372 V 98.948 h -17.484 V 236 h 17.484 z"];
 const WM_VB = { w: 996.57, h: 179.16, tx: -308.39, ty: -96.69 };
 const LW_ADDR = ['26632 Towne Centre Dr', 'Foothill Ranch, CA 92610'];
+/* the card, as approved Sep 30: its own address line and the tagline, word for word */
+const CARD_ADDR = ['26632 Towne Centre Dr #300', 'Foothill Ranch, CA 92610'];
+const LW_TAG = 'Good Companies x Good People';
 const LW_GOLD = '#F2C632';
 /* the wordmark: the Dropbox brand SVG exactly as supplied, one colour, rule included. Never recolour the rule */
 function wmSvg(fill){
@@ -6299,51 +6306,50 @@ function personCard(s){
 function cardProof(d){
   const lines = [d.email, d.mobile, d.web].filter(Boolean);
   return '<div class="bc-pair">' +
-    '<figure><div class="bc bc-front"><i class="bc-bar l"></i>' + wmSvg('#FFFFFF') + '</div><figcaption>Front</figcaption></figure>' +
-    '<figure><div class="bc bc-back"><i class="bc-bar r"></i>' +
-      '<div class="bc-who"><b>' + esc(d.name || 'Name') + '</b><span>' + esc(String(d.title || 'Title').toUpperCase()) + '</span></div>' +
-      '<div class="bc-lines">' + lines.map(l => '<span>' + esc(l) + '</span>').join('') +
-        '<em>' + LW_ADDR.map(esc).join('<br>') + '</em></div>' +
+    '<figure><div class="bc bc-front">' + wmSvg('#FFFFFF') + '<span class="bc-tag">' + esc(LW_TAG) + '</span></div><figcaption>Front</figcaption></figure>' +
+    '<figure><div class="bc bc-back"><div class="bc-stack">' +
+      '<b>' + esc(d.name || 'Name') + '</b><span class="bc-ttl">' + esc(String(d.title || 'Title').toUpperCase()) + '</span><i></i>' +
+      '<div class="bc-lines">' + lines.map(l => '<span>' + esc(l) + '</span>').join('') + '</div>' +
+      '<em>' + CARD_ADDR.map(esc).join('<br>') + '</em></div>' +
       '<div class="bc-qr">' + qrSvg(vcardText(d)) + '</div>' +
     '</div><figcaption>Back</figcaption></figure></div>';
 }
-/* print file: 3.5 x 2 in trim, 1/8 in bleed all round, trim and bleed boxes set, fonts embedded */
+/* print file, the Sep 30 approved card: 3.5 x 2 in trim, 1/8 in bleed all round, trim and bleed boxes set, fonts embedded.
+   Every number below is measured off the approved PDF, in points, y down from the top of the file. */
 async function cardPdf(d){
   const L = await needLib('pdf-lib.min.js', 'PDFLib');
   const FK = await needLib('fontkit.umd.min.js', 'fontkit');
   if(!L || !FK) throw new Error('the PDF library did not load');
   const doc = await L.PDFDocument.create(); doc.registerFontkit(FK);
   const get = async f => { const r = await fetch(f); if(!r.ok) throw new Error(f + ' missing'); return r.arrayBuffer(); };
-  const [XB, SB, RG] = await Promise.all(['Manrope-ExtraBold.ttf','Manrope-SemiBold.ttf','Manrope-Regular.ttf'].map(async f => doc.embedFont(await get(f), { subset: true })));
+  const [BD, MD, SB, RG] = await Promise.all(['Manrope-Bold.ttf','Manrope-Medium.ttf','Manrope-SemiBold.ttf','Manrope-Regular.ttf'].map(async f => doc.embedFont(await get(f), { subset: true })));
   const B = 9, TW = 252, TH = 144, PW = TW + 2 * B, PH = TH + 2 * B;
-  const ink = L.rgb(0.043, 0.043, 0.043), gold = L.rgb(0.949, 0.776, 0.196), paper = L.rgb(0.957, 0.949, 0.929),
-        stone = L.rgb(0.431, 0.412, 0.380), black = L.rgb(0.07, 0.07, 0.07), white = L.rgb(1, 1, 1);
+  const hex = h => L.rgb(parseInt(h.slice(1,3),16)/255, parseInt(h.slice(3,5),16)/255, parseInt(h.slice(5,7),16)/255);
+  const flood = hex('#111010'), white = L.rgb(1, 1, 1), tagc = hex('#D8D3C8'), paper = hex('#F5F2EB'),
+        ink = hex('#15130F'), stone = hex('#6E685E'), gold = hex('#F2C632');
   const page = () => { const p = doc.addPage([PW, PH]); p.setBleedBox(0, 0, PW, PH); p.setTrimBox(B, B, TW, TH); return p; };
-  const top = y => PH - B - y;                 /* y measured down from the trim top */
-  const side = TW * 0.07, barW = TW * 0.14, barH = 3.2, barY = TH * 0.12;
-  /* front */
+  const Y = y => PH - y;
+  const tracked = (p, txt, x, y, font, size, tr, color) => { let cx = x;
+    for(const ch of String(txt)){ p.drawText(ch, { x: cx, y, size, font, color }); cx += font.widthOfTextAtSize(ch, size) + tr; } };
+  /* front: flood, the wordmark one colour 2.57 in wide, the tagline on its left edge */
   const f = page();
-  f.drawRectangle({ x: 0, y: 0, width: PW, height: PH, color: ink });
-  f.drawRectangle({ x: B + side, y: top(barY) - barH, width: barW, height: barH, color: gold });
-  const ww = TW * 0.56, s = ww / WM_VB.w, wh = WM_VB.h * s, wx = B + (TW - ww) / 2, wy = top((TH - wh) / 2);
+  f.drawRectangle({ x: 0, y: 0, width: PW, height: PH, color: flood });
+  const ww = 185.04, s = ww / WM_VB.w, wx = 42.48, wy = Y(63.72);
   WM_D.forEach(dd => f.drawSvgPath(dd, { x: wx + WM_VB.tx * s, y: wy - WM_VB.ty * s, scale: s, color: white, borderWidth: 0 }));
-  /* back */
-  const b = page();
+  tracked(f, LW_TAG, wx, Y(131.25), MD, 7.5, 0.1, tagc);
+  /* back: name, title, short gold rule, contact lines, address, contact code mid right */
+  const b = page(), X = 31.32;
   b.drawRectangle({ x: 0, y: 0, width: PW, height: PH, color: paper });
-  b.drawRectangle({ x: B + TW - side - barW, y: top(barY) - barH, width: barW, height: barH, color: gold });
-  const tracked = (txt, x, y, font, size, tr, color) => { let cx = x;
-    for(const ch of String(txt)){ b.drawText(ch, { x: cx, y, size, font, color }); cx += font.widthOfTextAtSize(ch, size) + tr; } };
-  const X = B + side;
-  b.drawText(d.name || '', { x: X, y: top(TH * 0.26 + 11), size: 12, font: XB, color: black });
-  tracked(String(d.title || '').toUpperCase(), X, top(TH * 0.26 + 11 + 11), SB, 5.8, 0.9, stone);
-  const base = B + TH * 0.07 + 1.2;
-  LW_ADDR.forEach((l, i) => b.drawText(l, { x: X, y: base + (1 - i) * 7.2, size: 5.6, font: RG, color: stone }));
-  const ls = [d.email, d.mobile, d.web].filter(Boolean), lb = base + 7.2 + 12;
-  ls.forEach((l, i) => b.drawText(l, { x: X, y: lb + (ls.length - 1 - i) * 9, size: 6.8, font: RG, color: black }));
-  /* vCard code, bottom right: scan it and the contact saves */
-  const Q = qrMatrix(vcardText(d)), qs = 44, cell = qs / Q.n, qx = B + TW - side - qs, qy = B + TH * 0.07;
+  tracked(b, d.name || '', X, Y(47.26), BD, 15.5, -0.3, ink);
+  tracked(b, String(d.title || '').toUpperCase(), X, Y(60.75), SB, 6, 2, stone);
+  b.drawRectangle({ x: X, y: Y(73.8), width: 11.52, height: 1.44, color: gold });
+  const ls = [d.email, d.mobile, d.web].filter(Boolean);
+  ls.forEach((l, i) => b.drawText(l, { x: X, y: Y(87.6 + i * 10.6), size: 8.5, font: MD, color: ink }));
+  const ay = 87.6 + (ls.length - 1) * 10.6 + 16;
+  CARD_ADDR.forEach((l, i) => b.drawText(l, { x: X, y: Y(ay + i * 9.75), size: 7, font: RG, color: stone }));
+  const Q = qrMatrix(vcardText(d)), qs = 42.02, cell = qs / Q.n, qx = 196.68, qt = 92.53;
   for(let r = 0; r < Q.n; r++) for(let c = 0; c < Q.n; c++) if(Q.dark(r, c))
-    b.drawRectangle({ x: qx + c * cell, y: qy + qs - (r + 1) * cell, width: cell + 0.02, height: cell + 0.02, color: black });
+    b.drawRectangle({ x: qx + c * cell, y: Y(qt + (r + 1) * cell), width: cell + 0.02, height: cell + 0.02, color: ink });
   doc.setTitle('LIVEWORK business card · ' + (d.name || ''));
   doc.setAuthor('LIVEWORK'); doc.setCreator('LIVEWORK desk');
   return doc.save();
@@ -6370,11 +6376,15 @@ function sheetPerson(){
     body = (miss.length ? '<div class="p45-note">Add ' + miss.join(' and ') + ' in Profile and the card fills in.</div>' : '') +
       cardProof(d) +
       '<div class="spec" style="margin-top:14px">' +
-        '<div class="row"><b>Size</b><span>3.5 x 2 in, with 1/8 in bleed on every side (3.75 x 2.25 in file)</span></div>' +
-        '<div class="row"><b>Front</b><span>Black, gold bar top left, the LIVEWORK wordmark centered, one colour, exactly as the brand file</span></div>' +
-        '<div class="row"><b>Back</b><span>Paper, gold bar top right, name and title up top, email, mobile, livework.inc and the office address bottom left, a contact code bottom right that saves them to a phone</span></div>' +
-        '<div class="row"><b>Fonts</b><span>Manrope, embedded</span></div>' +
-      '</div>' +
+        '<div class="row"><b>Size</b><span>3.5 x 2 in trim, file 3.75 x 2.25 in with 1/8 in bleed</span></div>' +
+        '<div class="row"><b>Stock</b><span>32 pt or heavier, uncoated or soft touch</span></div>' +
+        '<div class="row"><b>Edges</b><span>Painted all four sides, gold, PMS 7406 C</span></div>' +
+        '<div class="row"><b>Print</b><span>Full color both sides, no crop marks in file</span></div>' +
+        '<div class="row"><b>Front</b><span>#111010 flood, wordmark #FFFFFF, vector, one colour</span></div>' +
+        '<div class="row"><b>Back</b><span>#F5F2EB flood, rule #F2C632</span></div>' +
+        '<div class="row"><b>Type</b><span>Manrope, embedded</span></div>' +
+        '<div class="row"><b>Code</b><span>Contact code, saves the card to a phone</span></div>' +
+        '</div>' +
       '<div class="g-acts"><button class="btn y" id="ppPdf">Download the print PDF</button><button class="btn ghost" data-tab="0">Edit the details</button></div>';
   } else {
     const mine = gearOf(sid), shelf = (S.gear || []).filter(g => !g.staff_id && !g.returned_on);
@@ -6409,7 +6419,7 @@ async function cardDownload(s, btn){
   const lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Building';
   try{ const bytes = await cardPdf(personCard(s));
     const u = URL.createObjectURL(new Blob([bytes], { type:'application/pdf' }));
-    const a = document.createElement('a'); a.href = u; a.download = 'livework-card-' + String(F(s,'name') || 'card').toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.pdf';
+    const a = document.createElement('a'); a.href = u; a.download = 'LIVEWORK-card-' + String(F(s,'name') || 'card').trim().replace(/[^A-Za-z0-9]+/g,'-') + '-PRINT.pdf';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000);
     toast('Card PDF ready.'); }
   catch(err){ toast('No PDF. ' + err.message, true); console.error(err); }
