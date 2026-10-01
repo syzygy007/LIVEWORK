@@ -3578,7 +3578,7 @@ function sheetCompany(){
       ['Notices to', esc(F(c,'notice_email') || 'Not on file')],
       ['Notes', esc(F(c,'notes','bio'))]
     ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-edit="company:' + idOf(c) + '">Edit</button><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button>' +
-      (isOwner() ? '<button class="btn ghost" data-vpack="' + idOf(c) + '">Vendor packet</button>' : '') + (isAdmin() ? '<button class="btn ghost del" data-delco="' + idOf(c) + '">Delete client</button>' : '') + '</div>';
+      (isAdmin() ? '<button class="btn ghost" data-vpack="' + idOf(c) + '">Vendor packet</button>' : '') + (isAdmin() ? '<button class="btn ghost del" data-delco="' + idOf(c) + '">Delete client</button>' : '') + '</div>';
   if(T===1) body = '<div class="clist">' + contactsOf(idOf(c)).map(ct => {
       const cid = idOf(ct);
       const ph = String(F(ct,'phone') || '').replace(/[^0-9+]/g,'');
@@ -6569,29 +6569,31 @@ function remitSpec(r, full){
     (r.email ? '<div class="row"><b>Remittance to</b><span>' + esc(r.email) + '</span></div>' : '') +
     '<div class="row"><b>Memo</b><span>' + esc(r.memo || 'Invoice number') + '</span></div></div>';
 }
+/* Patch 57 · bank details and vendor documents: Root and Admin read, only Root writes. The database holds the same rule. */
 function vRemit(){
   if(!isAdmin()) return '';
-  const r = remit();
-  return '<div class="sec"><h2>Getting paid.</h2><span class="muted small">What prints under How to pay on every invoice.</span>' +
-      '<button class="btn sm' + (r ? ' ghost' : ' y') + '" id="remitEdit">' + (r ? 'Change' : 'Add the bank details') + '</button></div>' +
+  const r = remit(), root = isOwner();
+  return '<div class="sec"><h2>Getting paid.</h2><span class="muted small">What prints under How to pay on every invoice.' + (root ? '' : ' Only Root can change it.') + '</span>' +
+      (root ? '<button class="btn sm' + (r ? ' ghost' : ' y') + '" id="remitEdit">' + (r ? 'Change' : 'Add the bank details') + '</button>' : '') + '</div>' +
     (r ? remitSpec(r) : '<div class="tbl"><div class="empty">No bank details yet. Invoices go out without a way to pay by ACH.</div></div>');
 }
 /* ---------- Patch 48 · the vendor packet: what a new client's AP team needs to pay us ---------- */
 function vendorFiles(){ const r = (S.lw_settings || []).find(x => x.key === 'vendor'); return r ? (r.value || {}) : {}; }
 const VFILES = [['w9', 'W-9', 'Signed IRS W-9 for Germann Inc.'], ['bank', 'Bank letter', 'Chase account verification letter on bank letterhead']];
 function vVendor(){
-  if(!isOwner()) return '';
-  const v = vendorFiles();
-  return '<div class="sec"><h2>Vendor packet.</h2><span class="muted small">Goes to a new client\'s accounts payable with the first invoice. The W-9 and bank letter sit in a private vault only Root can open.</span>' +
+  if(!isAdmin()) return '';
+  const v = vendorFiles(), root = isOwner();
+  return '<div class="sec"><h2>Vendor packet.</h2><span class="muted small">Goes to a new client\'s accounts payable with the first invoice. The W-9 and bank letter sit in a private vault. Root and Admin can open them, only Root can replace them.</span>' +
       '<button class="btn sm y" data-vpack="">Preview the packet</button></div>' +
     '<div class="spec" style="background:var(--white);border:1px solid var(--line);padding:0 20px">' +
     VFILES.map(([k, l, hint]) => '<div class="row"><b>' + l + '</b><span>' +
-      (v[k] ? '<span class="gdot ok"></span>On file ' + esc(short(v[k].at)) + ' · <a href="#" data-vview="' + k + '">View</a> · ' : '<span class="gdot wait"></span>Not yet · ' + esc(hint) + ' · ') +
-      '<label class="vup" for="vf_' + k + '">' + (v[k] ? 'Replace' : 'Upload the PDF') + '</label><input id="vf_' + k + '" class="vh" type="file" accept="application/pdf" data-vfile="' + k + '"></span></div>').join('') +
+      (v[k] ? '<span class="gdot ok"></span>On file ' + esc(short(v[k].at)) + ' · <a href="#" data-vview="' + k + '">View</a>' : '<span class="gdot wait"></span>Not yet · ' + esc(hint)) +
+      (root ? ' · <label class="vup" for="vf_' + k + '">' + (v[k] ? 'Replace' : 'Upload the PDF') + '</label><input id="vf_' + k + '" class="vh" type="file" accept="application/pdf" data-vfile="' + k + '">' : '') + '</span></div>').join('') +
     '</div>';
 }
 async function vendorUpload(k, file){
   if(!file) return;
+  if(!isOwner()) return toast('Only Root can replace the vendor documents.', true);
   if(!/pdf$/i.test(file.type || file.name)) return toast('A PDF, please.', true);
   try{
     await alive();
@@ -6682,6 +6684,7 @@ async function vendorPacket(coid, btn){
   if(btn){ btn.disabled = false; btn.textContent = lbl; }
 }
 function remitForm(){
+  if(!isOwner()) return toast('Only Root can change the bank details.', true);
   const r = remit() || {};
   const inp = (id, v, ph, extra) => '<input id="' + id + '" value="' + esc(v == null ? '' : v) + '" placeholder="' + (ph || '') + '" ' + (extra || '') + '>';
   SHEET = { kind:'form', id:'remit', tab:0, ctx:{} };
@@ -6716,9 +6719,9 @@ function remitForm(){
 }
 function invRemitLine(){
   if(!isAdmin()) return '';
-  const r = remit();
-  return r ? '<div class="p45-remit"><b>How to pay, on every PDF.</b><span>' + esc(r.bank) + ' · routing <span class="mono">' + esc(r.routing) + '</span> · account <span class="mono">' + esc(r.account) + '</span></span><button class="btn sm ghost" id="remitEdit">Change</button></div>'
-           : '<div class="p45-remit warn"><b>No bank details on the invoices yet.</b><span>Clients cannot pay by ACH until they are in.</span><button class="btn sm y" id="remitEdit">Add them</button></div>';
+  const r = remit(), root = isOwner();
+  return r ? '<div class="p45-remit"><b>How to pay, on every PDF.</b><span>' + esc(r.bank) + ' · routing <span class="mono">' + esc(r.routing) + '</span> · account <span class="mono">' + esc(r.account) + '</span></span>' + (root ? '<button class="btn sm ghost" id="remitEdit">Change</button>' : '') + '</div>'
+           : '<div class="p45-remit warn"><b>No bank details on the invoices yet.</b><span>Clients cannot pay by ACH until they are in.' + (root ? '' : ' Root adds them in Settings.') + '</span>' + (root ? '<button class="btn sm y" id="remitEdit">Add them</button>' : '') + '</div>';
 }
 function wireP45(m){
   m.querySelectorAll('[data-person]').forEach(b => b.onclick = e => { e.stopPropagation(); openSheet('person', b.dataset.person, +(b.dataset.ptab2 || 0)); });
