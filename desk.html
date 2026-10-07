@@ -1105,7 +1105,27 @@ async function rest(path, opts){
   }
   return j;
 }
-const readAll = t => rest(t + '?select=*&limit=2000').catch(e => { console.warn(t, e.message); return []; });
+/* Patch 58 · Supabase caps every REST read at 1,000 rows no matter what limit we ask for.
+   The desk used to read one page, so past 1,000 candidates the newest never showed and the
+   count froze at 1,000. Read in pages of 1,000 until a short page comes back. */
+const PAGE = 1000;
+async function readAll(t){
+  try{
+    const page = (off, key) => rest(t + '?select=*&limit=' + PAGE + '&offset=' + off + (key ? '&order=' + key + '.asc' : ''));
+    let rows = await page(0, null);
+    if(!Array.isArray(rows)) return [];
+    if(rows.length < PAGE) return rows;
+    const key = rows[0].id != null ? 'id' : (rows[0].uuid != null ? 'uuid' : null);
+    if(key) rows = await page(0, key);
+    let more = rows.length === PAGE;
+    while(more){
+      const next = await page(rows.length, key);
+      rows = rows.concat(next || []);
+      more = Array.isArray(next) && next.length === PAGE;
+    }
+    return rows;
+  }catch(e){ console.warn(t, e.message); return []; }
+}
 async function insert(t, row){
   const out = await rest(t, { method:'POST', body: JSON.stringify(row), prefer:'return=representation' });
   return Array.isArray(out) ? out[0] : out;
