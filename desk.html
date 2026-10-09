@@ -1297,7 +1297,7 @@ function drawNav(){
   if(me && !document.getElementById('myCardLink')) me.insertAdjacentHTML('beforeend', ' · <a href="#" id="myCardLink">Your card</a>');
   const mc = document.getElementById('myCardLink'); if(mc) mc.onclick = e => { e.preventDefault(); go('card'); };
   /* tools: pages that live outside the desk */
-  $('#nav').insertAdjacentHTML('beforeend', '<button data-tool="livesign.html" class="tool">Livesign<span class="n">sign a PDF</span></button>');
+  $('#nav').insertAdjacentHTML('beforeend', '<button data-tool="livesign.html" class="tool">Livesign<span class="n">sign a PDF</span></button><button data-tool="brand.html" class="tool">Brand kit<span class="n">logos, banners</span></button>');
   document.querySelectorAll('#nav button[data-tool]').forEach(b => b.onclick = () => { location.href = b.dataset.tool; });
   drawTabs();
 }
