@@ -529,6 +529,43 @@ html[data-skin="dark"] .aiorb path[stroke-opacity="0.95"],html[data-skin="dark"]
 .bdrop{border:2px dashed var(--line,#D3CEC4);padding:18px;text-align:center;cursor:pointer;background:var(--paper,#F4F2ED);border-radius:var(--r,10px)}
 .bdrop b{display:block}
 .bdrop.busy{opacity:.6;pointer-events:none}
+/* Patch 62 · the role intake */
+.sheet.wide{width:min(880px,100%)}
+.ri{display:grid;gap:26px}
+.ri .rsec{display:grid;gap:14px;padding-top:22px;border-top:1px solid var(--line)}
+.ri .rsec>h3{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0;color:var(--ink)}
+.ri .three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.ri .field{min-width:0}
+.ri .field textarea{min-height:76px}
+.ri .hint{font-size:12px;color:var(--stone);margin-top:-2px}
+.pk{display:flex;flex-wrap:wrap;gap:6px}
+.pk button{height:36px;padding:0 12px;border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:var(--r);font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.pk button:hover{border-color:var(--ink)}
+.pk button.on{background:var(--solid);color:var(--solid-ink);border-color:var(--solid)}
+.ristart{display:grid;gap:12px;padding:18px;background:var(--panel);color:var(--panel-ink);border:1px solid var(--panel-line);border-radius:var(--r)}
+.ristart label{font-size:14px;font-weight:700;color:var(--panel-ink)}
+.ristart textarea{width:100%;min-height:62px;padding:10px 12px;background:transparent;color:var(--panel-ink);border:1px solid var(--panel-dim);border-radius:var(--r);resize:vertical;font:inherit}
+.ristart textarea:focus{outline:none;border-color:var(--yellow)}
+.ristart .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ristart .row .say{flex:1 1 220px;min-width:0;font-size:13px;font-weight:600;color:var(--panel-dim)}
+.ristart .btn:hover{background:var(--panel-ink);color:var(--panel);border-color:var(--panel-ink)}
+.ristart .alt{all:unset;cursor:pointer;font-size:13px;font-weight:600;color:var(--panel-dim);text-decoration:underline;text-underline-offset:3px}
+.ristart .alt:hover{color:var(--panel-ink)}
+.ristart.busy,.ridesc.busy{opacity:.65;pointer-events:none}
+.ridesc{border:1px solid var(--line);border-radius:var(--r);background:var(--white)}
+.ri .ridesc textarea{border:0;min-height:260px;width:100%;background:transparent;line-height:1.55}
+.ridesc .foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-top:1px solid var(--line)}
+.ridesc .foot .say{flex:1 1 160px;min-width:0;font-size:13px;font-weight:600;color:var(--stone)}
+.ri .skl{padding:8px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);min-height:48px}
+.dtag{all:unset;display:none;cursor:pointer;margin-left:8px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--yellow-deep)}
+.dft .dtag{display:inline}
+.dtag:hover{text-decoration:underline}
+.dft>input,.dft>textarea,.dft>.ridesc,.dft>.skl,.dft>.pk{box-shadow:-4px 0 0 var(--yellow)}
+.rineed{font-size:13px;font-weight:600;color:var(--stone)}
+.dpill{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:999px;background:var(--yellow);color:#141210;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle}
+.jd{white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:900px){ .ri .three{grid-template-columns:1fr} }
+
 .mrow{padding:14px 0;border-bottom:1px solid var(--line)}
 .mrow:last-child{border-bottom:0}
 .mrow .mh{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -3549,8 +3586,11 @@ function openSheet(kind, id, tab){ SHEET = { kind, id, tab: tab || 0 }; paintShe
 function shell(title, sub, body){
   $('#sheet').innerHTML = '<button class="x" id="sx">Close</button>' +
     '<div><h2>' + title + '</h2>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + '</div>' + body;
+  $('#sheet').classList.toggle('wide', SHEET.kind === 'form' && SHEET.id === 'search');
   $('#sheet').classList.add('on'); $('#veil').classList.add('on');
   $('#sx').onclick = closeSheet;
+  $('#sheet').querySelectorAll('[data-copyjd]').forEach(b => b.onclick = async () => { const x = search(b.dataset.copyjd) || {};
+    try{ await navigator.clipboard.writeText(F(x,'description') || F(x,'notes') || ''); toast('Description copied.'); }catch(e){ toast('Copy was blocked by the browser.', true); } });
   wireSheet();
   labelCells($('#sheet'));
 }
@@ -3597,7 +3637,7 @@ function sheetCompany(){
       ['Address', esc(F(c,'address') || 'Not on file')],
       ['Notices to', esc(F(c,'notice_email') || 'Not on file')],
       ['Notes', esc(F(c,'notes','bio'))]
-    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-edit="company:' + idOf(c) + '">Edit</button><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a search</button>' +
+    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-edit="company:' + idOf(c) + '">Edit</button><button class="btn ghost" data-mail="co:' + idOf(c) + '">Email</button><button class="btn ghost" data-new="visit" data-co="' + idOf(c) + '">Visit note</button><button class="btn ghost" data-new="search" data-co="' + idOf(c) + '">Open a role</button>' +
       (isAdmin() ? '<button class="btn ghost" data-vpack="' + idOf(c) + '">Vendor packet</button>' : '') + (isAdmin() ? '<button class="btn ghost del" data-delco="' + idOf(c) + '">Delete client</button>' : '') + '</div>';
   if(T===1) body = '<div class="clist">' + contactsOf(idOf(c)).map(ct => {
       const cid = idOf(ct);
@@ -3630,7 +3670,7 @@ function sheetCompany(){
       '<p class="muted small">Room lets them sign in at the client room with a code. Billing sends invoices and payment reminders to them. One billing contact per client.</p>' +
       '<button class="btn" data-new="contact" data-co="' + idOf(c) + '">Add a contact</button>';
   if(T===2) body = (ss.length ? ss.map(s => '<div class="toggle"><div><b>' + esc(F(s,'title','role')) + '</b><small>' + esc(F(s,'location')) + ' · ' + (isOpen(s)?'Open':'Closed') + '</small></div><button class="btn sm ghost" data-se="' + idOf(s) + '">Open</button></div>').join('') : '<p class="muted small">No searches yet.</p>') +
-      '<button class="btn" data-new="search" data-co="' + idOf(c) + '">Open a search</button>';
+      '<button class="btn" data-new="search" data-co="' + idOf(c) + '">Open a role</button>';
   if(T===3) body = logList(acts.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,40)
       .map(a => [short(a.created_at) + ' ' + esc(F(a,'kind')), esc(F(a,'body','note'))]));
   if(T===4){
@@ -3661,6 +3701,24 @@ function sheetCompany(){
   shell(esc(F(c,'name')) + '.', esc(F(c,'city','location','industry')) + (needsBilling(idOf(c)) ? ' · <span class="pill warn">No billing contact</span>' : ''),
     tabs(['Profile','Contacts','Searches','Activity','Money','Documents']) + body);
 }
+function jobOrderRows(s){
+  const dr = new Set(String(s.draft_fields || '').split(','));
+  const lab = (t, k) => t + (k && dr.has(k) ? '<span class="dpill">Draft</span>' : '');
+  const row = (t, v, k) => v ? [lab(t, k), '<span class="jd">' + esc(v) + '</span>'] : null;
+  const jd = F(s,'description') || F(s,'notes','brief');
+  return [
+    row('Industry', F(s,'industry')), row('In one line', F(s,'summary')),
+    row('Works', F(s,'work_mode')), row('Reports to', F(s,'reports_to')), row('Why open', F(s,'why_open')),
+    row('On top of base', [F(s,'comp_extra'), F(s,'pay_type') === 'Hourly' ? 'Hourly' : '', F(s,'comp_firm')].filter(Boolean).join(' · ')),
+    row('Experience', [F(s,'years_exp') ? F(s,'years_exp') + ' years' : '', F(s,'level')].filter(Boolean).join(' · '), s.draft_fields && (dr.has('years') || dr.has('level')) ? (dr.has('years') ? 'years' : 'level') : ''),
+    row('Credential', F(s,'credential'), 'cred'), row('Industry background', F(s,'industry_bg'), 'bg'),
+    row('Manages', F(s,'team_size')),
+    [lab('Description', 'desc'), jd ? '<span class="jd">' + esc(jd) + '</span>' : ''],
+    row('By day 90', F(s,'day90'), 'd90'), row('Why people fail', F(s,'fail_reason'), 'fail'), row('The sell', F(s,'sell'), 'sell'),
+    row('Recruit from', F(s,'recruit_from')), row('Off limits', F(s,'off_limits')),
+    row('Interview', F(s,'process')), row('Timing', F(s,'urgency'))
+  ];
+}
 function sheetSearch(){
   const s = search(SHEET.id); if(!s) return closeSheet();
   const rows = S.pipeline.filter(p => String(p.search_id)===String(idOf(s)));
@@ -3678,10 +3736,10 @@ function sheetSearch(){
         : '<span class="muted">Not announced yet</span>'],
       ['Days open', daysBetween(F(s,'opened_at','created_at'))],
       ['Fee', esc(F(s,'fee') || '20% of first year base')],
-      ['Must haves', skView(skSplit(F(s,'must_haves')), 'must')],
+      ['Must haves' + (String(s.draft_fields || '').split(',').includes('must') ? '<span class="dpill">Draft</span>' : ''), skView(skSplit(F(s,'must_haves')), 'must')],
       ['Nice to haves', skView(skSplit(F(s,'nice_to_haves')), '')],
-      ['The brief', esc(F(s,'notes','brief','description'))]
-    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>' +
+      ...jobOrderRows(s)
+    ]) + '<div style="display:flex;gap:10px;flex-wrap:wrap">' + ((F(s,'description') || F(s,'notes')) ? '<button class="btn ghost" data-copyjd="' + idOf(s) + '">Copy the description</button>' : '') + '<button class="btn ghost" data-new="pipeline" data-se="' + idOf(s) + '">Submit a candidate</button>' +
       '<button class="btn ghost" data-edit="search:' + idOf(s) + '">Edit</button>' +
       '<button class="btn ghost" data-close="' + idOf(s) + '">' + (isOpen(s)?'Close the search':'Reopen') + '</button>' +
       (F(s,'launch_sent_at')
@@ -3883,7 +3941,8 @@ function prefill(kind, r){
     setv('f_room', r[MAP.contact.room] === true); setv('f_bill', r[MAP.contact.billing] === true); }
   if(kind === 'search'){ setv('f_co', r.company_id); setv('f_title', F(r,'title','role')); setv('f_loc', F(r,'location'));
     setv('f_kind', F(r,'kind','engagement_type')); setv('f_stat', String(F(r,'status') || 'open').toLowerCase());
-    setv('f_min', F(r,'comp_min','comp_low')); setv('f_max', F(r,'comp_max','comp_high')); setv('f_notes', F(r,'notes'));
+    setv('f_min', F(r,'comp_min','comp_low')); setv('f_max', F(r,'comp_max','comp_high'));
+    RI_FIELDS.forEach(([id, col]) => setv(id, F(r, col))); setv('f_desc', F(r,'description') || F(r,'notes'));
     setv('f_am', r.am_id || ''); setv('f_rec', r.recruiter_id || ''); setv('f_ad', r.ad_spend != null ? String(r.ad_spend) : '');
     SK.must = skSplit(r.must_haves); SK.nice = skSplit(r.nice_to_haves); skPaint(); }
   if(kind === 'candidate'){ setv('f_name', F(r,'name','full_name')); setv('f_title', F(r,'title','headline'));
@@ -3926,25 +3985,67 @@ function form(kind, ctx){
       '<div class="field"><label for="f_phone">Phone</label><input id="f_phone"></div></div>' +
       '<div class="field"><label><input type="checkbox" id="f_room" style="height:auto;width:auto;margin-right:8px">Client room access</label></div>' +
       '<div class="field"><label><input type="checkbox" id="f_bill" style="height:auto;width:auto;margin-right:8px">Billing contact, invoices go to this person</label></div>'],
-    search: ['Open a search.', 'The job order the client agreed to.',
-      '<div class="field"><label for="f_co">Client</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div>' +
-      '<div class="field"><label for="f_title">Title</label><input id="f_title" placeholder="Director of Fleet Operations"></div>' +
-      '<div class="two"><div class="field"><label for="f_loc">Location</label><input id="f_loc"></div>' +
-      '<div class="field"><label for="f_kind">Engagement</label><select id="f_kind"><option>Contingent</option><option>Retained</option></select></div></div>' +
-      '<div class="field"><label for="f_stat">Status</label><select id="f_stat"><option value="open">Open</option><option value="on_hold">On hold</option><option value="filled">Filled</option><option value="cancelled">Cancelled</option></select></div>' +
-      '<div class="two"><div class="field"><label for="f_am">Account Manager</label><select id="f_am">' + opts(activeStaff(), st => F(st,'name','email'), ctx.am) + '</select></div>' +
-      '<div class="field"><label for="f_rec">Recruiter</label><select id="f_rec">' + opts(activeStaff(), st => F(st,'name','email'), ctx.rec) + '</select></div></div>' +
-      '<div class="field"><label for="f_ad">Advertising on this role, dollars</label><input id="f_ad" inputmode="decimal" placeholder="Deducted from the fee before commission"></div>' +
-      '<div class="two"><div class="field"><label for="f_min">Comp low</label><input id="f_min" inputmode="numeric"></div>' +
-      '<div class="field"><label for="f_max">Comp high</label><input id="f_max" inputmode="numeric"></div></div>' +
-      '<div class="field"><label>The brief</label>' +
-        '<div class="bdrop" id="bdrop"><b id="bdropt">Drop the role summary here, or click to pick one</b>' +
-        '<span class="muted small" id="bdrops">PDF, Word or text. It reads the brief and pulls the must haves and nice to haves.</span>' +
-        '<input id="bfile" type="file" accept=".pdf,.docx,.txt,.md,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none"></div></div>' +
-      '<div class="field"><textarea id="f_notes" placeholder="What good looks like, who they report to, why the seat is open. Or paste the whole summary here."></textarea>' +
-        '<div style="margin-top:8px"><button type="button" class="btn sm ghost" id="bpull">Pull the skills from what is written</button></div></div>' +
-      '<div class="field"><label>Must haves <span class="muted">(what the match scores against)</span></label><div class="skl" id="skmust"></div></div>' +
-      '<div class="field"><label>Nice to haves <span class="muted">(half weight)</span></label><div class="skl" id="sknice"></div></div>'],
+    search: ['Open a role.', 'Title, industry and one line. The desk drafts the rest, you fine tune it with the client.',
+      (() => {
+        const pk = (id, list) => '<input type="hidden" id="' + id + '"><div class="pk" data-pk="' + id + '">' + list.map(x => '<button type="button">' + x + '</button>').join('') + '</div>';
+        const tag = k => '<button type="button" class="dtag" data-dok="' + k + '" title="Press once the client has confirmed it">Draft · confirm with client</button>';
+        const SPARK = '<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0l1.7 5.1L15 8l-5.3 2.9L8 16l-1.7-5.1L1 8l5.3-2.9z"/></svg>';
+        return '<div class="ri">' +
+        '<div class="rsec" style="border-top:0;padding-top:0">' +
+          '<div class="three"><div class="field"><label for="f_title">What is the title?</label><input id="f_title" placeholder="Senior Controller"></div>' +
+          '<div class="field"><label for="f_ind">What industry?</label><input id="f_ind" list="riind" placeholder="Electrical distribution"><datalist id="riind">' + INDUSTRIES.filter(n => n !== 'Other').map(n => '<option>' + n + '</option>').join('') + '</datalist></div>' +
+          '<div class="field"><label for="f_co">Which client?</label><select id="f_co">' + opts(S.companies, c => F(c,'name'), ctx.co) + '</select></div></div>' +
+          '<div class="ristart" id="ristart"><label for="f_sum">Sum the job up in a line or two.</label>' +
+            '<textarea id="f_sum" placeholder="Runs the accounting team and owns the close for a six branch distributor."></textarea>' +
+            '<div class="row"><span class="say" id="risay">Title, industry and this line are enough. Or <button type="button" class="alt" id="ribrief">drop in the client\'s brief</button> (PDF, Word, text).</span>' +
+            '<button type="button" class="btn" id="ridraft">' + SPARK + '<span id="ridlab">Draft the role</span></button></div>' +
+            '<input id="bfile" type="file" accept=".pdf,.docx,.txt,.md,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none"></div>' +
+          '<div class="two"><div class="field"><label for="f_loc">Where is the seat?</label><input id="f_loc" placeholder="City, state"></div>' +
+          '<div class="field"><label>How do they work?</label>' + pk('f_mode', ['Onsite','Hybrid','Remote']) + '</div></div>' +
+          '<div class="two"><div class="field"><label for="f_boss">Who does it report to?</label><input id="f_boss" placeholder="Title of the manager"></div>' +
+          '<div class="field"><label>Why is it open?</label>' + pk('f_why', ['New seat','Replacement','Confidential replacement']) + '</div></div>' +
+        '</div>' +
+        '<div class="rsec"><h3>The pay.</h3>' +
+          '<div class="three"><div class="field"><label for="f_min">Base, low</label><input id="f_min" inputmode="numeric" placeholder="140000"></div>' +
+          '<div class="field"><label for="f_max">Base, high</label><input id="f_max" inputmode="numeric" placeholder="170000"></div>' +
+          '<div class="field"><label>Paid how?</label>' + pk('f_ptype', ['Salary','Hourly']) + '</div></div>' +
+          '<div class="two"><div class="field"><label for="f_extra">Anything on top of base?</label><input id="f_extra" placeholder="Bonus, commission, car allowance, equity"></div>' +
+          '<div class="field"><label>How firm is the top number?</label>' + pk('f_firm', ['Firm','Room for the right person']) + '</div></div>' +
+        '</div>' +
+        '<div class="rsec"><h3>The description.</h3>' +
+          '<div class="field" data-dk="desc"><label for="f_desc">What will this person do?' + tag('desc') + '</label>' +
+          '<span class="hint">Type it the way you would say it, or paste call notes or an old posting. Write it clean turns it into a finished description.</span>' +
+          '<div class="ridesc" id="ridesc"><textarea id="f_desc" placeholder="Rough notes are fine."></textarea>' +
+          '<div class="foot"><span class="say" id="ricsay"></span><button type="button" class="btn sm ghost" id="riundo" style="display:none">Back to my notes</button>' +
+          '<button type="button" class="btn sm" id="riclean">' + SPARK + '<span>Write it clean</span></button></div></div></div>' +
+        '</div>' +
+        '<div class="rsec"><h3>Skills and experience.</h3>' +
+          '<div class="field" data-dk="must"><label>Must haves <span class="muted">(up to ten, what the match scores against)</span>' + tag('must') + '</label><div class="skl" id="skmust"></div></div>' +
+          '<div class="field" data-dk="nice"><label>Nice to haves' + tag('nice') + '</label><div class="skl" id="sknice"></div></div>' +
+          '<div class="two"><div class="field" data-dk="years"><label>Years doing this work?' + tag('years') + '</label>' + pk('f_years', ['0 to 2','3 to 5','5 to 8','8 to 12','12 plus']) + '</div>' +
+          '<div class="field" data-dk="level"><label>What level is the seat?' + tag('level') + '</label>' + pk('f_level', ['Individual','Lead','Manager','Director','Executive']) + '</div></div>' +
+          '<div class="two"><div class="field" data-dk="cred"><label for="f_cred">Degree, license or certification?' + tag('cred') + '</label><input id="f_cred" placeholder="CPA, PE, C10, none"></div>' +
+          '<div class="field" data-dk="bg"><label>Same industry background?' + tag('bg') + '</label>' + pk('f_bg', ['Required','Preferred','Open']) + '</div></div>' +
+          '<div class="field" style="max-width:220px"><label for="f_team">People they will manage</label><input id="f_team" inputmode="numeric" placeholder="0"></div>' +
+        '</div>' +
+        '<div class="rsec"><h3>What good looks like.</h3>' +
+          '<div class="field" data-dk="d90"><label for="f_d90">What has this person done by day 90?' + tag('d90') + '</label><textarea id="f_d90" placeholder="Two or three results the manager would call a win."></textarea></div>' +
+          '<div class="field" data-dk="fail"><label for="f_fail">Why has someone failed in this seat before?' + tag('fail') + '</label><textarea id="f_fail" placeholder="Tells us who to screen out."></textarea></div>' +
+          '<div class="field" data-dk="sell"><label for="f_sell">Why would a good person leave their job for this one?' + tag('sell') + '</label><textarea id="f_sell" placeholder="The honest selling points."></textarea></div>' +
+        '</div>' +
+        '<div class="rsec"><h3>The search.</h3>' +
+          '<div class="two"><div class="field"><label for="f_from">Companies to recruit from?</label><input id="f_from" placeholder="Competitors, adjacent firms"></div>' +
+          '<div class="field"><label for="f_off">Companies that are off limits?</label><input id="f_off" placeholder="Customers, partners"></div></div>' +
+          '<div class="field"><label for="f_proc">Who interviews, and who makes the call?</label><input id="f_proc" placeholder="Phone screen with HR, onsite with the CFO, CFO decides"></div>' +
+          '<div class="field"><label>How soon do they need someone?</label>' + pk('f_urg', ['Yesterday','30 days','60 days','Right person, no rush']) + '</div>' +
+          '<div class="two"><div class="field"><label for="f_kind">Engagement</label><select id="f_kind"><option>Contingent</option><option>Retained</option></select></div>' +
+          '<div class="field"><label for="f_stat">Status</label><select id="f_stat"><option value="open">Open</option><option value="on_hold">On hold</option><option value="filled">Filled</option><option value="cancelled">Cancelled</option></select></div></div>' +
+          '<div class="two"><div class="field"><label for="f_am">Account Manager</label><select id="f_am">' + opts(activeStaff(), st => F(st,'name','email'), ctx.am) + '</select></div>' +
+          '<div class="field"><label for="f_rec">Recruiter</label><select id="f_rec">' + opts(activeStaff(), st => F(st,'name','email'), ctx.rec) + '</select></div></div>' +
+          '<div class="field"><label for="f_ad">Advertising on this role, dollars</label><input id="f_ad" inputmode="decimal" placeholder="Deducted from the fee before commission"></div>' +
+        '</div>' +
+        '<div class="rineed" id="rineed"></div></div>';
+      })()],
     candidate: ['Add a candidate.', 'Drop a resume PDF and the form fills itself. Check it, then save.',
       '<div id="rdrop" style="border:2px dashed var(--line,#D3CEC4);padding:22px;text-align:center;cursor:pointer;background:var(--paper,#F4F2ED)">' +
         '<b id="rdropt">Drop a resume PDF here, or click to pick one</b><br><span class="muted small" id="rdrops">Reads name, contact, title, sections and skills. PDF only for now.</span>' +
@@ -4284,45 +4385,105 @@ async function briefText(file){
   }
   return await file.text();
 }
-async function pullSkills(text, say){
-  text = String(text || '').replace(/\s+/g, ' ').trim();
-  if(text.length < 40) return toast('There is not enough written to read yet.', true);
-  say('Reading the brief.', 'Picking the must haves and nice to haves.');
+/* Patch 62 · the role intake. One line drafts the role through role-draft; rough notes get written clean.
+   Anything the desk drafted wears a yellow edge until a person edits it or presses the tag. */
+const RI = { rough: '', drafted: new Set(), busy: false };
+const RI_FIELDS = [['f_ind','industry'],['f_sum','summary'],['f_boss','reports_to'],['f_why','why_open'],['f_mode','work_mode'],
+  ['f_ptype','pay_type'],['f_extra','comp_extra'],['f_firm','comp_firm'],['f_years','years_exp'],['f_level','level'],
+  ['f_cred','credential'],['f_bg','industry_bg'],['f_team','team_size'],['f_d90','day90'],['f_fail','fail_reason'],['f_sell','sell'],
+  ['f_from','recruit_from'],['f_off','off_limits'],['f_proc','process'],['f_urg','urgency']];
+const RI_DK = { desc:'Description', must:'Must haves', nice:'Nice to haves', years:'Years', level:'Level', cred:'Credential', bg:'Industry background', d90:'By day 90', fail:'Why people fail', sell:'The sell' };
+function riReady(){ return !S.searches.length || ('draft_fields' in S.searches[0]); }
+function pkPaint(){ document.querySelectorAll('#sheet .pk').forEach(g => { const v = val(g.dataset.pk);
+  g.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.textContent === v)); }); }
+function riMark(k, on){ if(on) RI.drafted.add(k); else RI.drafted.delete(k);
+  const q = document.querySelector('#sheet [data-dk="' + k + '"]'); if(q) q.classList.toggle('dft', !!on); }
+function riNeed(){ const el = document.getElementById('rineed'); if(!el) return;
+  const m = []; if(!val('f_co')) m.push('a client'); if(!val('f_title')) m.push('a title');
+  if(!val('f_min') || !val('f_max')) m.push('a pay range'); if(SK.must.length < 3) m.push('three must haves');
+  const d = RI.drafted.size;
+  el.textContent = (m.length ? 'Still needs ' + m.join(', ') + '. ' : 'Ready to open. ') + (d ? d + ' drafted answer' + (d === 1 ? '' : 's') + ' to confirm with the client.' : ''); }
+function riApply(j, mode){
+  const cur = val('f_desc');
+  if(mode === 'clean'){ RI.rough = cur; riMark('desc', false); }
+  else { if(cur && !RI.drafted.has('desc') && !RI.rough) RI.rough = cur; riMark('desc', true); }
+  setv('f_desc', j.description);
+  const u = document.getElementById('riundo'); if(u) u.style.display = RI.rough ? '' : 'none';
+  const hadM = SK.must.length, hadN = SK.nice.length;
+  (j.must || []).forEach(x => { if(SK.must.length < 10) skAdd('must', x); });
+  (j.nice || []).forEach(x => { if(!SK.must.some(y => y.toLowerCase() === String(x).toLowerCase())) skAdd('nice', x); });
+  skPaint();
+  if(mode === 'draft'){
+    if(SK.must.length > hadM) riMark('must', true);
+    if(SK.nice.length > hadN) riMark('nice', true);
+    [['f_cred','cred',j.credential],['f_d90','d90',j.day90],['f_fail','fail',j.fail],['f_sell','sell',j.sell],
+     ['f_years','years',j.years],['f_level','level',j.level],['f_bg','bg',j.industry_background]].forEach(([id, k, v]) => {
+      if(v && !val(id)){ setv(id, v); riMark(k, true); } });
+    pkPaint();
+  }
+  riNeed();
+}
+async function riCall(mode, notes){
+  if(RI.busy) return;
+  const dsay = t => { const e = document.getElementById('risay'); if(e) e.textContent = t; };
+  const csay = t => { const e = document.getElementById('ricsay'); if(e) e.textContent = t; };
+  const say = mode === 'clean' ? csay : dsay;
+  if(mode === 'draft' && !val('f_title') && !notes) return say('Give it a title first.');
+  if(mode === 'clean' && val('f_desc').length < 30) return say('Write a few lines first, then press it.');
+  const body = clean({ mode, title: val('f_title'), industry: val('f_ind'), summary: val('f_sum'),
+    notes: mode === 'clean' ? val('f_desc') : (notes || RI.rough || (RI.drafted.has('desc') ? '' : val('f_desc'))),
+    location: val('f_loc'), work_mode: val('f_mode'), reports_to: val('f_boss'), level: val('f_level'), years: val('f_years'),
+    credential: val('f_cred'), team: val('f_team') });
+  const box = document.getElementById(mode === 'clean' ? 'ridesc' : 'ristart');
+  RI.busy = true; if(box) box.classList.add('busy');
+  say(mode === 'clean' ? 'Writing it clean.' : 'Drafting ' + (val('f_title') || 'the role') + (val('f_ind') ? ' for ' + val('f_ind') : '') + '. About fifteen seconds.');
   try{
-    const j = await Promise.race([fnCall('role-skills', { text: text.slice(0, 24000), title: val('f_title') }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('No answer from the reader in a minute.')), 60000))]);
-    const must = Array.isArray(j.must) ? j.must : [], nice = Array.isArray(j.nice) ? j.nice : [];
-    must.forEach(x => skAdd('must', x)); nice.forEach(x => skAdd('nice', x));
-    skPaint();
-    say('Read it.', must.length + ' must haves and ' + nice.length + ' nice to haves. Take out any that are wrong, add what is missing.');
-    if(j.title && !val('f_title')) setv('f_title', j.title);
-  }catch(err){ say('Could not read that one.', err.message); toast(err.message, true); console.error(err); }
+    const j = await Promise.race([fnCall('role-draft', body),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('No answer from the writer in ninety seconds.')), 90000))]);
+    if(!document.getElementById('f_desc')) return;
+    riApply(j, mode);
+    if(mode === 'clean') csay('Written clean. Edit anything.');
+    else { dsay('Drafted. Every answer with a yellow edge is a draft to confirm with the client. Pay and the search are yours to ask.'); csay('Drafted. Edit anything.');
+      const l = document.getElementById('ridlab'); if(l) l.textContent = 'Draft again'; }
+  }catch(err){ say('Could not write it. ' + err.message); toast(err.message, true); console.error(err); }
+  finally{ RI.busy = false; if(box) box.classList.remove('busy'); }
 }
 function wireRoleForm(ctx){
-  if(!ctx || !ctx.edit){ SK.must = []; SK.nice = []; }
+  const r = ctx && ctx.edit ? editRow('search', ctx.edit) : null;
+  if(!r){ SK.must = []; SK.nice = []; }
   SK.was = SK.must.join('\n') + '|' + SK.nice.join('\n');
-  skPaint();
-  const z = document.getElementById('bdrop'), inp = document.getElementById('bfile'), pull = document.getElementById('bpull');
-  if(!z || !inp) return;
-  const say = (t, s2) => { const a = document.getElementById('bdropt'), b = document.getElementById('bdrops');
-    if(a) a.textContent = t; if(b && s2 != null) b.textContent = s2; };
-  const take = async file => {
-    if(!file) return;
-    if(file.size > 15000000) return toast('That file is over 15MB.', true);
-    z.classList.add('busy'); say('Reading ' + file.name, 'Pulling the text out.');
-    try{
-      const text = await briefText(file);
-      const n = document.getElementById('f_notes'); if(n && !n.value.trim()) n.value = text.trim().slice(0, 6000);
-      await pullSkills(text, say);
-    }catch(err){ say('Could not read that one.', err.message); toast(err.message, true); }
-    z.classList.remove('busy');
-  };
-  z.onclick = () => inp.click();
-  inp.onchange = () => take(inp.files[0]);
-  z.ondragover = e => { e.preventDefault(); z.style.borderColor = 'var(--yellow,#E3BD3B)'; };
-  z.ondragleave = () => { z.style.borderColor = ''; };
-  z.ondrop = e => { e.preventDefault(); z.style.borderColor = ''; take(e.dataTransfer.files[0]); };
-  if(pull) pull.onclick = () => pullSkills(val('f_notes'), say);
+  RI.busy = false; RI.drafted = new Set(); RI.rough = r && F(r,'description') ? String(F(r,'notes') || '') : '';
+  skPaint(); pkPaint();
+  const sheet = document.getElementById('sheet');
+  String((r && r.draft_fields) || '').split(',').filter(k => RI_DK[k]).forEach(k => riMark(k, true));
+  const u = document.getElementById('riundo'); if(u){ u.style.display = RI.rough ? '' : 'none';
+    u.onclick = () => { setv('f_desc', RI.rough); riMark('desc', false); u.style.display = 'none';
+      const e = document.getElementById('ricsay'); if(e) e.textContent = 'Back to your notes.'; riNeed(); }; }
+  sheet.querySelectorAll('.pk').forEach(g => g.querySelectorAll('button').forEach(b => b.onclick = () => {
+    const id = g.dataset.pk; setv(id, val(id) === b.textContent ? '' : b.textContent);
+    const q = g.closest('[data-dk]'); if(q) riMark(q.dataset.dk, false); pkPaint(); riNeed(); }));
+  sheet.querySelectorAll('.dtag').forEach(b => b.onclick = e => { e.preventDefault(); riMark(b.dataset.dok, false); riNeed(); });
+  const ri = sheet.querySelector('.ri');
+  if(ri){ ri.addEventListener('input', e => { const q = e.target.closest('[data-dk]');
+      if(q && !e.target.hasAttribute('data-skadd')) riMark(q.dataset.dk, false); riNeed(); });
+    ri.addEventListener('click', e => { if(e.target.closest('.skl')) setTimeout(riNeed, 0); });
+    ri.addEventListener('keyup', e => { if(e.target.hasAttribute && e.target.hasAttribute('data-skadd')) riNeed(); }); }
+  const co = document.getElementById('f_co'), ind = document.getElementById('f_ind');
+  const fromCo = () => { const c = company(co.value); if(c && ind && !ind.value) ind.value = F(c,'industry') || ''; riNeed(); };
+  if(co){ co.onchange = fromCo; if(!r) fromCo(); }
+  const d = document.getElementById('ridraft'); if(d) d.onclick = () => riCall('draft');
+  const c = document.getElementById('riclean'); if(c) c.onclick = () => riCall('clean');
+  const inp = document.getElementById('bfile'), bb = document.getElementById('ribrief');
+  if(bb && inp){ bb.onclick = () => inp.click();
+    inp.onchange = async () => { const file = inp.files[0]; if(!file) return;
+      if(file.size > 15000000) return toast('That file is over 15MB.', true);
+      const e = document.getElementById('risay'); if(e) e.textContent = 'Reading ' + file.name + '.';
+      try{ const text = (await briefText(file)).replace(/[ \t]+/g, ' ').trim();
+        if(text.length < 40) throw new Error('There is not enough written in that file to read.');
+        RI.rough = text.slice(0, 14000); await riCall('draft', RI.rough);
+      }catch(err){ if(e) e.textContent = 'Could not read that one. ' + err.message; toast(err.message, true); }
+      inp.value = ''; }; }
+  riNeed();
 }
 /* resume drop: upload the original with the staff token, let the backend read it, fill the form */
 let RESUME = null;
@@ -4801,14 +4962,25 @@ async function save(kind, ctx){
   }
   if(kind === 'search'){
     if(!val('f_co')) return toast('Pick the client.', true);
-    r = await put('searches', clean({ [M.search.company]: val('f_co'), [M.search.title]: val('f_title'),
+    if(!val('f_title')) return toast('Give the role a title.', true);
+    const row = clean({ [M.search.company]: val('f_co'), [M.search.title]: val('f_title'),
       [M.search.location]: val('f_loc'), [M.search.kind]: val('f_kind'), [M.search.status]: val('f_stat') || 'open',
       [M.search.comp_min]: val('f_min') ? num(val('f_min')) : '', [M.search.comp_max]: val('f_max') ? num(val('f_max')) : '',
-      [M.search.opened]: ctx.edit ? undefined : today(), [M.search.notes]: val('f_notes'),
+      [M.search.opened]: ctx.edit ? undefined : today(),
       [M.search.am]: val('f_am'), [M.search.recruiter]: val('f_rec'),
       [M.search.ad]: val('f_ad') ? num(val('f_ad')) : '',
       [M.search.must]: SK.must.join('\n'), [M.search.nice]: SK.nice.join('\n'),
-      [M.search.owner]: ctx.edit ? undefined : meId() }), ctx, ctx.edit ? 'Search updated.' : 'Search opened.');
+      [M.search.owner]: ctx.edit ? undefined : meId() });
+    if(riReady()){
+      RI_FIELDS.forEach(([id, col]) => { const v = val(id); if(v || ctx.edit) row[col] = v; });
+      if(val('f_desc') || ctx.edit) row.description = val('f_desc');
+      if(RI.rough) row[M.search.notes] = RI.rough;
+      row.draft_fields = [...RI.drafted].join(',');
+    } else {
+      row[M.search.notes] = val('f_desc');
+      toast('Saving the basics only. Patch 62 has not been run on the database yet.', true);
+    }
+    r = await put('searches', row, ctx, ctx.edit ? 'Role updated.' : 'Role opened.');
     if(r && ctx.edit && SK.was !== SK.must.join('\n') + '|' + SK.nice.join('\n') &&
        S.pipeline.some(p => String(p.search_id) === String(ctx.edit)))
       setTimeout(() => toast('The skills changed. Open the Pipeline tab and press Run the match again.'), 1200);
